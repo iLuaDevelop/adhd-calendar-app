@@ -92,7 +92,70 @@ const PetPage: React.FC = () => {
     setLoading(false);
   }, []);
 
-  const handleFeed = (method: 'gems' | 'xp') => {
+  useEffect(() => {
+    // Listen for pet restoration on login
+    const handlePetsRestored = () => {
+      console.log('[Pet] Pets restored from Firestore, reloading...');
+      const allStorePets = getAllPets();
+      let legacyPet = getPet();
+      
+      if (!legacyPet) {
+        legacyPet = createPet('Your Pet');
+      } else {
+        legacyPet = updatePetStats();
+        if (!legacyPet.mood) {
+          legacyPet.mood = getMoodFromStats(legacyPet);
+        }
+        if (!legacyPet.color) {
+          legacyPet.color = 'default';
+        }
+        if (!legacyPet.skin) {
+          legacyPet.skin = 'default';
+        }
+      }
+      
+      let allPetsToShow: Pet[] = [legacyPet];
+      allStorePets.forEach(storePet => {
+        if (storePet.id !== legacyPet!.id) {
+          allPetsToShow.push(storePet);
+        }
+      });
+      
+      setOwnedPets(allPetsToShow);
+      
+      const currentId = getCurrentPetId();
+      setCurrentPetIdState(currentId);
+      
+      let currentPet: Pet | null = null;
+      if (currentId && allStorePets.some(p => p.id === currentId)) {
+        currentPet = allStorePets.find(p => p.id === currentId) || legacyPet;
+      } else {
+        currentPet = legacyPet;
+      }
+      
+      setPet(currentPet);
+      setNewName(currentPet?.name || '');
+      setGems(getGems());
+      setXp(getXp());
+    };
+
+    // Listen for pet clearing on logout
+    const handlePetsCleared = () => {
+      console.log('[Pet] Pets cleared on logout');
+      setPet(null);
+      setOwnedPets([]);
+      setCurrentPetIdState(null);
+      setNewName('');
+    };
+
+    window.addEventListener('pets:restored', handlePetsRestored as EventListener);
+    window.addEventListener('pets:cleared', handlePetsCleared as EventListener);
+
+    return () => {
+      window.removeEventListener('pets:restored', handlePetsRestored as EventListener);
+      window.removeEventListener('pets:cleared', handlePetsCleared as EventListener);
+    };
+  }, []);
     if (method === 'gems' && gems < feedCostGems) {
       alert('Not enough gems! You need 5 gems to feed your pet.');
       return;
