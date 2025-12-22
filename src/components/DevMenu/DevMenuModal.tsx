@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getXp, setXp, resetXp, grantXp } from '../../services/xp';
 import { getGems, setGems, addGems } from '../../services/currency';
-import { getPet, updatePetStats, feedPet, getAllPets, deletePet } from '../../services/pet';
+import { getPet, updatePetStats, feedPet, getAllPets, deletePet, createPet } from '../../services/pet';
 import { unlockSkill, getAllSkills, getUnlockedSkills } from '../../services/skillTree';
 import { unlockTitle, setSelectedTitle, getUnlockedTitles, getSelectedTitle, getTitles, ALL_TITLES } from '../../services/titles';
 import { enableCriticalTestMode, disableCriticalTestMode, isCriticalTestModeEnabled, getCriticalChances, enableCrateTestMode, disableCrateTestMode, isCrateTestModeEnabled } from '../../services/critical';
@@ -198,6 +198,14 @@ const DevMenuModal: React.FC = () => {
           {/* Pet Controls */}
           <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12}}>
             <h3 style={{margin: '0 0 8px 0'}}>Pet Controls</h3>
+            <div style={{marginBottom: 12}}>
+              <button className="btn ghost" onClick={() => {
+                createPet('Your Pet');
+                alert('Default pet created and synced to Firestore!');
+              }} style={{fontSize: '0.8rem', width: '100%', marginBottom: 8}}>
+                ✨ Create Default Pet
+              </button>
+            </div>
             <div style={{marginBottom: 12}}>
               <h4 style={{margin: '0 0 8px 0', fontSize: '0.8rem', color: 'var(--muted)'}}>Delete Pet</h4>
               <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: 6}}>
@@ -418,6 +426,12 @@ const DevMenuModal: React.FC = () => {
           {/* Pet Controls */}
           <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12}}>
             <h3 style={{margin: '0 0 8px 0'}}>Pet Controls</h3>
+            <button className="btn ghost" onClick={() => {
+              createPet('Your Pet');
+              alert('Default pet created and synced to Firestore!');
+            }} style={{fontSize: '0.8rem', width: '100%', marginBottom: 8}}>
+              ✨ Create Default Pet
+            </button>
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12}}>
               <button className="btn ghost" onClick={() => {
                 const pet = getPet();
