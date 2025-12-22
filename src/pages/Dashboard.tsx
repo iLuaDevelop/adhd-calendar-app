@@ -139,6 +139,7 @@ const Dashboard: React.FC = () => {
     };
 
     const handleAdd = (title: string, due?: string) => {
+        console.log('[Dashboard.handleAdd] Called with title:', title, 'due:', due);
         if (tasks.length >= taskLimit) {
             alert(`Task limit reached (${taskLimit}). Unlock more in the Store!`);
             return;
@@ -153,6 +154,7 @@ const Dashboard: React.FC = () => {
         }
         
         const task = { id: Date.now(), title, description: '', dueDate: due || '', completed: false } as any;
+        console.log('[Dashboard.handleAdd] Adding task:', task);
         addTask(task);
         incrementDailyCreation();
         setAdding(false);
