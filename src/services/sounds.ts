@@ -21,21 +21,6 @@ export const initAudioContext = () => {
     if (!audioContext) {
       audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       console.log('[SOUND] ✅ AudioContext created on user gesture, state:', audioContext.state);
-      
-      // Create a dummy oscillator to warm up the audio system
-      // This helps prevent errors when the first real sound is played
-      setTimeout(() => {
-        try {
-          if (audioContext && audioContext.state === 'running') {
-            const dummy = audioContext.createOscillator();
-            dummy.frequency.value = 1;
-            dummy.stop(audioContext.currentTime);
-            console.log('[SOUND] Audio system warmed up');
-          }
-        } catch (e) {
-          console.log('[SOUND] Warmup error (safe to ignore):', e);
-        }
-      }, 50);
     }
     audioContextInitialized = true;
   } catch (e) {
