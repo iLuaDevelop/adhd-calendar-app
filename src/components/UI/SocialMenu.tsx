@@ -641,7 +641,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                       <button
                         onClick={scrollToBottom}
                         style={{
-                          position: 'absolute',
+                          position: 'sticky',
                           bottom: 8,
                           right: 8,
                           background: 'var(--primary)',
@@ -655,6 +655,8 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                           zIndex: 10,
                           boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                           transition: 'all 0.2s',
+                          width: 'fit-content',
+                          marginLeft: 'auto',
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.background = 'var(--accent)';
