@@ -72,15 +72,12 @@ const App: React.FC = () => {
     const unsubscribeConversations = subscribeToConversations(currentUser.uid, (convs) => {
       console.log('[App] Conversations updated globally:', convs.length, 'conversations');
       setConversations(convs);
-      const unreadCount = convs.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
-      setNotificationCount(prev => prev - (conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)) + unreadCount);
     });
 
     // Subscribe to friend requests globally
     const unsubscribeRequests = subscribeToPendingRequests(currentUser.uid, (requests) => {
       console.log('[App] Friend requests updated globally:', requests.length, 'requests');
       setFriendRequests(requests);
-      setNotificationCount(prev => prev - friendRequests.length + requests.length);
     });
 
     return () => {
@@ -88,6 +85,14 @@ const App: React.FC = () => {
       unsubscribeRequests();
     };
   }, []);
+
+  // Calculate total notification count
+  useEffect(() => {
+    const unreadMessages = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+    const total = unreadMessages + friendRequests.length;
+    console.log('[App] Notification count updated:', { unreadMessages, friendRequests: friendRequests.length, total });
+    setNotificationCount(total);
+  }, [conversations, friendRequests]);
 
   return (
     <Router>
