@@ -37,8 +37,8 @@ interface ProfileData {
 }
 
 const getDefaultProfile = (): ProfileData => ({
-    username: 'Player',
-    hashtag: String(Math.floor(Math.random() * 9000) + 1000),
+    username: 'Guest',
+    hashtag: '0000',
     tasksCompleted: 0,
     eventsCreated: 0,
     avatar: '👤',
