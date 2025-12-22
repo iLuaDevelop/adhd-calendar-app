@@ -43,7 +43,13 @@ export const saveGameProgress = async (progress: Partial<GameProgress>) => {
       lastUpdated: new Date().toISOString(),
     };
 
-    console.log('[gameProgress] Merging:', { existing: existingGameProgress, new: progress, merged: mergedProgress });
+    console.log('[gameProgress] Merging:', { 
+      existing: existingGameProgress, 
+      new: progress, 
+      merged: mergedProgress,
+      newTasks: progress?.tasks,
+      mergedTasks: mergedProgress.tasks
+    });
     
     // Use setDoc with merge to handle both new and existing docs
     await setDoc(userDocRef, { gameProgress: mergedProgress }, { merge: true });
@@ -81,7 +87,7 @@ export const loadGameProgress = async (): Promise<Partial<GameProgress> | null> 
     const gameProgress = userData?.gameProgress;
     console.log('[gameProgress] gameProgress field:', gameProgress);
     console.log('[gameProgress] gameProgress.xp =', gameProgress?.xp);
-    console.log('[gameProgress] gameProgress.tasks =', gameProgress?.tasks);
+    console.log('[gameProgress] gameProgress.tasks =', gameProgress?.tasks, '| type:', typeof gameProgress?.tasks);
 
     if (gameProgress) {
       console.log('[gameProgress] ✅ Loaded from Firestore:', gameProgress);
