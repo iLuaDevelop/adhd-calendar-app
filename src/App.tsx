@@ -33,9 +33,9 @@ const App: React.FC = () => {
 
   // Initialize AudioContext on first user interaction
   useEffect(() => {
-    const handleUserInteraction = () => {
+    const handleUserInteraction = async () => {
       console.log('[App] 🎯 User interaction detected, initializing AudioContext');
-      initAudioContext();
+      await initAudioContext();
       // Remove listener after first interaction
       document.removeEventListener('click', handleUserInteraction);
       document.removeEventListener('touchstart', handleUserInteraction);
