@@ -98,7 +98,14 @@ export const loadGameProgress = async (): Promise<Partial<GameProgress> | null> 
  * Sync specific data to Firestore (for frequent updates like XP)
  */
 export const syncXpToFirestore = async (xp: number) => {
-  await saveGameProgress({ xp });
+  console.log('[syncXpToFirestore] Syncing XP:', xp, 'to Firestore...');
+  try {
+    await saveGameProgress({ xp });
+    console.log('[syncXpToFirestore] ✅ XP sync complete');
+  } catch (error) {
+    console.error('[syncXpToFirestore] ❌ XP sync failed:', error);
+    throw error;
+  }
 };
 
 export const syncGemsToFirestore = async (gems: number) => {
