@@ -528,7 +528,13 @@ export const subscribeToUserProfile = (
     const userDoc = doc(db, 'users', userUid);
     const unsubscribe = onSnapshot(userDoc, (snapshot) => {
       if (snapshot.exists()) {
-        callback({ uid: snapshot.id, ...snapshot.data() });
+        const profileData = { uid: snapshot.id, ...snapshot.data() };
+        console.log('[Profile Listener] Received profile for', userUid, ':', {
+          avatar: profileData.avatar,
+          username: profileData.username,
+          hashtag: profileData.hashtag
+        });
+        callback(profileData);
       }
     });
 
