@@ -46,6 +46,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
   const [userProfile, setUserProfile] = useState<any>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [newFriendUsername, setNewFriendUsername] = useState('');
+  const [newFriendHashtag, setNewFriendHashtag] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [messages, setMessages] = useState<FirebaseMessage[]>([]);
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
@@ -110,6 +111,11 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
     setErrorMessage('');
     
     if (!newFriendUsername.trim()) {
+      setErrorMessage('Username is required');
+      return;
+    }
+
+    if (!newFriendHashtag.trim()) {
       setErrorMessage('Hashtag is required');
       return;
     }
@@ -122,12 +128,8 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
     try {
       setLoading(true);
       
-      // Search for user in Firestore by hashtag
-      const hashtag = newFriendUsername.trim().startsWith('#') 
-        ? newFriendUsername.trim() 
-        : '#' + newFriendUsername.trim();
-      
-      const results = await searchUsers(hashtag);
+      // Search for user in Firestore by username and hashtag
+      const results = await searchUsers(newFriendUsername.trim(), newFriendHashtag.trim());
       
       if (results.length === 0) {
         setErrorMessage('User not found');
@@ -152,6 +154,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
       await sendFriendRequest(foundUser.uid, foundUser.username, userProfile.username);
       
       setNewFriendUsername('');
+      setNewFriendHashtag('');
       setErrorMessage('');
     } catch (error: any) {
       console.error('Error sending friend request:', error);
@@ -358,9 +361,19 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                   <input
                     type="text"
-                    placeholder="Enter hashtag (e.g., #username)"
+                    placeholder="Username"
                     value={newFriendUsername}
                     onChange={(e) => {setNewFriendUsername(e.target.value); setErrorMessage('');}}
+                    onKeyPress={(e) => e.key === 'Enter' && addFriend()}
+                    className="input"
+                    style={{ flex: 1 }}
+                    disabled={loading}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Hashtag"
+                    value={newFriendHashtag}
+                    onChange={(e) => {setNewFriendHashtag(e.target.value); setErrorMessage('');}}
                     onKeyPress={(e) => e.key === 'Enter' && addFriend()}
                     className="input"
                     style={{ flex: 1 }}
