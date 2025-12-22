@@ -528,13 +528,19 @@ export const subscribeToUserProfile = (
     const userDoc = doc(db, 'users', userUid);
     const unsubscribe = onSnapshot(userDoc, (snapshot) => {
       if (snapshot.exists()) {
-        const profileData = { uid: snapshot.id, ...snapshot.data() };
-        console.log('[Profile Listener] Received profile for', userUid, ':', {
+        const fullData = snapshot.data();
+        const profileData = { uid: snapshot.id, ...fullData };
+        console.log('[Profile Listener] Firestore snapshot received for', userUid);
+        console.log('[Profile Listener] Full document data:', fullData);
+        console.log('[Profile Listener] Profile data to callback:', {
           avatar: profileData.avatar,
           username: profileData.username,
-          hashtag: profileData.hashtag
+          hashtag: profileData.hashtag,
+          timestamp: new Date().toISOString(),
         });
         callback(profileData);
+      } else {
+        console.log('[Profile Listener] ⚠️ User document does not exist:', userUid);
       }
     });
 
