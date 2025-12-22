@@ -474,3 +474,31 @@ export const getFriendRequestStatus = async (
   }
 };
 
+/**
+ * Remove a friend (removes from both users' friend lists)
+ */
+export const removeFriend = async (currentUserUid: string, friendUid: string) => {
+  try {
+    const currentUserProfile: any = await getUserProfile(currentUserUid);
+    const friendProfile: any = await getUserProfile(friendUid);
+
+    if (currentUserProfile && friendProfile) {
+      // Remove friend from current user's list
+      const currentFriends = (currentUserProfile.friends || []).filter(
+        (f: any) => f.uid !== friendUid
+      );
+
+      // Remove current user from friend's list
+      const friendFriends = (friendProfile.friends || []).filter(
+        (f: any) => f.uid !== currentUserUid
+      );
+
+      // Update both users in Firestore
+      await updateDoc(doc(db, 'users', currentUserUid), { friends: currentFriends });
+      await updateDoc(doc(db, 'users', friendUid), { friends: friendFriends });
+    }
+  } catch (error) {
+    console.error('Error removing friend:', error);
+    throw error;
+  }
+};
