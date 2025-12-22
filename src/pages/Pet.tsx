@@ -41,13 +41,22 @@ const PetPage: React.FC = () => {
   useEffect(() => {
     // Load all pets and get current pet
     const allStorePets = getAllPets();
-    let legacyPet = getPet();
+    console.log('[Pet] Loaded all pets from storage:', allStorePets.length);
     
-    // If no legacy pet exists, create a default one
-    if (!legacyPet) {
+    let legacyPet = getPet();
+    console.log('[Pet] getPet() returned:', legacyPet?.name);
+    
+    // If no legacy pet exists and no store pets exist, create a default one
+    if (!legacyPet && allStorePets.length === 0) {
+      console.log('[Pet] No pets found, creating default pet');
       legacyPet = createPet('Your Pet');
-    } else {
+    } else if (!legacyPet && allStorePets.length > 0) {
+      // If legacy pet doesn't exist but store pets do, use the first one
+      console.log('[Pet] Using first store pet as legacy pet');
+      legacyPet = allStorePets[0];
+    } else if (legacyPet) {
       // Update stats on page load for legacy pet
+      console.log('[Pet] Updating stats for legacy pet:', legacyPet.name);
       legacyPet = updatePetStats();
       // Ensure pet has mood and customization
       if (!legacyPet.mood) {
@@ -71,9 +80,11 @@ const PetPage: React.FC = () => {
       }
     });
     
+    console.log('[Pet] Total pets to show:', allPetsToShow.length);
     setOwnedPets(allPetsToShow);
     
     const currentId = getCurrentPetId();
+    console.log('[Pet] Current pet ID:', currentId);
     setCurrentPetIdState(currentId);
     
     let currentPet: Pet | null = null;
