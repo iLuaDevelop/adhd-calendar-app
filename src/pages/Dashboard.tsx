@@ -406,7 +406,11 @@ const Dashboard: React.FC = () => {
     const handleLogout = async () => {
         try {
             await signOutUser();
+            setIsLoggedIn(false);
+            setShowProfile(false);
             setLoginError('');
+            setLoginEmail('');
+            setLoginPassword('');
         } catch (error: any) {
             setLoginError('Logout failed');
         }
