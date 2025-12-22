@@ -65,13 +65,15 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
 
   // Sync global data from App props
   useEffect(() => {
-    if (initialConversations && initialConversations.length > 0) {
+    if (initialConversations) {
+      console.log('[SocialMenu] Syncing conversations from props:', initialConversations.length);
       setConversations(initialConversations);
     }
   }, [initialConversations]);
 
   useEffect(() => {
-    if (initialFriendRequests && initialFriendRequests.length > 0) {
+    if (initialFriendRequests) {
+      console.log('[SocialMenu] Syncing friend requests from props:', initialFriendRequests.length);
       setFriendRequests(initialFriendRequests);
     }
   }, [initialFriendRequests]);
