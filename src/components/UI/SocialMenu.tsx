@@ -17,6 +17,7 @@ import {
   removeFriend as removeFriendService,
   subscribeToUserProfile,
 } from '../../services/messaging';
+import { playMessageNotificationSound, playFriendRequestSound } from '../../services/sounds';
 
 interface SocialMenuProps {
   open: boolean;
@@ -113,6 +114,10 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
       
       // Subscribe to friend requests
       const unsubscribeRequests = subscribeToPendingRequests(currentUser.uid, (requests) => {
+        // Play notification sound if new friend request arrived
+        if (requests.length > friendRequests.length) {
+          playFriendRequestSound();
+        }
         setFriendRequests(requests);
       });
 
@@ -124,7 +129,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
     } catch (error) {
       console.error('Error subscribing to conversations:', error);
     }
-  }, [currentUser]);
+  }, [currentUser, friendRequests.length]);
 
   // Subscribe to profile changes for all friends to update avatars in real-time
   useEffect(() => {
@@ -384,6 +389,10 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
         currentUser.uid,
         selectedFriend.uid,
         (msgs) => {
+          // Play notification sound only if messages increased (new message arrived)
+          if (msgs.length > messages.length) {
+            playMessageNotificationSound();
+          }
           setMessages(msgs);
         }
       );
@@ -391,7 +400,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
     } catch (error) {
       console.error('Error subscribing to conversation:', error);
     }
-  }, [selectedFriend, currentUser]);
+  }, [selectedFriend, currentUser, messages.length]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
