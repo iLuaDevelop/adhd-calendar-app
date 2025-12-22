@@ -80,6 +80,15 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
 
   // Track conversation changes and play notification sounds when NEW messages arrive (only when menu is closed)
   const prevConversationCountRef = React.useRef<number | null>(null);
+  
+  // Initialize refs when menu opens/closes to track baseline
+  useEffect(() => {
+    const unreadCount = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+    prevConversationCountRef.current = unreadCount;
+    console.log('[SocialMenu] Menu state changed to:', open ? 'OPEN' : 'CLOSED', 'Current unread:', unreadCount);
+  }, [open, conversations.length]);
+
+  // Check for new messages and play sound
   useEffect(() => {
     const unreadCount = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
     const prevUnread = prevConversationCountRef.current;
@@ -88,7 +97,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
     
     // Only play sound if:
     // 1. Menu is CLOSED
-    // 2. We have a previous unread count (not first load)
+    // 2. We have a previous unread count (not first init)
     // 3. Unread count increased
     if (!open && prevUnread !== null && unreadCount > prevUnread) {
       console.log('[SocialMenu] PLAYING MESSAGE SOUND - menu closed, new message arrived. Prev:', prevUnread, 'Now:', unreadCount);
@@ -100,6 +109,14 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
 
   // Play sound when new friend requests arrive (only when menu is closed)
   const prevRequestCountRef = React.useRef<number | null>(null);
+  
+  // Initialize friend request ref when menu opens/closes
+  useEffect(() => {
+    prevRequestCountRef.current = friendRequests.length;
+    console.log('[SocialMenu] Menu state changed, friend requests baseline:', friendRequests.length);
+  }, [open, friendRequests.length]);
+
+  // Check for new friend requests and play sound
   useEffect(() => {
     const prevRequests = prevRequestCountRef.current;
     console.log('[SocialMenu] Friend request sound check: open=', open, 'friendRequests=', friendRequests.length, 'prevRequests=', prevRequests);
