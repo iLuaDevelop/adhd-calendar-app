@@ -1,9 +1,26 @@
 // Simple synthesized sound effects using Web Audio API
 // No external files needed - generates sounds programmatically
 
+// Create a single shared AudioContext to avoid browser limits
+let audioContext: AudioContext | null = null;
+
+const getAudioContext = (): AudioContext | null => {
+  if (!audioContext) {
+    try {
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    } catch (e) {
+      console.log('[SOUND] Failed to create AudioContext');
+      return null;
+    }
+  }
+  return audioContext;
+};
+
 export const playLevelUpSound = () => {
   try {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const audioContext = ctx;
     
     // Create a pleasant ascending chime sequence for level up
     const now = audioContext.currentTime;
@@ -37,7 +54,9 @@ export const playLevelUpSound = () => {
 
 export const playXpSound = () => {
   try {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const audioContext = ctx;
     const now = audioContext.currentTime;
 
     // Simple short "ding" sound for XP gain
@@ -61,7 +80,9 @@ export const playXpSound = () => {
 };
 export const playCriticalSound = () => {
   try {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const audioContext = ctx;
     
     // Create a distinctive double "ding" for critical hit
     const now = audioContext.currentTime;
@@ -94,7 +115,9 @@ export const playCriticalSound = () => {
 export const playMessageNotificationSound = () => {
   try {
     console.log('[SOUND] playMessageNotificationSound called - PLAYING MESSAGE SOUND NOW');
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const audioContext = ctx;
     
     // Create a pleasant "message received" sound - ascending notes
     const now = audioContext.currentTime;
@@ -127,7 +150,9 @@ export const playMessageNotificationSound = () => {
 export const playFriendRequestSound = () => {
   try {
     console.log('[SOUND] playFriendRequestSound called - PLAYING FRIEND REQUEST SOUND NOW');
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const audioContext = ctx;
     
     // Create a distinctive "friend request" sound - three notes
     const now = audioContext.currentTime;
