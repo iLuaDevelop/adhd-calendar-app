@@ -120,17 +120,24 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
     const unsubscribers: Array<() => void> = [];
     const friendUids = friends.map(f => f.uid);
 
+    console.log('[SocialMenu] Setting up profile listeners for', friendUids.length, 'friends:', friendUids);
+
     friendUids.forEach(friendUid => {
       try {
         console.log('[SocialMenu] Setting up profile listener for friend:', friendUid);
         const unsubscribe = subscribeToUserProfile(friendUid, (updatedProfile) => {
-          console.log('[SocialMenu] Friend profile callback fired for:', friendUid, {
-            newAvatar: updatedProfile.avatar,
-            newUsername: updatedProfile.username,
-            newHashtag: updatedProfile.hashtag,
+          console.log('[SocialMenu] 🔔 Friend profile callback FIRED for:', friendUid);
+          console.log('[SocialMenu] Callback received avatar:', updatedProfile.avatar);
+          console.log('[SocialMenu] Callback received full profile:', {
+            avatar: updatedProfile.avatar,
+            username: updatedProfile.username,
+            hashtag: updatedProfile.hashtag,
+            uid: updatedProfile.uid,
           });
           
           setFriends(prevFriends => {
+            console.log('[SocialMenu] Before state update - current friends:', prevFriends.map(f => ({ uid: f.uid, avatar: f.avatar })));
+            
             const updated = prevFriends.map(f =>
               f.uid === friendUid
                 ? {
@@ -144,17 +151,20 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
             
             const friend = updated.find(f => f.uid === friendUid);
             if (friend) {
-              console.log('[SocialMenu] Updated friend in state:', {
+              console.log('[SocialMenu] ✅ Updated friend in state:', {
                 uid: friendUid,
+                oldAvatar: prevFriends.find(f => f.uid === friendUid)?.avatar,
                 newAvatar: friend.avatar,
               });
             }
             
+            console.log('[SocialMenu] After state update - new friends:', updated.map(f => ({ uid: f.uid, avatar: f.avatar })));
             return updated;
           });
 
           // Also update selected friend if it's this user
           if (selectedFriend?.uid === friendUid) {
+            console.log('[SocialMenu] Updating selectedFriend avatar from', selectedFriend.avatar, 'to', updatedProfile.avatar);
             setSelectedFriend(prev =>
               prev
                 ? {
@@ -178,8 +188,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
       console.log('[SocialMenu] Cleaning up profile listeners for friends:', friendUids);
       unsubscribers.forEach(unsub => unsub());
     };
-  }, [friends.map(f => f.uid).join(',')]);
-  const addFriend = async () => {
+  }, [friends.map(f => f.uid).join(','), selectedFriend?.uid]);  const addFriend = async () => {
     setErrorMessage('');
     
     if (!newFriendUsername.trim()) {
