@@ -110,7 +110,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
     setErrorMessage('');
     
     if (!newFriendUsername.trim()) {
-      setErrorMessage('Username is required');
+      setErrorMessage('Hashtag is required');
       return;
     }
 
@@ -122,8 +122,12 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
     try {
       setLoading(true);
       
-      // Search for user in Firestore
-      const results = await searchUsers(newFriendUsername.trim());
+      // Search for user in Firestore by hashtag
+      const hashtag = newFriendUsername.trim().startsWith('#') 
+        ? newFriendUsername.trim() 
+        : '#' + newFriendUsername.trim();
+      
+      const results = await searchUsers(hashtag);
       
       if (results.length === 0) {
         setErrorMessage('User not found');
@@ -354,7 +358,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                   <input
                     type="text"
-                    placeholder="Enter username"
+                    placeholder="Enter hashtag (e.g., #username)"
                     value={newFriendUsername}
                     onChange={(e) => {setNewFriendUsername(e.target.value); setErrorMessage('');}}
                     onKeyPress={(e) => e.key === 'Enter' && addFriend()}
