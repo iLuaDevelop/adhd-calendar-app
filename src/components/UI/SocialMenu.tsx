@@ -69,11 +69,13 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
 
   // Track notification count and report to parent
   useEffect(() => {
-    const totalNotifications = friendRequests.length + conversations.length;
+    // Count: friend requests + unread messages
+    const unreadMessageCount = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+    const totalNotifications = friendRequests.length + unreadMessageCount;
     if (onNotificationCountChange) {
       onNotificationCountChange(totalNotifications);
     }
-  }, [friendRequests.length, conversations.length, onNotificationCountChange]);
+  }, [friendRequests.length, conversations, onNotificationCountChange]);
 
   const [isScrolledUp, setIsScrolledUp] = useState(false);
 
@@ -119,6 +121,14 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
     // Subscribe to conversations
     try {
       const unsubscribe = subscribeToConversations(currentUser.uid, (convs) => {
+        // Play message notification if new message arrived (conversation count increased or new last message)
+        if (convs.length > conversations.length || 
+            (convs.length === conversations.length && convs.some((conv, idx) => {
+              const oldConv = conversations[idx];
+              return oldConv && conv.lastMessage !== oldConv.lastMessage;
+            }))) {
+          playMessageNotificationSound();
+        }
         setConversations(convs);
       });
       
@@ -406,6 +416,16 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
           setMessages(msgs);
         }
       );
+      
+      // Mark conversation as read when opened
+      setConversations(prevConvs => 
+        prevConvs.map(conv =>
+          conv.friendUid === selectedFriend.uid
+            ? { ...conv, unreadCount: 0 }
+            : conv
+        )
+      );
+      
       return () => unsubscribe();
     } catch (error) {
       console.error('Error subscribing to conversation:', error);
