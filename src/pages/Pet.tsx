@@ -170,16 +170,35 @@ const PetPage: React.FC = () => {
 
   // Helper to reload current pet from storage to get latest state
   const reloadCurrentPet = (petId: string) => {
+    console.log('[Pet] 🔄 reloadCurrentPet called for:', petId);
     const allPets = getAllPets();
+    console.log('[Pet] getAllPets() returned:', allPets.length, 'pets');
+    allPets.forEach(p => console.log('[Pet]   -', p.id, p.name, 'hunger:', p.hunger));
+    
     const petToLoad = allPets.find(p => p.id === petId);
+    console.log('[Pet] Found pet to load?', !!petToLoad);
     if (petToLoad) {
-      console.log('[Pet] Reloading pet from storage:', petToLoad.name);
+      console.log('[Pet] ✅ Loading pet:', petToLoad.name, 'hunger:', petToLoad.hunger, 'health:', petToLoad.health);
       setPet(petToLoad);
       setNewName(petToLoad.name);
       setGems(getGems());
       setXp(getXp());
       return petToLoad;
     }
+    
+    // If not found in allPets, try getPet (legacy)
+    console.log('[Pet] ⚠️ Pet not found in allPets, trying getPet()');
+    const legacyPet = getPet();
+    if (legacyPet && legacyPet.id === petId) {
+      console.log('[Pet] ✅ Found in legacy pet storage:', legacyPet.name, 'hunger:', legacyPet.hunger);
+      setPet(legacyPet);
+      setNewName(legacyPet.name);
+      setGems(getGems());
+      setXp(getXp());
+      return legacyPet;
+    }
+    
+    console.log('[Pet] ❌ Pet not found anywhere!');
     return null;
   };
 
