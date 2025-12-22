@@ -55,6 +55,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+  const [friendToRemove, setFriendToRemove] = useState<Friend | null>(null);
 
   // Common emojis for quick access
   const EMOJIS = ['😀', '😂', '😍', '🤔', '😎', '🎉', '🔥', '👍', '❤️', '✨', '🚀', '💪', '🤝', '😅', '🎊', '💯'];
@@ -164,17 +165,39 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
     }
   };
 
-  const removeFriend = (friendUid: string) => {
-    const updatedFriends = friends.filter(f => f.uid !== friendUid);
-    setFriends(updatedFriends);
+  const removeFriend = (friend: Friend) => {
+    setFriendToRemove(friend);
+  };
 
-    // Save to localStorage as backup
-    const friendsSet = new Set(updatedFriends.map(f => f.uid));
-    localStorage.setItem(FRIENDS_KEY, JSON.stringify(Array.from(friendsSet)));
-    
-    if (selectedFriend?.uid === friendUid) {
-      setSelectedFriend(null);
+  const confirmRemoveFriend = async () => {
+    if (!friendToRemove || !currentUser) return;
+
+    try {
+      setLoading(true);
+      
+      // Remove from current user's friends list
+      const updatedFriends = friends.filter(f => f.uid !== friendToRemove.uid);
+      setFriends(updatedFriends);
+
+      // Save to localStorage as backup
+      const friendsSet = new Set(updatedFriends.map(f => f.uid));
+      localStorage.setItem(FRIENDS_KEY, JSON.stringify(Array.from(friendsSet)));
+      
+      if (selectedFriend?.uid === friendToRemove.uid) {
+        setSelectedFriend(null);
+      }
+
+      setFriendToRemove(null);
+    } catch (error) {
+      console.error('Error removing friend:', error);
+      setErrorMessage('Failed to remove friend');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const cancelRemoveFriend = () => {
+    setFriendToRemove(null);
   };
 
   const sendMessage = async () => {
@@ -466,7 +489,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                         💬
                       </button>
                       <button
-                        onClick={() => removeFriend(friend.uid)}
+                        onClick={() => removeFriend(friend)}
                         className="btn ghost"
                         style={{ padding: '4px 8px', fontSize: '0.8rem', color: 'var(--danger, #ff6b6b)' }}
                       >
@@ -737,6 +760,54 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
             </div>
           )}
         </div>
+
+        {/* Remove Friend Confirmation Modal */}
+        {friendToRemove && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}>
+            <div style={{
+              background: 'var(--panel)',
+              border: '2px solid var(--border)',
+              borderRadius: 8,
+              padding: 24,
+              maxWidth: 300,
+              textAlign: 'center',
+            }}>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '1.1rem' }}>Remove Friend?</h3>
+              <div style={{ color: 'var(--text-secondary)', marginBottom: 16, fontSize: '0.9rem' }}>
+                Remove <strong>{friendToRemove.username}</strong> from your friends list?
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={confirmRemoveFriend}
+                  className="btn"
+                  style={{ flex: 1, background: 'var(--danger, #ff6b6b)', color: 'white' }}
+                  disabled={loading}
+                >
+                  {loading ? 'Removing...' : 'Remove'}
+                </button>
+                <button
+                  onClick={cancelRemoveFriend}
+                  className="btn ghost"
+                  style={{ flex: 1 }}
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </aside>
 
       <div 
