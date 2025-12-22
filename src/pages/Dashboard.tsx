@@ -536,14 +536,16 @@ const Dashboard: React.FC = () => {
         if (auth.currentUser) {
             try {
                 console.log('[saveProfile] Syncing to Firestore...');
-                await updateDoc(doc(db, 'users', auth.currentUser.uid), {
+                const updatePayload = {
                     username: data.username,
                     hashtag: data.hashtag || '1000',
                     avatar: data.avatar,
                     customAvatarUrl: data.customAvatarUrl || null,
                     updatedAt: new Date().toISOString()
-                });
-                console.log('[saveProfile] Firestore sync successful');
+                };
+                console.log('[saveProfile] Update payload:', updatePayload);
+                await updateDoc(doc(db, 'users', auth.currentUser.uid), updatePayload);
+                console.log('[saveProfile] ✅ Firestore sync successful with avatar:', data.avatar);
                 // After successful save, update state again to ensure it's persisted
                 setProfile(data);
             } catch (error) {
