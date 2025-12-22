@@ -90,3 +90,68 @@ export const playCriticalSound = () => {
     console.log('Audio context not available');
   }
 };
+
+export const playMessageNotificationSound = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Create a pleasant "message received" sound - ascending notes
+    const now = audioContext.currentTime;
+    const notes = [
+      { freq: 440, time: 0, duration: 0.08 },      // A4
+      { freq: 554.37, time: 0.08, duration: 0.08 }, // C#5
+    ];
+
+    notes.forEach(note => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+
+      osc.frequency.value = note.freq;
+      osc.type = 'sine';
+
+      gain.gain.setValueAtTime(0.2, now + note.time);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
+
+      osc.start(now + note.time);
+      osc.stop(now + note.time + note.duration);
+    });
+  } catch (e) {
+    console.log('Audio context not available');
+  }
+};
+
+export const playFriendRequestSound = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Create a distinctive "friend request" sound - three notes
+    const now = audioContext.currentTime;
+    const notes = [
+      { freq: 523.25, time: 0, duration: 0.1 },    // C5
+      { freq: 659.25, time: 0.1, duration: 0.1 },  // E5
+      { freq: 523.25, time: 0.2, duration: 0.15 }, // C5 again
+    ];
+
+    notes.forEach(note => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+
+      osc.frequency.value = note.freq;
+      osc.type = 'sine';
+
+      gain.gain.setValueAtTime(0.25, now + note.time);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
+
+      osc.start(now + note.time);
+      osc.stop(now + note.time + note.duration);
+    });
+  } catch (e) {
+    console.log('Audio context not available');
+  }
+};
