@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
+import { doc, updateDoc } from 'firebase/firestore';
 import { useCalendar } from '../hooks/useCalendar';
 import TaskCard from '../components/Task/TaskCard';
 import Calendar from '../components/Calendar/Calendar';
@@ -13,7 +14,7 @@ import { getUnlockedSkills, unlockSkill, getAllSkills } from '../services/skillT
 import { getTitles, unlockTitle, setSelectedTitle, getUnlockedTitles, ALL_TITLES, getSelectedTitle } from '../services/titles';
 import { enableCriticalTestMode, disableCriticalTestMode, isCriticalTestModeEnabled, getCriticalChances, enableCrateTestMode, disableCrateTestMode, isCrateTestModeEnabled } from '../services/critical';
 import { signUpWithEmail, signInWithEmail, signOutUser, onAuthChange, getCurrentUserProfile } from '../services/auth';
-import { auth } from '../services/firebase';
+import { auth, db } from '../services/firebase';
 
 const PURCHASES_KEY = 'adhd_purchases';
 const DAILY_CREATIONS_KEY = 'adhd_daily_creations';
@@ -361,9 +362,24 @@ const Dashboard: React.FC = () => {
         setShowProfile(true);
     };
 
-    const saveProfile = (data: ProfileData) => {
+    const saveProfile = async (data: ProfileData) => {
         setProfile(data);
         localStorage.setItem(PROFILE_KEY, JSON.stringify(data));
+        
+        // Sync to Firestore if logged in
+        if (auth.currentUser) {
+            try {
+                await updateDoc(doc(db, 'users', auth.currentUser.uid), {
+                    username: data.username,
+                    hashtag: data.hashtag || '1000',
+                    avatar: data.avatar,
+                    customAvatarUrl: data.customAvatarUrl || null,
+                    updatedAt: new Date().toISOString()
+                });
+            } catch (error) {
+                console.error('Error updating profile in Firestore:', error);
+            }
+        }
         
         // Dispatch event to notify other components
         window.dispatchEvent(new Event('profileUpdated'));
@@ -461,22 +477,22 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    const handleSaveName = () => {
+    const handleSaveName = async () => {
         if (editNameValue.trim()) {
-            saveProfile({ ...profile, username: editNameValue.trim() });
+            await saveProfile({ ...profile, username: editNameValue.trim() });
             setEditingName(false);
         }
     };
 
-    const handleSaveHashtag = () => {
+    const handleSaveHashtag = async () => {
         if (editHashtagValue.trim()) {
-            saveProfile({ ...profile, hashtag: editHashtagValue.trim() });
+            await saveProfile({ ...profile, hashtag: editHashtagValue.trim() });
             setEditingHashtag(false);
         }
     };
 
-    const handleAvatarSelect = (avatar: string) => {
-        saveProfile({ ...profile, avatar, customAvatarUrl: undefined });
+    const handleAvatarSelect = async (avatar: string) => {
+        await saveProfile({ ...profile, avatar, customAvatarUrl: undefined });
         setEditingAvatar(false);
     };
 
