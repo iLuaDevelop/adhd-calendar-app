@@ -78,24 +78,17 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
     }
   }, [initialFriendRequests]);
 
-  // Track if menu was just opened to avoid playing sound during open
-  const wasMenuOpenRef = React.useRef<boolean>(false);
-  useEffect(() => {
-    wasMenuOpenRef.current = open;
-  }, [open]);
-
   // Track conversation changes and play notification sounds when NEW messages arrive (only when menu is closed)
   const prevConversationCountRef = React.useRef<number>(0);
   useEffect(() => {
     const unreadCount = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
     const prevUnread = prevConversationCountRef.current || 0;
     
-    // Only play sound if:
-    // 1. Menu is currently closed
-    // 2. Menu was not just opened (wasMenuOpenRef.current is false)
-    // 3. Unread count increased
-    if (!open && !wasMenuOpenRef.current && unreadCount > prevUnread && prevUnread > 0) {
-      console.log('[SocialMenu] New message arrived while menu closed, playing sound. Prev:', prevUnread, 'Now:', unreadCount);
+    console.log('[SocialMenu] Sound effect check: open=', open, 'unreadCount=', unreadCount, 'prevUnread=', prevUnread);
+    
+    // Only play sound if menu is CLOSED and unread count increased
+    if (!open && unreadCount > prevUnread) {
+      console.log('[SocialMenu] PLAYING MESSAGE SOUND - menu closed, new message arrived');
       playMessageNotificationSound();
     }
     
@@ -105,8 +98,10 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
   // Play sound when new friend requests arrive (only when menu is closed)
   const prevRequestCountRef = React.useRef<number>(0);
   useEffect(() => {
-    if (!open && friendRequests.length > prevRequestCountRef.current && prevRequestCountRef.current > 0) {
-      console.log('[SocialMenu] New friend request arrived while menu closed, playing sound');
+    console.log('[SocialMenu] Friend request sound check: open=', open, 'friendRequests=', friendRequests.length, 'prevRequests=', prevRequestCountRef.current);
+    
+    if (!open && friendRequests.length > prevRequestCountRef.current) {
+      console.log('[SocialMenu] PLAYING FRIEND REQUEST SOUND - menu closed, new request arrived');
       playFriendRequestSound();
     }
     prevRequestCountRef.current = friendRequests.length;
