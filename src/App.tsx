@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Dashboard from './pages/Dashboard';
 import DayView from './pages/DayView';
 import WeekView from './pages/WeekView';
@@ -57,33 +57,38 @@ const App: React.FC = () => {
   // Global listener for conversations and friend requests (stays active even when menu is closed)
   useEffect(() => {
     const auth = getAuth();
-    const currentUser = auth.currentUser;
 
-    if (!currentUser) {
-      setNotificationCount(0);
-      setConversations([]);
-      setFriendRequests([]);
-      return;
-    }
+    // Use onAuthStateChanged to wait for auth to be ready
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      if (!currentUser) {
+        console.log('[App] No user logged in, resetting notifications');
+        setNotificationCount(0);
+        setConversations([]);
+        setFriendRequests([]);
+        return;
+      }
 
-    console.log('[App] Setting up global conversation and friend request listeners');
+      console.log('[App] User authenticated, setting up conversation and friend request listeners for:', currentUser.uid);
 
-    // Subscribe to conversations globally (just for badge count, sounds handled by SocialMenu)
-    const unsubscribeConversations = subscribeToConversations(currentUser.uid, (convs) => {
-      console.log('[App] Conversations updated globally:', convs.length, 'conversations');
-      setConversations(convs);
+      // Subscribe to conversations globally
+      const unsubscribeConversations = subscribeToConversations(currentUser.uid, (convs) => {
+        console.log('[App] Conversations updated globally:', convs.length, 'conversations');
+        setConversations(convs);
+      });
+
+      // Subscribe to friend requests globally
+      const unsubscribeRequests = subscribeToPendingRequests(currentUser.uid, (requests) => {
+        console.log('[App] Friend requests updated globally:', requests.length, 'requests');
+        setFriendRequests(requests);
+      });
+
+      return () => {
+        unsubscribeConversations();
+        unsubscribeRequests();
+      };
     });
 
-    // Subscribe to friend requests globally
-    const unsubscribeRequests = subscribeToPendingRequests(currentUser.uid, (requests) => {
-      console.log('[App] Friend requests updated globally:', requests.length, 'requests');
-      setFriendRequests(requests);
-    });
-
-    return () => {
-      unsubscribeConversations();
-      unsubscribeRequests();
-    };
+    return () => unsubscribeAuth();
   }, []);
 
   // Calculate total notification count
