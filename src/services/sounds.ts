@@ -13,6 +13,12 @@ const getAudioContext = (): AudioContext | null => {
       return null;
     }
   }
+  
+  // Resume if suspended due to browser autoplay policy
+  if (audioContext.state === 'suspended') {
+    audioContext.resume().catch(e => console.log('[SOUND] Failed to resume AudioContext:', e));
+  }
+  
   return audioContext;
 };
 
