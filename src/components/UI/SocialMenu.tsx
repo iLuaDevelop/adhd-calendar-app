@@ -17,6 +17,7 @@ import {
   markMessagesAsRead,
 } from '../../services/messaging';
 import { playMessageNotificationSound, playFriendRequestSound } from '../../services/sounds';
+import ProfileModal from './ProfileModal';
 
 interface SocialMenuProps {
   open: boolean;
@@ -62,6 +63,8 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
   const [loading, setLoading] = useState(false);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>(initialFriendRequests);
   const [friendToRemove, setFriendToRemove] = useState<Friend | null>(null);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [selectedProfileFriend, setSelectedProfileFriend] = useState<Friend | null>(null);
 
   // Sync global data from App props
   useEffect(() => {
@@ -700,6 +703,16 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
                         💬
                       </button>
                       <button
+                        onClick={() => {
+                          setSelectedProfileFriend(friend);
+                          setProfileModalOpen(true);
+                        }}
+                        className="btn ghost"
+                        style={{ padding: '4px 8px', fontSize: '0.8rem' }}
+                      >
+                        👁️
+                      </button>
+                      <button
                         onClick={() => removeFriend(friend)}
                         className="btn ghost"
                         style={{ padding: '4px 8px', fontSize: '0.8rem', color: 'var(--danger, #ff6b6b)' }}
@@ -1065,6 +1078,16 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
         className={`sidebar-backdrop ${open ? 'open' : ''}`} 
         onClick={onClose} 
       />
+
+      {selectedProfileFriend && (
+        <ProfileModal
+          open={profileModalOpen}
+          onClose={() => setProfileModalOpen(false)}
+          userId={selectedProfileFriend.uid}
+          username={selectedProfileFriend.username}
+          avatar={selectedProfileFriend.avatar}
+        />
+      )}
     </>
   );
 };
