@@ -1,4 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { getAuth } from 'firebase/auth';
+import {
+  sendMessage,
+  subscribeToConversation,
+  subscribeToConversations,
+  deleteConversation as deleteConversationFirestore,
+  searchUsers,
+  getUserProfile,
+  FirebaseMessage,
+  Conversation
+} from '../../services/messaging';
 
 interface SocialMenuProps {
   open: boolean;
@@ -7,12 +18,11 @@ interface SocialMenuProps {
 }
 
 const FRIENDS_KEY = 'adhd_friends';
-const MESSAGES_KEY = 'adhd_messages';
 const PROFILE_KEY = 'adhd_profile';
-const USERS_KEY = 'adhd_users';
 
 interface Friend {
   id: string;
+  uid: string;
   username: string;
   hashtag: string;
   avatar: string;
@@ -31,125 +41,140 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
   const [userProfile, setUserProfile] = useState<any>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [newFriendUsername, setNewFriendUsername] = useState('');
-  const [newFriendHashtag, setNewFriendHashtag] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [selectedFriend, setSelectedFriend] = useState<string | null>(null);
+  const [messages, setMessages] = useState<FirebaseMessage[]>([]);
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [messageText, setMessageText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // Common emojis for quick access
   const EMOJIS = ['😀', '😂', '😍', '🤔', '😎', '🎉', '🔥', '👍', '❤️', '✨', '🚀', '💪', '🤝', '😅', '🎊', '💯'];
 
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
 
-  // Load friends list and user profile
+
+  // Load user profile from Firestore and set up conversation listener
   useEffect(() => {
-    const loadProfile = () => {
-      // Use provided profile or load from localStorage
-      const profile = currentProfile || ((() => {
-        const profileStr = localStorage.getItem(PROFILE_KEY);
-        return profileStr ? JSON.parse(profileStr) : { username: 'Player', hashtag: '1000', avatar: '👤' };
-      })());
-      setUserProfile(profile);
+    if (!currentUser) {
+      setUserProfile(null);
+      return;
+    }
+
+    const loadProfile = async () => {
+      try {
+        const profile = await getUserProfile(currentUser.uid);
+        if (profile) {
+          setUserProfile(profile);
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      }
     };
 
     loadProfile();
 
-    const friendsStr = localStorage.getItem(FRIENDS_KEY);
-    const friendsSet = friendsStr ? new Set(JSON.parse(friendsStr)) : new Set();
-    // Convert to array (in a real app, you'd fetch actual friend data)
-    const friendsArray: Friend[] = Array.from(friendsSet).map((id: any) => ({
-      id,
-      username: `Friend_${id}`,
-      avatar: '👤',
-    }));
-    setFriends(friendsArray);
+    // Subscribe to conversations
+    try {
+      const unsubscribe = subscribeToConversations(currentUser.uid, (convs) => {
+        setConversations(convs);
+      });
+      return () => unsubscribe();
+    } catch (error) {
+      console.error('Error subscribing to conversations:', error);
+    }
+  }, [currentUser]);
 
-    // Load messages
-    const messagesStr = localStorage.getItem(MESSAGES_KEY);
-    setMessages(messagesStr ? JSON.parse(messagesStr) : []);
-
-    // Listen for custom profile update events
-    const handleProfileUpdate = () => {
-      loadProfile();
-    };
-
-    window.addEventListener('profileUpdated', handleProfileUpdate as EventListener);
-    return () => window.removeEventListener('profileUpdated', handleProfileUpdate as EventListener);
-  }, [currentProfile]);
-
-  const addFriend = () => {
+  const addFriend = async () => {
     setErrorMessage('');
     
     if (!newFriendUsername.trim()) {
       setErrorMessage('Username is required');
       return;
     }
-    
-    // Check if user exists
-    const usersStr = localStorage.getItem(USERS_KEY);
-    const users = usersStr ? JSON.parse(usersStr) : [];
-    const hashtag = newFriendHashtag.trim();
-    const userExists = users.some((user: any) => 
-      user.username.toLowerCase() === newFriendUsername.toLowerCase() &&
-      (hashtag === '' || user.hashtag === hashtag)
-    );
-    
-    if (!userExists) {
-      setErrorMessage('User not found. Make sure the username and hashtag are correct.');
+
+    if (!currentUser) {
+      setErrorMessage('You must be logged in');
       return;
     }
-    
-    const finalHashtag = hashtag || users.find((user: any) => user.username.toLowerCase() === newFriendUsername.toLowerCase())?.hashtag;
-    const newFriendId = `${newFriendUsername.toLowerCase().replace(/\s+/g, '_')}#${finalHashtag}`;
-    
-    // Check if already a friend
-    if (friends.some(f => f.id === newFriendId)) {
-      setErrorMessage('Already friends with this user');
-      return;
+
+    try {
+      setLoading(true);
+      
+      // Search for user in Firestore
+      const results = await searchUsers(newFriendUsername.trim());
+      
+      if (results.length === 0) {
+        setErrorMessage('User not found');
+        return;
+      }
+
+      const foundUser = results[0];
+      
+      // Check if already a friend
+      if (friends.some(f => f.uid === foundUser.uid)) {
+        setErrorMessage('Already friends with this user');
+        return;
+      }
+
+      const newFriend: Friend = {
+        id: foundUser.uid,
+        uid: foundUser.uid,
+        username: foundUser.username,
+        hashtag: foundUser.hashtag,
+        avatar: foundUser.avatar || '👤',
+      };
+
+      setFriends([...friends, newFriend]);
+      setNewFriendUsername('');
+
+      // Save to localStorage as backup
+      const friendsList = friends.concat(newFriend);
+      const friendsSet = new Set(friendsList.map(f => f.uid));
+      localStorage.setItem(FRIENDS_KEY, JSON.stringify(Array.from(friendsSet)));
+    } catch (error) {
+      console.error('Error adding friend:', error);
+      setErrorMessage('Failed to add friend');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const removeFriend = (friendUid: string) => {
+    const updatedFriends = friends.filter(f => f.uid !== friendUid);
+    setFriends(updatedFriends);
+
+    // Save to localStorage as backup
+    const friendsSet = new Set(updatedFriends.map(f => f.uid));
+    localStorage.setItem(FRIENDS_KEY, JSON.stringify(Array.from(friendsSet)));
     
-    const newFriend: Friend = {
-      id: newFriendId,
-      username: newFriendUsername,
-      hashtag: finalHashtag.toString(),
-      avatar: '👤',
-    };
-
-    const updatedFriends = [...friends, newFriend];
-    setFriends(updatedFriends);
-    setNewFriendUsername('');
-    setNewFriendHashtag('');
-
-    // Save to localStorage
-    const friendsSet = new Set(updatedFriends.map(f => f.id));
-    localStorage.setItem(FRIENDS_KEY, JSON.stringify(Array.from(friendsSet)));
+    if (selectedFriend?.uid === friendUid) {
+      setSelectedFriend(null);
+    }
   };
 
-  const removeFriend = (friendId: string) => {
-    const updatedFriends = friends.filter(f => f.id !== friendId);
-    setFriends(updatedFriends);
+  const sendMessage = async () => {
+    if (!messageText.trim() || !selectedFriend || !currentUser || !userProfile) return;
 
-    // Save to localStorage
-    const friendsSet = new Set(updatedFriends.map(f => f.id));
-    localStorage.setItem(FRIENDS_KEY, JSON.stringify(Array.from(friendsSet)));
-  };
+    try {
+      setLoading(true);
+      
+      await sendMessage(
+        selectedFriend.uid,
+        selectedFriend.username,
+        messageText,
+        userProfile.username
+      );
 
-  const sendMessage = () => {
-    if (!messageText.trim() || !selectedFriend) return;
-
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      from: 'You',
-      to: selectedFriend,
-      text: messageText,
-      timestamp: Date.now(),
-    };
-
-    const updatedMessages = [...messages, newMessage];
-    setMessages(updatedMessages);
-    setMessageText('');
-    localStorage.setItem(MESSAGES_KEY, JSON.stringify(updatedMessages));
+      setMessageText('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setErrorMessage('Failed to send message');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const addEmoji = (emoji: string) => {
@@ -157,42 +182,40 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
     setShowEmojiPicker(false);
   };
 
-  const deleteConversation = (friendId: string) => {
-    const updatedMessages = messages.filter(m => 
-      !((m.from === 'You' && m.to === friendId) || (m.from === friendId && m.to === 'You'))
-    );
-    setMessages(updatedMessages);
-    localStorage.setItem(MESSAGES_KEY, JSON.stringify(updatedMessages));
-    if (selectedFriend === friendId) {
-      setSelectedFriend(null);
+  const deleteConversation = async (friendUid: string) => {
+    if (!currentUser) return;
+
+    try {
+      await deleteConversationFirestore(currentUser.uid, friendUid);
+      if (selectedFriend?.uid === friendUid) {
+        setSelectedFriend(null);
+      }
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      setErrorMessage('Failed to delete conversation');
     }
   };
 
-  const getMessagesWithFriend = (friendId: string) => {
-    return messages.filter(m => (m.from === 'You' && m.to === friendId) || (m.from === friendId && m.to === 'You'));
-  };
+  // Set up listener for selected conversation
+  useEffect(() => {
+    if (!selectedFriend || !currentUser) {
+      setMessages([]);
+      return;
+    }
 
-  const getConversations = () => {
-    // Get unique friends that have messages
-    const friendsWithMessages = new Map<string, Message>();
-    
-    messages.forEach(msg => {
-      const friendId = msg.from === 'You' ? msg.to : msg.from;
-      if (!friendsWithMessages.has(friendId) || friendsWithMessages.get(friendId)!.timestamp < msg.timestamp) {
-        friendsWithMessages.set(friendId, msg);
-      }
-    });
-
-    // Sort by most recent message
-    return Array.from(friendsWithMessages.entries())
-      .sort((a, b) => b[1].timestamp - a[1].timestamp)
-      .map(([friendId, lastMsg]) => ({
-        friendId,
-        lastMessage: lastMsg,
-        friend: friends.find(f => f.id === friendId),
-      }))
-      .filter(conv => conv.friend); // Only include if friend still exists
-  };
+    try {
+      const unsubscribe = subscribeToConversation(
+        currentUser.uid,
+        selectedFriend.uid,
+        (msgs) => {
+          setMessages(msgs);
+        }
+      );
+      return () => unsubscribe();
+    } catch (error) {
+      console.error('Error subscribing to conversation:', error);
+    }
+  }, [selectedFriend, currentUser]);
 
   return (
     <>
@@ -269,15 +292,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                     onKeyPress={(e) => e.key === 'Enter' && addFriend()}
                     className="input"
                     style={{ flex: 1 }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="#1234"
-                    value={newFriendHashtag}
-                    onChange={(e) => {setNewFriendHashtag(e.target.value); setErrorMessage('');}}
-                    onKeyPress={(e) => e.key === 'Enter' && addFriend()}
-                    className="input"
-                    style={{ width: 100 }}
+                    disabled={loading}
                   />
                 </div>
                 {errorMessage && (
@@ -289,8 +304,9 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                   onClick={addFriend}
                   className="btn"
                   style={{ width: '100%' }}
+                  disabled={loading}
                 >
-                  Add Friend
+                  {loading ? 'Adding...' : 'Add Friend'}
                 </button>
               </div>
 
@@ -339,7 +355,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                 ) : (
                   friends.map(friend => (
                     <div
-                      key={friend.id}
+                      key={friend.uid}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -356,7 +372,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                       </div>
                       <button
                         onClick={() => {
-                          setSelectedFriend(friend.id);
+                          setSelectedFriend(friend);
                           setActiveTab('messages');
                         }}
                         className="btn ghost"
@@ -365,7 +381,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                         💬
                       </button>
                       <button
-                        onClick={() => removeFriend(friend.id)}
+                        onClick={() => removeFriend(friend.uid)}
                         className="btn ghost"
                         style={{ padding: '4px 8px', fontSize: '0.8rem', color: 'var(--danger, #ff6b6b)' }}
                       >
@@ -392,30 +408,30 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                       ← Back
                     </button>
                     <div style={{ fontWeight: 'bold' }}>
-                      {friends.find(f => f.id === selectedFriend)?.username}<span style={{ color: 'var(--muted)', marginLeft: 4 }}>#{friends.find(f => f.id === selectedFriend)?.hashtag}</span>
+                      {selectedFriend.username}<span style={{ color: 'var(--muted)', marginLeft: 4 }}>#{selectedFriend.hashtag}</span>
                     </div>
                   </div>
 
                   <div style={{ flex: 1, overflowY: 'auto', marginBottom: 12, minHeight: 200, maxHeight: 300, padding: 8, background: 'var(--panel)', borderRadius: 6 }}>
-                    {getMessagesWithFriend(selectedFriend).length === 0 ? (
+                    {messages.length === 0 ? (
                       <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 16 }}>
                         No messages yet. Start a conversation!
                       </div>
                     ) : (
-                      getMessagesWithFriend(selectedFriend).map(msg => (
+                      messages.map(msg => (
                         <div
                           key={msg.id}
                           style={{
                             marginBottom: 8,
                             padding: 8,
-                            background: msg.from === 'You' ? 'var(--primary)' : 'var(--border)',
+                            background: msg.senderUid === currentUser?.uid ? 'var(--primary)' : 'var(--border)',
                             borderRadius: 6,
-                            color: msg.from === 'You' ? 'white' : 'var(--text)',
-                            textAlign: msg.from === 'You' ? 'right' : 'left',
+                            color: msg.senderUid === currentUser?.uid ? 'white' : 'var(--text)',
+                            textAlign: msg.senderUid === currentUser?.uid ? 'right' : 'left',
                           }}
                         >
                           <div style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: 4 }}>
-                            {new Date(msg.timestamp).toLocaleTimeString()}
+                            {new Date(msg.createdAt).toLocaleTimeString()}
                           </div>
                           <div>{msg.text}</div>
                         </div>
@@ -432,6 +448,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                       onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                       className="input"
                       style={{ flex: 1 }}
+                      disabled={loading}
                     />
                     <button
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -445,8 +462,9 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                       onClick={sendMessage}
                       className="btn"
                       style={{ padding: '8px 12px' }}
+                      disabled={loading}
                     >
-                      Send
+                      {loading ? '...' : 'Send'}
                     </button>
                   </div>
                   
@@ -492,84 +510,88 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                 </>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
-                  {getConversations().length === 0 ? (
+                  {conversations.length === 0 ? (
                     <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 16 }}>
                       No messages yet. Start a conversation from the Friends tab!
                     </div>
                   ) : (
-                    getConversations().map(conv => (
-                      <div
-                        key={conv.friendId}
-                        style={{
-                          display: 'flex',
-                          gap: 12,
-                          alignItems: 'center',
-                        }}
-                      >
-                        <button
-                          onClick={() => setSelectedFriend(conv.friendId)}
+                    conversations.map(conv => {
+                      const friend = friends.find(f => f.uid === conv.friendUid);
+                      if (!friend) return null;
+
+                      return (
+                        <div
+                          key={conv.friendUid}
                           style={{
                             display: 'flex',
                             gap: 12,
-                            padding: 12,
-                            background: 'linear-gradient(135deg, var(--accent) 0%, rgba(99, 102, 241, 0.1) 100%)',
-                            border: '1px solid var(--accent)',
-                            borderRadius: 8,
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            transition: 'all 0.2s',
                             alignItems: 'center',
-                            flex: 1,
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'linear-gradient(135deg, var(--accent) 0%, rgba(99, 102, 241, 0.2) 100%)';
-                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'linear-gradient(135deg, var(--accent) 0%, rgba(99, 102, 241, 0.1) 100%)';
-                            e.currentTarget.style.boxShadow = 'none';
                           }}
                         >
-                          <div style={{ fontSize: '2rem', flexShrink: 0, lineHeight: 1 }}>
-                            {conv.friend?.avatar}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 'bold', fontSize: '0.95rem', color: 'white', marginBottom: 4 }}>
-                              {conv.friend?.username}
+                          <button
+                            onClick={() => setSelectedFriend(friend)}
+                            style={{
+                              display: 'flex',
+                              gap: 12,
+                              padding: 12,
+                              background: 'linear-gradient(135deg, var(--accent) 0%, rgba(99, 102, 241, 0.1) 100%)',
+                              border: '1px solid var(--accent)',
+                              borderRadius: 8,
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              transition: 'all 0.2s',
+                              alignItems: 'center',
+                              flex: 1,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'linear-gradient(135deg, var(--accent) 0%, rgba(99, 102, 241, 0.2) 100%)';
+                              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'linear-gradient(135deg, var(--accent) 0%, rgba(99, 102, 241, 0.1) 100%)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            <div style={{ fontSize: '2rem', flexShrink: 0, lineHeight: 1 }}>
+                              {friend.avatar}
                             </div>
-                            <div style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.8)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 4 }}>
-                              <span style={{ fontWeight: '500' }}>
-                                {conv.lastMessage.from === 'You' ? 'You' : conv.friend?.username}:
-                              </span>
-                              {' '}{conv.lastMessage.text}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 'bold', fontSize: '0.95rem', color: 'white', marginBottom: 4 }}>
+                                {friend.username}
+                              </div>
+                              <div style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.8)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 4 }}>
+                                <span style={{ fontWeight: '500' }}>
+                                  {conv.lastMessage.substring(0, 30)}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.5)' }}>
+                                {new Date(conv.lastMessageTime.toMillis()).toLocaleDateString()}
+                              </div>
                             </div>
-                            <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.5)' }}>
-                              {new Date(conv.lastMessage.timestamp).toLocaleDateString()}
-                            </div>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => deleteConversation(conv.friendId)}
-                          className="btn ghost"
-                          style={{
-                            padding: '6px 8px',
-                            fontSize: '1rem',
-                            color: 'var(--danger, #ff6b6b)',
-                            flexShrink: 0,
-                            transition: 'all 0.2s',
-                          }}
-                          title="Delete conversation"
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(255, 107, 107, 0.2)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                          }}
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    ))
+                          </button>
+                          <button
+                            onClick={() => deleteConversation(conv.friendUid)}
+                            className="btn ghost"
+                            style={{
+                              padding: '6px 8px',
+                              fontSize: '1rem',
+                              color: 'var(--danger, #ff6b6b)',
+                              flexShrink: 0,
+                              transition: 'all 0.2s',
+                            }}
+                            title="Delete conversation"
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'rgba(255, 107, 107, 0.2)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'transparent';
+                            }}
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               )}
