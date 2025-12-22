@@ -265,21 +265,22 @@ export const searchUsers = async (username: string, hashtag: string): Promise<an
       throw new Error('User not authenticated');
     }
 
-    // Get user profile to search by username and hashtag
+    // Get user profile to search by username first
     const usersRef = collection(db, 'users');
     const q = query(
       usersRef,
-      where('username', '==', username),
-      where('hashtag', '==', hashtag.startsWith('#') ? hashtag : '#' + hashtag)
+      where('username', '==', username)
     );
 
     const snapshot = await getDocs(q);
+    const normalizedHashtag = hashtag.startsWith('#') ? hashtag : '#' + hashtag;
+    
     const results = snapshot.docs
       .map(doc => ({
         uid: doc.id,
         ...doc.data(),
       }))
-      .filter(user => user.uid !== currentUser.uid); // Don't include self
+      .filter(user => user.uid !== currentUser.uid && user.hashtag === normalizedHashtag); // Don't include self and filter by hashtag
 
     return results;
   } catch (error) {
