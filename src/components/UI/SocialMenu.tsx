@@ -16,6 +16,7 @@ import {
   rejectFriendRequest,
   removeFriend as removeFriendService,
   subscribeToUserProfile,
+  markMessagesAsRead,
 } from '../../services/messaging';
 import { playMessageNotificationSound, playFriendRequestSound } from '../../services/sounds';
 
@@ -72,6 +73,12 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
     // Count: friend requests + unread messages
     const unreadMessageCount = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
     const totalNotifications = friendRequests.length + unreadMessageCount;
+    console.log('[SocialMenu] Notification count:', {
+      friendRequests: friendRequests.length,
+      unreadMessages: unreadMessageCount,
+      total: totalNotifications,
+      conversations: conversations.map(c => ({ friend: c.friendUsername, unread: c.unreadCount }))
+    });
     if (onNotificationCountChange) {
       onNotificationCountChange(totalNotifications);
     }
@@ -404,7 +411,14 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
       return;
     }
 
+    console.log('[SocialMenu] Opening conversation with:', selectedFriend.username);
+
     try {
+      // Mark messages as read when conversation is opened
+      markMessagesAsRead(currentUser.uid, selectedFriend.uid).catch(err => 
+        console.warn('[SocialMenu] Failed to mark messages as read:', err)
+      );
+
       const unsubscribe = subscribeToConversation(
         currentUser.uid,
         selectedFriend.uid,
@@ -418,13 +432,15 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
       );
       
       // Mark conversation as read when opened
-      setConversations(prevConvs => 
-        prevConvs.map(conv =>
+      setConversations(prevConvs => {
+        const updated = prevConvs.map(conv =>
           conv.friendUid === selectedFriend.uid
             ? { ...conv, unreadCount: 0 }
             : conv
-        )
-      );
+        );
+        console.log('[SocialMenu] Marked conversation as read locally:', { friend: selectedFriend.username, conversations: updated.map(c => ({ friend: c.friendUsername, unread: c.unreadCount })) });
+        return updated;
+      });
       
       return () => unsubscribe();
     } catch (error) {
