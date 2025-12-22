@@ -145,7 +145,9 @@ const Quests: React.FC = () => {
 
   const completeQuest = (questId: number) => {
     const quest = quests.find(q => q.id === questId);
-    if (quest && !quest.completed) {
+    // Only allow completion if quest is not already completed AND progress meets target
+    if (quest && !quest.completed && quest.progress >= quest.target) {
+      console.log('[Quests] Completing quest:', quest.title);
       grantXp(quest.reward.xp);
       addGems(quest.reward.gems);
       window.dispatchEvent(new Event('currencyUpdated'));
@@ -154,6 +156,9 @@ const Quests: React.FC = () => {
         q.id === questId ? { ...q, completed: true } : q
       );
       setQuests(updated);
+      localStorage.setItem(QUESTS_KEY, JSON.stringify(updated));
+    } else if (quest && quest.progress < quest.target) {
+      console.warn('[Quests] Cannot complete quest - progress too low:', quest.title, `${quest.progress}/${quest.target}`);
     }
   };
 
