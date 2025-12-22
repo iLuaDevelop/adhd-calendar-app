@@ -12,16 +12,19 @@ let audioContextInitialized = false;
 
 // Initialize AudioContext on first user gesture to satisfy browser autoplay policy
 export const initAudioContext = () => {
-  if (audioContextInitialized) return;
+  if (audioContextInitialized) {
+    console.log('[SOUND] AudioContext already initialized');
+    return;
+  }
   
   try {
     if (!audioContext) {
       audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      console.log('[SOUND] AudioContext created on user gesture, state:', audioContext.state);
+      console.log('[SOUND] ✅ AudioContext created on user gesture, state:', audioContext.state);
     }
     audioContextInitialized = true;
   } catch (e) {
-    console.log('[SOUND] Failed to initialize AudioContext:', e);
+    console.log('[SOUND] ❌ Failed to initialize AudioContext:', e);
   }
 };
 
@@ -31,18 +34,10 @@ const getAudioContext = async (): Promise<AudioContext | null> => {
     return null;
   }
 
-  // If not initialized yet, try to initialize it now (though it may fail if no user gesture)
-  if (!audioContext && !audioContextInitialized) {
-    try {
-      initAudioContext();
-    } catch (e) {
-      console.log('[SOUND] Cannot initialize AudioContext without user gesture');
-      return null;
-    }
-  }
-
+  // Only return existing context - never create new one here
+  // AudioContext must be created during user gesture only
   if (!audioContext) {
-    console.log('[SOUND] AudioContext not available');
+    console.log('[SOUND] AudioContext not initialized yet. Was user gesture captured?');
     return null;
   }
   
