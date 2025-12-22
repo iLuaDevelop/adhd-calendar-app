@@ -149,42 +149,17 @@ export const subscribeToConversations = (
     console.log('[subscribeToConversations] Setting up listener for user:', userUid);
     const messagesRef = collection(db, 'messages');
     
-    // Get all messages involving this user (no orderBy to avoid index requirement)
+    // Get all received messages (the important ones for unread count)
     const q = query(
       messagesRef,
-      where('senderUid', '==', userUid)
+      where('recipientUid', '==', userUid)
     );
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      console.log('[subscribeToConversations] Received update - sent messages count:', snapshot.docs.length);
+    const unsubscribe = onSnapshot(q, (receivedSnapshot) => {
+      console.log('[subscribeToConversations] Received update - received messages count:', receivedSnapshot.docs.length);
       const conversationMap = new Map<string, Conversation>();
-
-      // Process sent messages
-      for (const msgDoc of snapshot.docs) {
-        const msg = msgDoc.data();
-        const friendUid = msg.recipientUid;
-        const friendUsername = msg.recipientUsername;
-
-        if (!conversationMap.has(friendUid)) {
-          conversationMap.set(friendUid, {
-            friendId: friendUid,
-            friendUid: friendUid,
-            friendUsername: friendUsername,
-            lastMessage: msg.text,
-            lastMessageTime: msg.timestamp,
-            unreadCount: 0,
-          });
-        }
-      }
-
-      // Also get received messages
-      const q2 = query(
-        messagesRef,
-        where('recipientUid', '==', userUid)
-      );
-
-      const receivedSnapshot = await getDocs(q2);
       
+      // Process received messages
       for (const msgDoc of receivedSnapshot.docs) {
         const msg = msgDoc.data();
         const friendUid = msg.senderUid;
