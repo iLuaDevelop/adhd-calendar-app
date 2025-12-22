@@ -118,13 +118,16 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
     if (friends.length === 0) return;
 
     const unsubscribers: Array<() => void> = [];
+    const friendUids = friends.map(f => f.uid);
 
-    friends.forEach(friend => {
+    friendUids.forEach(friendUid => {
       try {
-        const unsubscribe = subscribeToUserProfile(friend.uid, (updatedProfile) => {
+        console.log('Setting up profile listener for friend:', friendUid);
+        const unsubscribe = subscribeToUserProfile(friendUid, (updatedProfile) => {
+          console.log('Friend profile updated:', friendUid, updatedProfile);
           setFriends(prevFriends =>
             prevFriends.map(f =>
-              f.uid === friend.uid
+              f.uid === friendUid
                 ? {
                     ...f,
                     avatar: updatedProfile.avatar || f.avatar,
@@ -136,7 +139,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
           );
 
           // Also update selected friend if it's this user
-          if (selectedFriend?.uid === friend.uid) {
+          if (selectedFriend?.uid === friendUid) {
             setSelectedFriend(prev =>
               prev
                 ? {
@@ -157,9 +160,10 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
     });
 
     return () => {
+      console.log('Cleaning up profile listeners for friends:', friendUids);
       unsubscribers.forEach(unsub => unsub());
     };
-  }, [friends.length]);
+  }, [friends.map(f => f.uid).join(',')]);
 
   const addFriend = async () => {
     setErrorMessage('');
