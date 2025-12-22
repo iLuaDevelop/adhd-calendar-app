@@ -129,6 +129,11 @@ export const unlockTitle = (titleId: string): void => {
         if (!titles.unlockedIds.includes(titleId)) {
             titles.unlockedIds.push(titleId);
             localStorage.setItem(TITLES_KEY, JSON.stringify(titles));
+            
+            // Sync to Firestore
+            console.log('[titles] Syncing unlocked title to Firestore:', titleId);
+            syncTitlesToFirestore(titles.unlockedIds, titles.selectedTitleId).catch(err => console.warn('[titles] Failed to sync:', err));
+            
             // Dispatch custom event for UI updates
             window.dispatchEvent(new CustomEvent('titleUnlocked', { detail: { titleId } }));
         }

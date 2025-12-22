@@ -239,18 +239,26 @@ const Dashboard: React.FC = () => {
                             localStorage.setItem(skillsKey, JSON.stringify(gameProgress.unlockedSkills));
                         }
                         // Restore titles
-                        if (gameProgress.unlockedTitles || gameProgress.selectedTitle) {
-                            const titlesKey = 'adhd_unlocked_titles';
-                            if (gameProgress.unlockedTitles) {
-                                console.log('[Auth] Restoring unlocked titles:', gameProgress.unlockedTitles.length);
-                                localStorage.setItem(titlesKey, JSON.stringify(gameProgress.unlockedTitles));
-                            }
-                            if (gameProgress.selectedTitle) {
-                                console.log('[Auth] Restoring selected title:', gameProgress.selectedTitle);
-                                localStorage.setItem('adhd_selected_title', gameProgress.selectedTitle);
+                        console.log('[Auth] ⏭️ Restoring titles...');
+                        console.log('[Auth] gameProgress:', gameProgress);
+                        console.log('[Auth] gameProgress.unlockedTitles:', gameProgress?.unlockedTitles);
+                        console.log('[Auth] gameProgress.selectedTitle:', gameProgress?.selectedTitle);
+                        if (gameProgress?.unlockedTitles?.length || gameProgress?.selectedTitle) {
+                            const titlesKey = 'adhd_titles';
+                            if (gameProgress.unlockedTitles && gameProgress.unlockedTitles.length > 0) {
+                                console.log('[Auth] ✅ Restoring unlocked titles:', gameProgress.unlockedTitles.length);
+                                // Store as the full titles object to match what titles.ts expects
+                                const titlesObj = {
+                                    unlockedIds: gameProgress.unlockedTitles,
+                                    selectedTitleId: gameProgress.selectedTitle || null
+                                };
+                                localStorage.setItem(titlesKey, JSON.stringify(titlesObj));
                             }
                             // Fire event to notify UI to reload titles
+                            console.log('[Auth] 🎯 Firing titles:restored event');
                             window.dispatchEvent(new CustomEvent('titles:restored'));
+                        } else {
+                            console.log('[Auth] ⚠️ No titles to restore (unlockedTitles or selectedTitle missing)');
                         }
                         // Restore tasks
                         if (gameProgress.tasks && Array.isArray(gameProgress.tasks)) {
@@ -287,9 +295,8 @@ const Dashboard: React.FC = () => {
                 localStorage.removeItem(BRONZE_CRATE_KEY);
                 localStorage.removeItem(QUESTS_KEY);
                 localStorage.removeItem('adhd_tasks'); // Clear tasks on logout
-                localStorage.removeItem('adhd_unlocked_titles'); // Clear titles on logout
-                localStorage.removeItem('adhd_selected_title'); // Clear selected title on logout
-                
+                localStorage.removeItem('adhd_titles'); // Clear titles on logout
+
                 // Fire event to notify UI to clear titles
                 window.dispatchEvent(new CustomEvent('titles:cleared'));
                 // Fire event to notify useCalendar to clear tasks
@@ -583,8 +590,7 @@ const Dashboard: React.FC = () => {
             localStorage.removeItem(BRONZE_CRATE_KEY);
             localStorage.removeItem(QUESTS_KEY);
             localStorage.removeItem('adhd_tasks'); // Clear tasks on logout
-            localStorage.removeItem('adhd_unlocked_titles'); // Clear titles on logout
-            localStorage.removeItem('adhd_selected_title'); // Clear selected title on logout
+localStorage.removeItem('adhd_titles'); // Clear titles on logout
             
             // Fire event to notify useCalendar to clear tasks
             window.dispatchEvent(new CustomEvent('tasks:cleared'));
