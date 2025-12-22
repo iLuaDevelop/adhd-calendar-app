@@ -542,8 +542,8 @@ const Dashboard: React.FC = () => {
             localStorage.removeItem(BRONZE_CRATE_KEY);
             localStorage.removeItem(QUESTS_KEY);
             
-            // Reset all game state
-            resetXp();
+            // Reset all game state WITHOUT syncing to Firestore
+            resetXp(false); // Don't sync the reset to Firestore
             setGems(0);
             setPet(null);
             setOwnedPets([]);

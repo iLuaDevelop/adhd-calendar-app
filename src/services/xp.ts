@@ -54,12 +54,16 @@ export function getXp(): number {
   }
 }
 
-export function setXp(xp: number) {
+export function setXp(xp: number, shouldSync: boolean = true) {
   try {
     localStorage.setItem(XP_KEY, String(xp));
-    // Sync to Firestore if user is logged in
-    console.log('[XP] Setting XP to:', xp, '- syncing to Firestore...');
-    syncXpToFirestore(xp).catch(err => console.warn('[XP] Failed to sync to Firestore:', err));
+    // Sync to Firestore if user is logged in and shouldSync is true
+    if (shouldSync) {
+      console.log('[XP] Setting XP to:', xp, '- syncing to Firestore...');
+      syncXpToFirestore(xp).catch(err => console.warn('[XP] Failed to sync to Firestore:', err));
+    } else {
+      console.log('[XP] Setting XP to:', xp, '(no sync - logout in progress)');
+    }
   } catch {}
   window.dispatchEvent(new CustomEvent('xp:update', { detail: { xp } }));
 }
@@ -83,8 +87,8 @@ export function grantXp(amount = 10) {
   return next;
 }
 
-export function resetXp() {
-  setXp(0);
+export function resetXp(shouldSync: boolean = true) {
+  setXp(0, shouldSync);
   try {
     window.dispatchEvent(new CustomEvent('xp:reset', { detail: { xp: 0 } }));
   } catch {}
