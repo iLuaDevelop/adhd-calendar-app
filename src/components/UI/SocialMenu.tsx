@@ -128,6 +128,8 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
     try {
       setLoading(true);
       
+      console.log('Adding friend - Username:', newFriendUsername.trim(), 'Hashtag:', newFriendHashtag.trim());
+      
       // Search for user in Firestore by username and hashtag
       const results = await searchUsers(newFriendUsername.trim(), newFriendHashtag.trim());
       
