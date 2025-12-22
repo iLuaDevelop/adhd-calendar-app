@@ -1,15 +1,26 @@
 // Simple synthesized sound effects using Web Audio API
 // No external files needed - generates sounds programmatically
 
+// Check if browser supports Web Audio API
+const isAudioSupported = () => {
+  return !!(window.AudioContext || (window as any).webkitAudioContext);
+};
+
 // Create a single shared AudioContext to avoid browser limits
 let audioContext: AudioContext | null = null;
 
 const getAudioContext = async (): Promise<AudioContext | null> => {
+  if (!isAudioSupported()) {
+    console.log('[SOUND] Web Audio API not supported');
+    return null;
+  }
+
   if (!audioContext) {
     try {
       audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      console.log('[SOUND] AudioContext created, state:', audioContext.state);
     } catch (e) {
-      console.log('[SOUND] Failed to create AudioContext');
+      console.log('[SOUND] Failed to create AudioContext:', e);
       return null;
     }
   }
@@ -18,7 +29,7 @@ const getAudioContext = async (): Promise<AudioContext | null> => {
   if (audioContext.state === 'suspended') {
     try {
       await audioContext.resume();
-      console.log('[SOUND] AudioContext resumed');
+      console.log('[SOUND] AudioContext resumed, state:', audioContext.state);
     } catch (e) {
       console.log('[SOUND] Failed to resume AudioContext:', e);
       return null;
@@ -128,8 +139,12 @@ export const playMessageNotificationSound = async () => {
   try {
     console.log('[SOUND] playMessageNotificationSound called - PLAYING MESSAGE SOUND NOW');
     const ctx = await getAudioContext();
-    if (!ctx) return;
+    if (!ctx) {
+      console.log('[SOUND] No AudioContext available');
+      return;
+    }
     const audioContext = ctx;
+    console.log('[SOUND] AudioContext state:', audioContext.state, 'sampleRate:', audioContext.sampleRate);
     
     // Create a pleasant "message received" sound - ascending notes
     const now = audioContext.currentTime;
@@ -138,24 +153,30 @@ export const playMessageNotificationSound = async () => {
       { freq: 554.37, time: 0.08, duration: 0.08 }, // C#5
     ];
 
-    notes.forEach(note => {
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
+    notes.forEach((note, idx) => {
+      try {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
 
-      osc.connect(gain);
-      gain.connect(audioContext.destination);
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
 
-      osc.frequency.value = note.freq;
-      osc.type = 'sine';
+        osc.frequency.value = note.freq;
+        osc.type = 'sine';
 
-      gain.gain.setValueAtTime(0.5, now + note.time);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
+        gain.gain.setValueAtTime(0.3, now + note.time);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
 
-      osc.start(now + note.time);
-      osc.stop(now + note.time + note.duration);
+        osc.start(now + note.time);
+        osc.stop(now + note.time + note.duration);
+        console.log('[SOUND] Note', idx, 'freq:', note.freq, 'scheduled');
+      } catch (noteError) {
+        console.log('[SOUND] Error creating note', idx, ':', noteError);
+      }
     });
+    console.log('[SOUND] Message sound setup complete');
   } catch (e) {
-    console.log('Audio context not available');
+    console.log('[SOUND] Error in playMessageNotificationSound:', e);
   }
 };
 
