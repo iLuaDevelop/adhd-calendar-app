@@ -16,6 +16,7 @@ import {
   subscribeToUserProfile,
   markMessagesAsRead,
 } from '../../services/messaging';
+import { playMessageNotificationSound, playFriendRequestSound } from '../../services/sounds';
 
 interface SocialMenuProps {
   open: boolean;
@@ -74,6 +75,30 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
       setFriendRequests(initialFriendRequests);
     }
   }, [initialFriendRequests]);
+
+  // Track conversation changes and play notification sounds when new messages arrive
+  const prevConversationCountRef = React.useRef<number>(0);
+  useEffect(() => {
+    if (open && conversations.length > 0) {
+      const unreadCount = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+      const prevUnread = prevConversationCountRef.current || 0;
+      
+      // Play sound only if unread count increased (new message arrived)
+      if (unreadCount > prevUnread) {
+        playMessageNotificationSound();
+      }
+      prevConversationCountRef.current = unreadCount;
+    }
+  }, [conversations, open]);
+
+  // Play sound when new friend requests arrive
+  const prevRequestCountRef = React.useRef<number>(0);
+  useEffect(() => {
+    if (open && friendRequests.length > prevRequestCountRef.current) {
+      playFriendRequestSound();
+    }
+    prevRequestCountRef.current = friendRequests.length;
+  }, [friendRequests, open]);
 
   // Log whenever friends state changes
   useEffect(() => {

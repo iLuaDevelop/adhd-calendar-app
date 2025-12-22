@@ -19,7 +19,6 @@ import QuestsMenu from './components/UI/QuestsMenu';
 import CurrencyDisplay from './components/UI/CurrencyDisplay';
 import DevMenuModal from './components/DevMenu/DevMenuModal';
 import { subscribeToConversations, subscribeToPendingRequests } from './services/messaging';
-import { playMessageNotificationSound, playFriendRequestSound } from './services/sounds';
 
 const App: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -69,22 +68,18 @@ const App: React.FC = () => {
 
     console.log('[App] Setting up global conversation and friend request listeners');
 
-    // Subscribe to conversations globally
+    // Subscribe to conversations globally (just for badge count, sounds handled by SocialMenu)
     const unsubscribeConversations = subscribeToConversations(currentUser.uid, (convs) => {
       console.log('[App] Conversations updated globally:', convs.length, 'conversations');
       setConversations(convs);
       const unreadCount = convs.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
       setNotificationCount(prev => prev - (conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)) + unreadCount);
-      playMessageNotificationSound();
     });
 
     // Subscribe to friend requests globally
     const unsubscribeRequests = subscribeToPendingRequests(currentUser.uid, (requests) => {
       console.log('[App] Friend requests updated globally:', requests.length, 'requests');
       setFriendRequests(requests);
-      if (requests.length > friendRequests.length) {
-        playFriendRequestSound();
-      }
       setNotificationCount(prev => prev - friendRequests.length + requests.length);
     });
 
