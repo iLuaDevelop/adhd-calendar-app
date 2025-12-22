@@ -254,9 +254,9 @@ export const deleteConversation = async (userUid: string, friendUid: string) => 
 };
 
 /**
- * Search for users by username (for adding friends)
+ * Search for users by hashtag (for adding friends)
  */
-export const searchUsers = async (username: string): Promise<any[]> => {
+export const searchUsers = async (hashtag: string): Promise<any[]> => {
   try {
     const auth = getAuth();
     const currentUser = auth.currentUser;
@@ -265,11 +265,11 @@ export const searchUsers = async (username: string): Promise<any[]> => {
       throw new Error('User not authenticated');
     }
 
-    // Get user profile to search by username
+    // Get user profile to search by hashtag
     const usersRef = collection(db, 'users');
     const q = query(
       usersRef,
-      where('username', '==', username)
+      where('hashtag', '==', hashtag)
     );
 
     const snapshot = await getDocs(q);
