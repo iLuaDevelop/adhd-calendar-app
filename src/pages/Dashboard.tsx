@@ -363,6 +363,7 @@ const Dashboard: React.FC = () => {
     };
 
     const saveProfile = async (data: ProfileData) => {
+        // Update local state immediately for UI responsiveness
         setProfile(data);
         localStorage.setItem(PROFILE_KEY, JSON.stringify(data));
         
@@ -376,8 +377,15 @@ const Dashboard: React.FC = () => {
                     customAvatarUrl: data.customAvatarUrl || null,
                     updatedAt: new Date().toISOString()
                 });
+                // After successful save, update state again to ensure it's persisted
+                setProfile(data);
             } catch (error) {
                 console.error('Error updating profile in Firestore:', error);
+                // Revert to localStorage version on error
+                const stored = localStorage.getItem(PROFILE_KEY);
+                if (stored) {
+                    setProfile(JSON.parse(stored));
+                }
             }
         }
         
