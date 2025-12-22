@@ -112,7 +112,7 @@ export const playXpSound = async () => {
     osc.frequency.value = 800;
     osc.type = 'sine';
 
-    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.setValueAtTime(0.1, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
 
     osc.start(now);
@@ -144,7 +144,7 @@ export const playCriticalSound = async () => {
       osc.frequency.value = note.freq;
       osc.type = 'sine';
 
-      gain.gain.setValueAtTime(0.5, now + note.time);
+      gain.gain.setValueAtTime(0.1, now + note.time);
       gain.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
 
       osc.start(now + note.time);
@@ -184,7 +184,8 @@ export const playMessageNotificationSound = async () => {
         osc.frequency.value = note.freq;
         osc.type = 'sine';
 
-        gain.gain.setValueAtTime(0.3, now + note.time);
+        // Lower gain values to prevent audio device errors
+        gain.gain.setValueAtTime(0.1, now + note.time);
         gain.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
 
         osc.start(now + note.time);
@@ -225,7 +226,7 @@ export const playFriendRequestSound = async () => {
       osc.frequency.value = note.freq;
       osc.type = 'sine';
 
-      gain.gain.setValueAtTime(0.5, now + note.time);
+      gain.gain.setValueAtTime(0.1, now + note.time);
       gain.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
 
       osc.start(now + note.time);
