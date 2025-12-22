@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
 import {
-  sendMessage,
+  sendMessage as sendMessageService,
   subscribeToConversation,
   subscribeToConversations,
   deleteConversation as deleteConversationFirestore,
   searchUsers,
   getUserProfile,
   FirebaseMessage,
-  Conversation
+  Conversation,
+  FriendRequest,
+  sendFriendRequest,
+  subscribeToPendingRequests,
+  acceptFriendRequest,
+  rejectFriendRequest,
 } from '../../services/messaging';
 
 interface SocialMenuProps {
@@ -37,7 +42,7 @@ interface Message {
 }
 
 const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }) => {
-  const [activeTab, setActiveTab] = useState<'friends' | 'messages'>('friends');
+  const [activeTab, setActiveTab] = useState<'friends' | 'messages' | 'requests'>('friends');
   const [userProfile, setUserProfile] = useState<any>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [newFriendUsername, setNewFriendUsername] = useState('');
@@ -48,6 +53,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
 
   // Common emojis for quick access
   const EMOJIS = ['😀', '😂', '😍', '🤔', '😎', '🎉', '🔥', '👍', '❤️', '✨', '🚀', '💪', '🤝', '😅', '🎊', '💯'];
@@ -68,6 +74,10 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
         const profile = await getUserProfile(currentUser.uid);
         if (profile) {
           setUserProfile(profile);
+          // Load friends from profile
+          if (profile.friends) {
+            setFriends(profile.friends);
+          }
         }
       } catch (error) {
         console.error('Error loading profile:', error);
@@ -81,7 +91,16 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
       const unsubscribe = subscribeToConversations(currentUser.uid, (convs) => {
         setConversations(convs);
       });
-      return () => unsubscribe();
+      
+      // Subscribe to friend requests
+      const unsubscribeRequests = subscribeToPendingRequests(currentUser.uid, (requests) => {
+        setFriendRequests(requests);
+      });
+
+      return () => {
+        unsubscribe();
+        unsubscribeRequests();
+      };
     } catch (error) {
       console.error('Error subscribing to conversations:', error);
     }
@@ -95,7 +114,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
       return;
     }
 
-    if (!currentUser) {
+    if (!currentUser || !userProfile) {
       setErrorMessage('You must be logged in');
       return;
     }
@@ -119,24 +138,20 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
         return;
       }
 
-      const newFriend: Friend = {
-        id: foundUser.uid,
-        uid: foundUser.uid,
-        username: foundUser.username,
-        hashtag: foundUser.hashtag,
-        avatar: foundUser.avatar || '👤',
-      };
+      // Check if request already pending
+      if (friendRequests.some(r => r.fromUid === currentUser.uid && r.toUid === foundUser.uid)) {
+        setErrorMessage('Friend request already sent');
+        return;
+      }
 
-      setFriends([...friends, newFriend]);
+      // Send friend request instead of directly adding
+      await sendFriendRequest(foundUser.uid, foundUser.username, userProfile.username);
+      
       setNewFriendUsername('');
-
-      // Save to localStorage as backup
-      const friendsList = friends.concat(newFriend);
-      const friendsSet = new Set(friendsList.map(f => f.uid));
-      localStorage.setItem(FRIENDS_KEY, JSON.stringify(Array.from(friendsSet)));
-    } catch (error) {
-      console.error('Error adding friend:', error);
-      setErrorMessage('Failed to add friend');
+      setErrorMessage('');
+    } catch (error: any) {
+      console.error('Error sending friend request:', error);
+      setErrorMessage(error.message || 'Failed to send friend request');
     } finally {
       setLoading(false);
     }
@@ -161,7 +176,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
     try {
       setLoading(true);
       
-      await sendMessage(
+      await sendMessageService(
         selectedFriend.uid,
         selectedFriend.username,
         messageText,
@@ -193,6 +208,37 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
     } catch (error) {
       console.error('Error deleting conversation:', error);
       setErrorMessage('Failed to delete conversation');
+    }
+  };
+
+  const handleAcceptRequest = async (request: FriendRequest) => {
+    try {
+      setLoading(true);
+      await acceptFriendRequest(request.id, request.fromUid, request.fromUsername);
+      // Reload profile to get updated friends list
+      if (currentUser) {
+        const profile = await getUserProfile(currentUser.uid);
+        if (profile && profile.friends) {
+          setFriends(profile.friends);
+        }
+      }
+    } catch (error) {
+      console.error('Error accepting friend request:', error);
+      setErrorMessage('Failed to accept friend request');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRejectRequest = async (requestId: string) => {
+    try {
+      setLoading(true);
+      await rejectFriendRequest(requestId);
+    } catch (error) {
+      console.error('Error rejecting friend request:', error);
+      setErrorMessage('Failed to reject friend request');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -260,6 +306,28 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
               }}
             >
               Friends
+            </button>
+            <button
+              onClick={() => setActiveTab('requests')}
+              style={{
+                flex: 1,
+                padding: '6px 12px',
+                border: 'none',
+                background: activeTab === 'requests' ? 'var(--primary)' : 'transparent',
+                color: activeTab === 'requests' ? 'white' : 'var(--text)',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontWeight: activeTab === 'requests' ? 'bold' : 'normal',
+                fontSize: '0.9rem',
+                position: 'relative',
+              }}
+            >
+              Requests
+              {friendRequests.length > 0 && (
+                <span style={{ position: 'absolute', top: -8, right: -8, background: 'var(--danger, #ff6b6b)', color: 'white', borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                  {friendRequests.length}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setActiveTab('messages')}
@@ -391,6 +459,60 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                   ))
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Friend Requests Tab */}
+          {activeTab === 'requests' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 'calc(100% - 60px)', overflowY: 'auto' }}>
+              {friendRequests.length === 0 ? (
+                <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 16 }}>
+                  No pending friend requests
+                </div>
+              ) : (
+                friendRequests.map(request => (
+                  <div
+                    key={request.id}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8,
+                      padding: 12,
+                      background: 'var(--panel)',
+                      borderRadius: 6,
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ fontSize: '1.2rem' }}>👤</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{request.fromUsername}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          {new Date(request.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => handleAcceptRequest(request)}
+                        className="btn"
+                        style={{ flex: 1, fontSize: '0.85rem', padding: '6px 8px' }}
+                        disabled={loading}
+                      >
+                        ✓ Accept
+                      </button>
+                      <button
+                        onClick={() => handleRejectRequest(request.id)}
+                        className="btn ghost"
+                        style={{ flex: 1, fontSize: '0.85rem', padding: '6px 8px', color: 'var(--danger, #ff6b6b)' }}
+                        disabled={loading}
+                      >
+                        ✕ Reject
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           )}
 

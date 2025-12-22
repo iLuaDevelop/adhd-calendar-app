@@ -139,7 +139,7 @@ export const syncTitlesToFirestore = async (unlockedTitles: string[], selectedTi
 };
 
 export const syncTasksToFirestore = async (tasks: any[]) => {
-  console.log('[syncTasksToFirestore] Syncing tasks to Firestore...');
+  console.log('[syncTasksToFirestore] 📤 Syncing tasks to Firestore...', { taskCount: tasks?.length, taskIds: tasks?.map(t => t.id) });
   try {
     await saveGameProgress({ tasks });
     console.log('[syncTasksToFirestore] ✅ Tasks sync complete');

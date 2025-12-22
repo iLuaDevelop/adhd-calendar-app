@@ -9,7 +9,8 @@ import {
   doc, 
   getDocs,
   Timestamp,
-  getDoc
+  getDoc,
+  updateDoc
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { getAuth } from 'firebase/auth';
@@ -32,6 +33,16 @@ export interface Conversation {
   lastMessage: string;
   lastMessageTime: Timestamp;
   unreadCount: number;
+}
+
+export interface FriendRequest {
+  id: string;
+  fromUid: string;
+  fromUsername: string;
+  toUid: string;
+  toUsername: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: number;
 }
 
 /**
@@ -291,3 +302,174 @@ export const getUserProfile = async (uid: string) => {
     throw error;
   }
 };
+
+/**
+ * Send a friend request
+ */
+export const sendFriendRequest = async (
+  toUid: string,
+  toUsername: string,
+  fromUsername: string
+) => {
+  try {
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    
+    if (!currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    // Check if request already exists
+    const requestsRef = collection(db, 'friendRequests');
+    const existingQuery = query(
+      requestsRef,
+      where('fromUid', '==', currentUser.uid),
+      where('toUid', '==', toUid)
+    );
+    
+    const existing = await getDocs(existingQuery);
+    if (!existing.empty) {
+      const existingRequest = existing.docs[0].data();
+      if (existingRequest.status === 'pending') {
+        throw new Error('Friend request already sent');
+      }
+    }
+
+    const newRequest = {
+      fromUid: currentUser.uid,
+      fromUsername: fromUsername,
+      toUid: toUid,
+      toUsername: toUsername,
+      status: 'pending' as const,
+      createdAt: Date.now(),
+    };
+
+    const docRef = await addDoc(requestsRef, newRequest);
+    return { id: docRef.id, ...newRequest };
+  } catch (error) {
+    console.error('Error sending friend request:', error);
+    throw error;
+  }
+};
+
+/**
+ * Accept a friend request
+ */
+export const acceptFriendRequest = async (requestId: string, fromUid: string, fromUsername: string) => {
+  try {
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    
+    if (!currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    // Update request status
+    await updateDoc(doc(db, 'friendRequests', requestId), { status: 'accepted' });
+
+    // Add friend to both users
+    const currentUserProfile: any = await getUserProfile(currentUser.uid);
+    const otherUserProfile: any = await getUserProfile(fromUid);
+
+    if (currentUserProfile && otherUserProfile) {
+      const currentFriends = currentUserProfile.friends || [];
+      const otherFriends = otherUserProfile.friends || [];
+
+      if (!currentFriends.find((f: any) => f.uid === fromUid)) {
+        currentFriends.push({
+          uid: fromUid,
+          username: fromUsername,
+          hashtag: otherUserProfile.hashtag,
+          avatar: otherUserProfile.avatar,
+        });
+      }
+
+      if (!otherFriends.find((f: any) => f.uid === currentUser.uid)) {
+        otherFriends.push({
+          uid: currentUser.uid,
+          username: currentUserProfile.username,
+          hashtag: currentUserProfile.hashtag,
+          avatar: currentUserProfile.avatar,
+        });
+      }
+
+      await updateDoc(doc(db, 'users', currentUser.uid), { friends: currentFriends });
+      await updateDoc(doc(db, 'users', fromUid), { friends: otherFriends });
+    }
+  } catch (error) {
+    console.error('Error accepting friend request:', error);
+    throw error;
+  }
+};
+
+/**
+ * Reject a friend request
+ */
+export const rejectFriendRequest = async (requestId: string) => {
+  try {
+    await updateDoc(doc(db, 'friendRequests', requestId), { status: 'rejected' });
+  } catch (error) {
+    console.error('Error rejecting friend request:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get pending friend requests for a user
+ */
+export const subscribeToPendingRequests = (
+  userUid: string,
+  callback: (requests: FriendRequest[]) => void
+) => {
+  try {
+    const requestsRef = collection(db, 'friendRequests');
+    const q = query(
+      requestsRef,
+      where('toUid', '==', userUid),
+      where('status', '==', 'pending')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const requests = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      } as FriendRequest));
+
+      callback(requests);
+    });
+
+    return unsubscribe;
+  } catch (error) {
+    console.error('Error subscribing to friend requests:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get friend request status between two users
+ */
+export const getFriendRequestStatus = async (
+  fromUid: string,
+  toUid: string
+): Promise<'pending' | 'accepted' | 'rejected' | 'none'> => {
+  try {
+    const requestsRef = collection(db, 'friendRequests');
+    const q = query(
+      requestsRef,
+      where('fromUid', '==', fromUid),
+      where('toUid', '==', toUid)
+    );
+
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      return 'none';
+    }
+
+    const request = snapshot.docs[0].data();
+    return request.status;
+  } catch (error) {
+    console.error('Error getting friend request status:', error);
+    return 'none';
+  }
+};
+
