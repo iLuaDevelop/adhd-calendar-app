@@ -273,15 +273,30 @@ export const searchUsers = async (username: string, hashtag: string): Promise<an
     );
 
     const snapshot = await getDocs(q);
-    const normalizedHashtag = hashtag.startsWith('#') ? hashtag : '#' + hashtag;
+    
+    // Try different hashtag formats to be flexible
+    const hashtagVariants = [
+      hashtag,
+      hashtag.startsWith('#') ? hashtag : '#' + hashtag,
+      hashtag.startsWith('#') ? hashtag.substring(1) : hashtag,
+    ];
+    
+    console.log('Searching for username:', username);
+    console.log('Hashtag variants to try:', hashtagVariants);
+    console.log('Found users with this username:', snapshot.docs.length);
     
     const results = snapshot.docs
       .map(doc => ({
         uid: doc.id,
         ...doc.data(),
       }))
-      .filter(user => user.uid !== currentUser.uid && user.hashtag === normalizedHashtag); // Don't include self and filter by hashtag
+      .filter(user => {
+        if (user.uid === currentUser.uid) return false; // Skip self
+        console.log('Checking user:', user.username, 'with hashtag:', user.hashtag);
+        return hashtagVariants.includes(user.hashtag);
+      });
 
+    console.log('Final matching results:', results);
     return results;
   } catch (error) {
     console.error('Error searching users:', error);
