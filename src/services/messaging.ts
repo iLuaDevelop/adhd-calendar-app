@@ -85,18 +85,17 @@ export const subscribeToConversation = (
     
     // Query for messages sent by user to friend OR sent by friend to user
     // We'll use two separate queries and merge results
+    // Note: No orderBy in Firestore to avoid composite index requirement
     const q1 = query(
       messagesRef,
       where('senderUid', '==', userUid),
-      where('recipientUid', '==', friendUid),
-      orderBy('createdAt', 'asc')
+      where('recipientUid', '==', friendUid)
     );
 
     const q2 = query(
       messagesRef,
       where('senderUid', '==', friendUid),
-      where('recipientUid', '==', userUid),
-      orderBy('createdAt', 'asc')
+      where('recipientUid', '==', userUid)
     );
 
     // Subscribe to both queries
@@ -112,9 +111,9 @@ export const subscribeToConversation = (
           ...doc.data(),
         } as FirebaseMessage));
 
-        // Merge and sort by timestamp
+        // Merge and sort by timestamp (done client-side)
         const allMessages = [...messages1, ...messages2].sort(
-          (a, b) => a.createdAt - b.createdAt
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
 
         callback(allMessages);
