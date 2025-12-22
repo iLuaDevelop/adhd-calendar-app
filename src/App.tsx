@@ -27,6 +27,7 @@ const App: React.FC = () => {
   const [notificationCount, setNotificationCount] = useState(0);
   const [conversations, setConversations] = useState<any[]>([]);
   const [friendRequests, setFriendRequests] = useState<any[]>([]);
+  const [currentAuthUser, setCurrentAuthUser] = useState<any>(null);
   const keySequenceRef = React.useRef<string[]>([]);
 
   // Global dev menu trigger with Ctrl+Alt+D+F
@@ -54,42 +55,46 @@ const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Global listener for conversations and friend requests (stays active even when menu is closed)
+  // Monitor auth state
   useEffect(() => {
     const auth = getAuth();
-
-    // Use onAuthStateChanged to wait for auth to be ready
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-      if (!currentUser) {
-        console.log('[App] No user logged in, resetting notifications');
-        setNotificationCount(0);
-        setConversations([]);
-        setFriendRequests([]);
-        return;
-      }
-
-      console.log('[App] User authenticated, setting up conversation and friend request listeners for:', currentUser.uid);
-
-      // Subscribe to conversations globally
-      const unsubscribeConversations = subscribeToConversations(currentUser.uid, (convs) => {
-        console.log('[App] Conversations updated globally:', convs.length, 'conversations');
-        setConversations(convs);
-      });
-
-      // Subscribe to friend requests globally
-      const unsubscribeRequests = subscribeToPendingRequests(currentUser.uid, (requests) => {
-        console.log('[App] Friend requests updated globally:', requests.length, 'requests');
-        setFriendRequests(requests);
-      });
-
-      return () => {
-        unsubscribeConversations();
-        unsubscribeRequests();
-      };
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      console.log('[App] Auth state changed, user:', user?.uid ? 'logged in' : 'logged out');
+      setCurrentAuthUser(user);
     });
-
     return () => unsubscribeAuth();
   }, []);
+
+  // Global listener for conversations and friend requests (stays active even when menu is closed)
+  useEffect(() => {
+    if (!currentAuthUser) {
+      console.log('[App] No authenticated user, skipping conversation setup');
+      setNotificationCount(0);
+      setConversations([]);
+      setFriendRequests([]);
+      return;
+    }
+
+    console.log('[App] Setting up conversation and friend request listeners for:', currentAuthUser.uid);
+
+    // Subscribe to conversations globally
+    const unsubscribeConversations = subscribeToConversations(currentAuthUser.uid, (convs) => {
+      console.log('[App] Conversations updated globally:', convs.length, 'conversations, unread:', convs.map(c => ({ friend: c.friendUsername, unread: c.unreadCount })));
+      setConversations(convs);
+    });
+
+    // Subscribe to friend requests globally
+    const unsubscribeRequests = subscribeToPendingRequests(currentAuthUser.uid, (requests) => {
+      console.log('[App] Friend requests updated globally:', requests.length, 'requests');
+      setFriendRequests(requests);
+    });
+
+    return () => {
+      console.log('[App] Cleaning up conversation and friend request listeners');
+      unsubscribeConversations();
+      unsubscribeRequests();
+    };
+  }, [currentAuthUser]);
 
   // Calculate total notification count
   useEffect(() => {
