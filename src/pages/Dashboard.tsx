@@ -264,9 +264,19 @@ const Dashboard: React.FC = () => {
                         console.log('[Auth] ⏭️ Restoring pets...');
                         console.log('[Auth] gameProgress.pets:', gameProgress?.pets);
                         console.log('[Auth] gameProgress.currentPetId:', gameProgress?.currentPetId);
-                        if (gameProgress?.pets && Array.isArray(gameProgress.pets) && gameProgress.pets.length > 0) {
+                        if (gameProgress?.pets && Array.isArray(gameProgress.pets)) {
                             console.log('[Auth] ✅ Restoring pets:', gameProgress.pets.length);
+                            // Save all pets (default + shop pets) to adhd_pets
                             localStorage.setItem('adhd_pets', JSON.stringify(gameProgress.pets));
+                            
+                            // Extract and set the default pet (usually the first one or with id starting with 'pet_')
+                            if (gameProgress.pets.length > 0) {
+                                // Find the first pet that looks like a default pet (created before any shop purchases)
+                                const firstPet = gameProgress.pets[0];
+                                console.log('[Auth] ✅ Setting default pet in localStorage:', firstPet.name);
+                                localStorage.setItem('adhd_pet', JSON.stringify(firstPet));
+                            }
+                            
                             if (gameProgress.currentPetId) {
                                 console.log('[Auth] ✅ Restoring current pet:', gameProgress.currentPetId);
                                 localStorage.setItem('adhd_current_pet_id', gameProgress.currentPetId);
