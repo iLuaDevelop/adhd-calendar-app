@@ -1,5 +1,6 @@
 import { grantXp, getXp, setXp } from './xp';
 import { addGems, getGems } from './currency';
+import { syncPetsToFirestore } from './gameProgress';
 
 const PET_KEY = 'adhd_pet';
 const PETS_KEY = 'adhd_pets'; // For multiple pets
@@ -352,6 +353,12 @@ export const getCurrentPetId = (): string | null => {
 // Set current active pet
 export const setCurrentPet = (petId: string): void => {
   localStorage.setItem(CURRENT_PET_KEY, petId);
+  
+  // Sync to Firestore
+  const allPets = getAllPets();
+  console.log('[pet] Syncing current pet selection to Firestore:', petId);
+  syncPetsToFirestore(allPets, petId).catch(err => console.warn('[pet] Failed to sync current pet:', err));
+  
   window.dispatchEvent(new CustomEvent('petSwitched', { detail: { petId } }));
 };
 
@@ -397,6 +404,10 @@ export const buyPet = (petShopId: string, customName?: string): Pet | null => {
 
   // Set as current pet
   setCurrentPet(newPet.id);
+  
+  // Sync to Firestore
+  console.log('[pet] Syncing new pet purchase to Firestore:', newPet.id);
+  syncPetsToFirestore(allPets, newPet.id).catch(err => console.warn('[pet] Failed to sync pet purchase:', err));
 
   return newPet;
 };
@@ -408,13 +419,20 @@ export const deletePet = (petId: string): void => {
   localStorage.setItem(PETS_KEY, JSON.stringify(filtered));
 
   // If deleted pet was current, switch to first available
+  let newCurrentPetId: string | null = null;
   if (getCurrentPetId() === petId) {
     if (filtered.length > 0) {
+      newCurrentPetId = filtered[0].id;
       setCurrentPet(filtered[0].id);
     } else {
       localStorage.removeItem(CURRENT_PET_KEY);
+      newCurrentPetId = null;
     }
   }
+  
+  // Sync deletion to Firestore
+  console.log('[pet] Syncing pet deletion to Firestore:', petId);
+  syncPetsToFirestore(filtered, newCurrentPetId).catch(err => console.warn('[pet] Failed to sync pet deletion:', err));
 };
 
 // Check if player has bought a pet with given shop ID

@@ -260,6 +260,23 @@ const Dashboard: React.FC = () => {
                         } else {
                             console.log('[Auth] ⚠️ No titles to restore (unlockedTitles or selectedTitle missing)');
                         }
+                        // Restore pets
+                        console.log('[Auth] ⏭️ Restoring pets...');
+                        console.log('[Auth] gameProgress.pets:', gameProgress?.pets);
+                        console.log('[Auth] gameProgress.currentPetId:', gameProgress?.currentPetId);
+                        if (gameProgress?.pets && Array.isArray(gameProgress.pets) && gameProgress.pets.length > 0) {
+                            console.log('[Auth] ✅ Restoring pets:', gameProgress.pets.length);
+                            localStorage.setItem('adhd_pets', JSON.stringify(gameProgress.pets));
+                            if (gameProgress.currentPetId) {
+                                console.log('[Auth] ✅ Restoring current pet:', gameProgress.currentPetId);
+                                localStorage.setItem('adhd_current_pet_id', gameProgress.currentPetId);
+                            }
+                            // Fire event to notify Pet page to reload
+                            console.log('[Auth] 🎯 Firing pets:restored event');
+                            window.dispatchEvent(new CustomEvent('pets:restored'));
+                        } else {
+                            console.log('[Auth] ⚠️ No pets to restore');
+                        }
                         // Restore tasks
                         if (gameProgress.tasks && Array.isArray(gameProgress.tasks)) {
                             console.log('[Auth] Restoring tasks from Firestore:', gameProgress.tasks.length, 'tasks', gameProgress.tasks);
@@ -296,11 +313,15 @@ const Dashboard: React.FC = () => {
                 localStorage.removeItem(QUESTS_KEY);
                 localStorage.removeItem('adhd_tasks'); // Clear tasks on logout
                 localStorage.removeItem('adhd_titles'); // Clear titles on logout
+                localStorage.removeItem('adhd_pets'); // Clear pets on logout
+                localStorage.removeItem('adhd_current_pet_id'); // Clear current pet ID on logout
 
                 // Fire event to notify UI to clear titles
                 window.dispatchEvent(new CustomEvent('titles:cleared'));
                 // Fire event to notify useCalendar to clear tasks
                 window.dispatchEvent(new CustomEvent('tasks:cleared'));
+                // Fire event to notify Pet page to clear pets
+                window.dispatchEvent(new CustomEvent('pets:cleared'));
                 
                 // Reset all game state
                 resetXp(false); // Don't sync - we're logging out
@@ -590,13 +611,18 @@ const Dashboard: React.FC = () => {
             localStorage.removeItem(BRONZE_CRATE_KEY);
             localStorage.removeItem(QUESTS_KEY);
             localStorage.removeItem('adhd_tasks'); // Clear tasks on logout
-localStorage.removeItem('adhd_titles'); // Clear titles on logout
+            localStorage.removeItem('adhd_titles'); // Clear titles on logout
+            localStorage.removeItem('adhd_pets'); // Clear pets on logout
+            localStorage.removeItem('adhd_current_pet_id'); // Clear current pet ID on logout
             
             // Fire event to notify useCalendar to clear tasks
             window.dispatchEvent(new CustomEvent('tasks:cleared'));
             
             // Fire event to notify UI to clear titles
             window.dispatchEvent(new CustomEvent('titles:cleared'));
+            
+            // Fire event to notify Pet page to clear pets
+            window.dispatchEvent(new CustomEvent('pets:cleared'));
             
             // Reset all game state WITHOUT syncing to Firestore
             resetXp(false); // Don't sync the reset to Firestore
