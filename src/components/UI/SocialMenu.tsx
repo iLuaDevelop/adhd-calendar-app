@@ -99,6 +99,12 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
 
     loadProfile();
 
+    // Subscribe to user's own profile changes
+    const unsubscribeOwnProfile = subscribeToUserProfile(currentUser.uid, (updatedProfile) => {
+      console.log('[SocialMenu] Own profile updated:', { avatar: updatedProfile.avatar, customAvatarUrl: !!updatedProfile.customAvatarUrl });
+      setUserProfile(prev => prev ? { ...prev, ...updatedProfile } : updatedProfile);
+    });
+
     // Subscribe to conversations
     try {
       const unsubscribe = subscribeToConversations(currentUser.uid, (convs) => {
@@ -113,6 +119,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
       return () => {
         unsubscribe();
         unsubscribeRequests();
+        unsubscribeOwnProfile();
       };
     } catch (error) {
       console.error('Error subscribing to conversations:', error);
@@ -569,7 +576,11 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                       pointerEvents: 'none'
                     }} />
                     
-                    <div style={{ fontSize: '1.5rem', position: 'relative', zIndex: 1 }}>{userProfile.avatar}</div>
+                    {userProfile.customAvatarUrl ? (
+                      <img src={userProfile.customAvatarUrl} alt={userProfile.username} style={{ width: '2rem', height: '2rem', borderRadius: '50%', objectFit: 'cover', position: 'relative', zIndex: 1 }} />
+                    ) : (
+                      <div style={{ fontSize: '1.5rem', position: 'relative', zIndex: 1 }}>{userProfile.avatar}</div>
+                    )}
                     <div style={{ flex: 1, position: 'relative', zIndex: 1 }}>
                       <div style={{ fontWeight: 'bold', fontSize: '0.95rem', color: 'white' }}>{userProfile.username}<span style={{ color: 'rgba(255,255,255,0.8)', marginLeft: 4 }}>#{userProfile.hashtag}</span></div>
                       <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', fontWeight: 500, letterSpacing: 0.5 }}>YOU</div>
