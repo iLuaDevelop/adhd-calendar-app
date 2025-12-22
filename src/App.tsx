@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { getAuth } from 'firebase/auth';
 import Dashboard from './pages/Dashboard';
 import DayView from './pages/DayView';
 import WeekView from './pages/WeekView';
@@ -17,12 +18,16 @@ import SocialMenu from './components/UI/SocialMenu';
 import QuestsMenu from './components/UI/QuestsMenu';
 import CurrencyDisplay from './components/UI/CurrencyDisplay';
 import DevMenuModal from './components/DevMenu/DevMenuModal';
+import { subscribeToConversations, subscribeToPendingRequests } from './services/messaging';
+import { playMessageNotificationSound, playFriendRequestSound } from './services/sounds';
 
 const App: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [socialMenuOpen, setSocialMenuOpen] = useState(false);
   const [questsMenuOpen, setQuestsMenuOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [conversationCount, setConversationCount] = useState(0);
+  const [friendRequestCount, setFriendRequestCount] = useState(0);
   const keySequenceRef = React.useRef<string[]>([]);
 
   // Global dev menu trigger with Ctrl+Alt+D+F
@@ -49,6 +54,50 @@ const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Global listener for conversations and friend requests (stays active even when menu is closed)
+  useEffect(() => {
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      setNotificationCount(0);
+      return;
+    }
+
+    console.log('[App] Setting up global conversation and friend request listeners');
+
+    // Subscribe to conversations globally
+    const unsubscribeConversations = subscribeToConversations(currentUser.uid, (convs) => {
+      console.log('[App] Conversations updated globally:', convs.length, 'conversations');
+      const unreadCount = convs.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+      setConversationCount(unreadCount);
+      playMessageNotificationSound();
+    });
+
+    // Subscribe to friend requests globally
+    const unsubscribeRequests = subscribeToPendingRequests(currentUser.uid, (requests) => {
+      console.log('[App] Friend requests updated globally:', requests.length, 'requests');
+      setFriendRequestCount(requests.length);
+      if (requests.length > 0) {
+        playFriendRequestSound();
+      }
+    });
+
+    // Update total notification count
+    setNotificationCount(conversationCount + friendRequestCount);
+
+    return () => {
+      unsubscribeConversations();
+      unsubscribeRequests();
+    };
+  }, []);
+
+  // Update notification count whenever conversation or friend request counts change
+  useEffect(() => {
+    setNotificationCount(conversationCount + friendRequestCount);
+    console.log('[App] Total notifications:', conversationCount + friendRequestCount, '(conversations:', conversationCount, '+ requests:', friendRequestCount, ')');
+  }, [conversationCount, friendRequestCount]);
 
   return (
     <Router>

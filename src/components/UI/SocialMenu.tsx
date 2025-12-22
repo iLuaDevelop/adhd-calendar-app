@@ -3,22 +3,19 @@ import { getAuth } from 'firebase/auth';
 import {
   sendMessage as sendMessageService,
   subscribeToConversation,
-  subscribeToConversations,
-  deleteConversation as deleteConversationFirestore,
+  deleteConversation as deleteConversationFirebase,
   searchUsers,
   getUserProfile,
   FirebaseMessage,
   Conversation,
   FriendRequest,
   sendFriendRequest,
-  subscribeToPendingRequests,
   acceptFriendRequest,
   rejectFriendRequest,
   removeFriend as removeFriendService,
   subscribeToUserProfile,
   markMessagesAsRead,
 } from '../../services/messaging';
-import { playMessageNotificationSound, playFriendRequestSound } from '../../services/sounds';
 
 interface SocialMenuProps {
   open: boolean;
@@ -125,38 +122,10 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
       setUserProfile(prev => prev ? { ...prev, ...updatedProfile } : updatedProfile);
     });
 
-    // Subscribe to conversations
-    try {
-      const unsubscribe = subscribeToConversations(currentUser.uid, (convs) => {
-        // Play message notification if new message arrived (conversation count increased or new last message)
-        if (convs.length > conversations.length || 
-            (convs.length === conversations.length && convs.some((conv, idx) => {
-              const oldConv = conversations[idx];
-              return oldConv && conv.lastMessage !== oldConv.lastMessage;
-            }))) {
-          playMessageNotificationSound();
-        }
-        setConversations(convs);
-      });
-      
-      // Subscribe to friend requests
-      const unsubscribeRequests = subscribeToPendingRequests(currentUser.uid, (requests) => {
-        // Play notification sound if new friend request arrived
-        if (requests.length > friendRequests.length) {
-          playFriendRequestSound();
-        }
-        setFriendRequests(requests);
-      });
-
-      return () => {
-        unsubscribe();
-        unsubscribeRequests();
-        unsubscribeOwnProfile();
-      };
-    } catch (error) {
-      console.error('Error subscribing to conversations:', error);
-    }
-  }, [currentUser, friendRequests.length]);
+    return () => {
+      unsubscribeOwnProfile();
+    };
+  }, [currentUser]);
 
   // Subscribe to profile changes for all friends to update avatars in real-time
   useEffect(() => {
