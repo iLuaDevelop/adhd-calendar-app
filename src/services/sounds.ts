@@ -93,6 +93,7 @@ export const playCriticalSound = () => {
 
 export const playMessageNotificationSound = () => {
   try {
+    console.log('[SOUND] playMessageNotificationSound called - PLAYING MESSAGE SOUND NOW');
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     
     // Create a pleasant "message received" sound - ascending notes
@@ -125,6 +126,7 @@ export const playMessageNotificationSound = () => {
 
 export const playFriendRequestSound = () => {
   try {
+    console.log('[SOUND] playFriendRequestSound called - PLAYING FRIEND REQUEST SOUND NOW');
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     
     // Create a distinctive "friend request" sound - three notes
