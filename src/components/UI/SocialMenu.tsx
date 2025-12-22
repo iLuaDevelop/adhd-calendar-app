@@ -122,11 +122,16 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
 
     friendUids.forEach(friendUid => {
       try {
-        console.log('Setting up profile listener for friend:', friendUid);
+        console.log('[SocialMenu] Setting up profile listener for friend:', friendUid);
         const unsubscribe = subscribeToUserProfile(friendUid, (updatedProfile) => {
-          console.log('Friend profile updated:', friendUid, updatedProfile);
-          setFriends(prevFriends =>
-            prevFriends.map(f =>
+          console.log('[SocialMenu] Friend profile callback fired for:', friendUid, {
+            newAvatar: updatedProfile.avatar,
+            newUsername: updatedProfile.username,
+            newHashtag: updatedProfile.hashtag,
+          });
+          
+          setFriends(prevFriends => {
+            const updated = prevFriends.map(f =>
               f.uid === friendUid
                 ? {
                     ...f,
@@ -135,8 +140,18 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                     hashtag: updatedProfile.hashtag || f.hashtag,
                   }
                 : f
-            )
-          );
+            );
+            
+            const friend = updated.find(f => f.uid === friendUid);
+            if (friend) {
+              console.log('[SocialMenu] Updated friend in state:', {
+                uid: friendUid,
+                newAvatar: friend.avatar,
+              });
+            }
+            
+            return updated;
+          });
 
           // Also update selected friend if it's this user
           if (selectedFriend?.uid === friendUid) {
@@ -155,16 +170,15 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
 
         unsubscribers.push(unsubscribe);
       } catch (error) {
-        console.error('Error subscribing to friend profile:', error);
+        console.error('[SocialMenu] Error subscribing to friend profile:', error);
       }
     });
 
     return () => {
-      console.log('Cleaning up profile listeners for friends:', friendUids);
+      console.log('[SocialMenu] Cleaning up profile listeners for friends:', friendUids);
       unsubscribers.forEach(unsub => unsub());
     };
   }, [friends.map(f => f.uid).join(',')]);
-
   const addFriend = async () => {
     setErrorMessage('');
     
