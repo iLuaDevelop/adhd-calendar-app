@@ -22,6 +22,7 @@ const App: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [socialMenuOpen, setSocialMenuOpen] = useState(false);
   const [questsMenuOpen, setQuestsMenuOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
   const keySequenceRef = React.useRef<string[]>([]);
 
   // Global dev menu trigger with Ctrl+Alt+D+F
@@ -70,7 +71,7 @@ const App: React.FC = () => {
 
         <QuestsMenu open={questsMenuOpen} onClose={() => setQuestsMenuOpen(false)} />
 
-        <SocialMenu open={socialMenuOpen} onClose={() => setSocialMenuOpen(false)} />
+        <SocialMenu open={socialMenuOpen} onClose={() => setSocialMenuOpen(false)} onNotificationCountChange={setNotificationCount} />
 
         <div style={{ 
           flex: 1, 
@@ -146,8 +147,28 @@ const App: React.FC = () => {
             title="Social Menu"
           >
             👥
+            {notificationCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: -8,
+                right: -8,
+                background: '#ff4757',
+                color: 'white',
+                borderRadius: '50%',
+                width: 24,
+                height: 24,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.75rem',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 8px rgba(255, 71, 87, 0.4)',
+              }}>
+                {notificationCount > 99 ? '99+' : notificationCount}
+              </span>
+            )}
           </button>
-        )}
+        )}}
 
         <DevMenuModal />
       </div>

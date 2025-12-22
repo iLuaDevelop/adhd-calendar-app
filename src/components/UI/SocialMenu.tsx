@@ -23,6 +23,7 @@ interface SocialMenuProps {
   open: boolean;
   onClose: () => void;
   currentProfile?: any;
+  onNotificationCountChange?: (count: number) => void;
 }
 
 const FRIENDS_KEY = 'adhd_friends';
@@ -65,6 +66,15 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
   useEffect(() => {
     console.log('[SocialMenu] RENDER: Friends state changed, now have', friends.length, 'friends:', friends.map(f => ({ uid: f.uid, avatar: f.avatar })));
   }, [friends]);
+
+  // Track notification count and report to parent
+  useEffect(() => {
+    const totalNotifications = friendRequests.length + conversations.length;
+    if (onNotificationCountChange) {
+      onNotificationCountChange(totalNotifications);
+    }
+  }, [friendRequests.length, conversations.length, onNotificationCountChange]);
+
   const [isScrolledUp, setIsScrolledUp] = useState(false);
 
   const messagesContainerRef = React.useRef<HTMLDivElement>(null);
