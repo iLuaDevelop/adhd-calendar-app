@@ -13,8 +13,7 @@ import {
   sendFriendRequest,
   subscribeToPendingRequests,
   acceptFriendRequest,
-  rejectFriendRequest,
-} from '../../services/messaging';
+  rejectFriendRequest,  removeFriend as removeFriendService,} from '../../services/messaging';
 
 interface SocialMenuProps {
   open: boolean;
@@ -174,6 +173,9 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
 
     try {
       setLoading(true);
+      
+      // Remove from Firestore (both users' friend lists)
+      await removeFriendService(currentUser.uid, friendToRemove.uid);
       
       // Remove from current user's friends list
       const updatedFriends = friends.filter(f => f.uid !== friendToRemove.uid);
