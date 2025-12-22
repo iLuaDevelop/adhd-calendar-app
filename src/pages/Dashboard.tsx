@@ -363,6 +363,7 @@ const Dashboard: React.FC = () => {
     };
 
     const saveProfile = async (data: ProfileData) => {
+        console.log('[saveProfile] Saving profile with:', data);
         // Update local state immediately for UI responsiveness
         setProfile(data);
         localStorage.setItem(PROFILE_KEY, JSON.stringify(data));
@@ -370,6 +371,7 @@ const Dashboard: React.FC = () => {
         // Sync to Firestore if logged in
         if (auth.currentUser) {
             try {
+                console.log('[saveProfile] Syncing to Firestore...');
                 await updateDoc(doc(db, 'users', auth.currentUser.uid), {
                     username: data.username,
                     hashtag: data.hashtag || '1000',
@@ -377,6 +379,7 @@ const Dashboard: React.FC = () => {
                     customAvatarUrl: data.customAvatarUrl || null,
                     updatedAt: new Date().toISOString()
                 });
+                console.log('[saveProfile] Firestore sync successful');
                 // After successful save, update state again to ensure it's persisted
                 setProfile(data);
             } catch (error) {
@@ -498,8 +501,13 @@ const Dashboard: React.FC = () => {
     };
 
     const handleSaveNameAndHashtag = async () => {
-        await handleSaveName();
-        await handleSaveHashtag();
+        // Combine both changes into a single object to avoid state race conditions
+        const updatedProfile = { 
+            ...profile, 
+            username: editNameValue.trim() || profile.username,
+            hashtag: editHashtagValue.trim() || profile.hashtag
+        };
+        await saveProfile(updatedProfile);
         setEditingName(false);
     };
 
