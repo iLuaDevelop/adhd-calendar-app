@@ -58,7 +58,8 @@ export function setXp(xp: number) {
   try {
     localStorage.setItem(XP_KEY, String(xp));
     // Sync to Firestore if user is logged in
-    syncXpToFirestore(xp).catch(err => console.warn('Failed to sync XP to Firestore:', err));
+    console.log('[XP] Setting XP to:', xp, '- syncing to Firestore...');
+    syncXpToFirestore(xp).catch(err => console.warn('[XP] Failed to sync to Firestore:', err));
   } catch {}
   window.dispatchEvent(new CustomEvent('xp:update', { detail: { xp } }));
 }

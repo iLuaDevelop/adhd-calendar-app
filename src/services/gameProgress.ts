@@ -35,13 +35,13 @@ export const saveGameProgress = async (progress: Partial<GameProgress>) => {
     };
 
     const userDocRef = doc(db, 'users', currentUser.uid);
-    await updateDoc(userDocRef, {
-      gameProgress: progressData,
-    });
+    
+    // Use setDoc with merge to handle both new and existing docs
+    await setDoc(userDocRef, { gameProgress: progressData }, { merge: true });
 
-    console.log('[gameProgress] Saved to Firestore:', progressData);
+    console.log('[gameProgress] ✅ Saved to Firestore:', progressData);
   } catch (error) {
-    console.error('[gameProgress] Error saving to Firestore:', error);
+    console.error('[gameProgress] ❌ Error saving to Firestore:', error);
     // Don't throw - allow game to continue even if save fails
   }
 };
@@ -71,13 +71,14 @@ export const loadGameProgress = async (): Promise<Partial<GameProgress> | null> 
     const gameProgress = userData?.gameProgress;
 
     if (gameProgress) {
-      console.log('[gameProgress] Loaded from Firestore:', gameProgress);
+      console.log('[gameProgress] ✅ Loaded from Firestore:', gameProgress);
       return gameProgress;
     }
 
+    console.warn('[gameProgress] No gameProgress field found in user document');
     return null;
   } catch (error) {
-    console.error('[gameProgress] Error loading from Firestore:', error);
+    console.error('[gameProgress] ❌ Error loading from Firestore:', error);
     return null;
   }
 };
