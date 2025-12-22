@@ -580,7 +580,9 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                     No friends yet. Add one to get started!
                   </div>
                 ) : (
-                  friends.map(friend => (
+                  friends.map(friend => {
+                    console.log('[SocialMenu] Rendering friend card:', { uid: friend.uid, avatar: friend.avatar, username: friend.username });
+                    return (
                     <div
                       key={friend.uid}
                       style={{
@@ -615,7 +617,8 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                         ✕
                       </button>
                     </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
