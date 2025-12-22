@@ -58,6 +58,11 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
   const [loading, setLoading] = useState(false);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [friendToRemove, setFriendToRemove] = useState<Friend | null>(null);
+
+  // Log whenever friends state changes
+  useEffect(() => {
+    console.log('[SocialMenu] RENDER: Friends state changed, now have', friends.length, 'friends:', friends.map(f => ({ uid: f.uid, avatar: f.avatar })));
+  }, [friends]);
   const [isScrolledUp, setIsScrolledUp] = useState(false);
 
   const messagesContainerRef = React.useRef<HTMLDivElement>(null);
