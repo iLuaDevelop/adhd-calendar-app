@@ -202,12 +202,16 @@ const Dashboard: React.FC = () => {
 
                     // Load game progress
                     const gameProgress = await loadGameProgress();
+                    console.log('[Auth] gameProgress object:', gameProgress);
                     if (gameProgress) {
                         console.log('[Auth] Loaded game progress from Firestore:', gameProgress);
                         // Restore XP
-                        if (gameProgress.xp !== undefined) {
-                            console.log('[Auth] Restoring XP:', gameProgress.xp);
+                        console.log('[Auth] gameProgress.xp =', gameProgress.xp);
+                        if (gameProgress.xp !== undefined && gameProgress.xp !== null) {
+                            console.log('[Auth] ✅ Restoring XP:', gameProgress.xp);
                             setXp(gameProgress.xp);
+                        } else {
+                            console.log('[Auth] ⚠️ No XP to restore (xp is', gameProgress.xp, ')');
                         }
                         // Restore gems
                         if (gameProgress.gems !== undefined) {
