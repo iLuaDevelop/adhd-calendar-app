@@ -364,12 +364,16 @@ export const setCurrentPet = (petId: string): void => {
 
 // Buy a new pet from the shop
 export const buyPet = (petShopId: string, customName?: string): Pet | null => {
+  console.log('[pet] 🛍️ buyPet called with petShopId:', petShopId);
   const petShop = PET_SHOP.find(p => p.petId === petShopId);
-  if (!petShop) return null;
+  if (!petShop) {
+    console.warn('[pet] ❌ Pet shop item not found:', petShopId);
+    return null;
+  }
 
   const currentXp = getXp();
   if (currentXp < petShop.cost) {
-    console.warn('Not enough XP to buy pet');
+    console.warn('[pet] ❌ Not enough XP to buy pet. Need:', petShop.cost, 'Have:', currentXp);
     return null;
   }
 
@@ -400,15 +404,19 @@ export const buyPet = (petShopId: string, customName?: string): Pet | null => {
   // Add to pets list
   const allPets = getAllPets();
   allPets.push(newPet);
+  console.log('[pet] ✅ Pet purchased, total pets now:', allPets.length);
   localStorage.setItem(PETS_KEY, JSON.stringify(allPets));
 
   // Set as current pet
   setCurrentPet(newPet.id);
   
   // Sync to Firestore
-  console.log('[pet] Syncing new pet purchase to Firestore:', newPet.id);
-  syncPetsToFirestore(allPets, newPet.id).catch(err => console.warn('[pet] Failed to sync pet purchase:', err));
+  console.log('[pet] 📤 Syncing new pet purchase to Firestore:', newPet.id);
+  syncPetsToFirestore(allPets, newPet.id).catch(err => {
+    console.error('[pet] ❌ Failed to sync pet purchase:', err);
+  });
 
+  console.log('[pet] ✅ Pet bought successfully:', newPet.name);
   return newPet;
 };
 

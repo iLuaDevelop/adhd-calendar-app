@@ -150,10 +150,11 @@ export const syncTasksToFirestore = async (tasks: any[]) => {
 };
 
 export const syncPetsToFirestore = async (pets: any[], currentPetId: string | null) => {
-  console.log('[syncPetsToFirestore] Syncing pets to Firestore...');
+  console.log('[syncPetsToFirestore] 📤 Syncing pets to Firestore...', { petsCount: pets?.length, currentPetId });
   try {
-    await saveGameProgress({ pets, currentPetId });
+    const result = await saveGameProgress({ pets, currentPetId });
     console.log('[syncPetsToFirestore] ✅ Pets sync complete');
+    return result;
   } catch (error) {
     console.error('[syncPetsToFirestore] ❌ Pets sync failed:', error);
     throw error;
