@@ -447,6 +447,15 @@ const Dashboard: React.FC = () => {
             setLoginError('');
             setLoginEmail('');
             setLoginPassword('');
+            // Reset profile to guest
+            setProfile({
+                username: 'Guest',
+                hashtag: '0000',
+                avatar: '👤',
+                customAvatarUrl: undefined,
+                tasksCompleted: 0,
+                eventsCreated: 0
+            });
         } catch (error: any) {
             setLoginError('Logout failed');
         }
