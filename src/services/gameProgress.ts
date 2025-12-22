@@ -48,7 +48,11 @@ export const saveGameProgress = async (progress: Partial<GameProgress>) => {
       new: progress, 
       merged: mergedProgress,
       newTasks: progress?.tasks,
-      mergedTasks: mergedProgress.tasks
+      mergedTasks: mergedProgress.tasks,
+      newPets: progress?.pets,
+      mergedPets: mergedProgress.pets,
+      newCurrentPetId: progress?.currentPetId,
+      mergedCurrentPetId: mergedProgress.currentPetId
     });
     
     // Use setDoc with merge to handle both new and existing docs
@@ -88,6 +92,8 @@ export const loadGameProgress = async (): Promise<Partial<GameProgress> | null> 
     console.log('[gameProgress] gameProgress field:', gameProgress);
     console.log('[gameProgress] gameProgress.xp =', gameProgress?.xp);
     console.log('[gameProgress] gameProgress.tasks =', gameProgress?.tasks, '| type:', typeof gameProgress?.tasks);
+    console.log('[gameProgress] gameProgress.pets =', gameProgress?.pets, '| length:', gameProgress?.pets?.length);
+    console.log('[gameProgress] gameProgress.currentPetId =', gameProgress?.currentPetId);
 
     if (gameProgress) {
       console.log('[gameProgress] ✅ Loaded from Firestore:', gameProgress);
@@ -122,10 +128,6 @@ export const syncGemsToFirestore = async (gems: number) => {
 
 export const syncPurchasesToFirestore = async (purchases: number[]) => {
   await saveGameProgress({ purchases });
-};
-
-export const syncPetsToFirestore = async (pets: any[], currentPetId: string | null) => {
-  await saveGameProgress({ pets, currentPetId });
 };
 
 export const syncSkillsToFirestore = async (unlockedSkills: string[]) => {
