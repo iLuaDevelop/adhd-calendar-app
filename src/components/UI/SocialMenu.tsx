@@ -426,6 +426,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
 
     try {
       // Mark messages as read when conversation is opened
+      console.log('[SocialMenu] About to mark messages as read for:', selectedFriend.username);
       markMessagesAsRead(currentUser.uid, selectedFriend.uid).catch(err => 
         console.warn('[SocialMenu] Failed to mark messages as read:', err)
       );

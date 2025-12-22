@@ -164,6 +164,9 @@ export const subscribeToConversations = (
         const msg = msgDoc.data();
         const friendUid = msg.senderUid;
         const friendUsername = msg.senderUsername;
+        
+        // Check if message is unread (missing read field or read === false)
+        const isUnread = msg.read !== true;
 
         if (!conversationMap.has(friendUid)) {
           conversationMap.set(friendUid, {
@@ -172,7 +175,7 @@ export const subscribeToConversations = (
             friendUsername: friendUsername,
             lastMessage: msg.text,
             lastMessageTime: msg.timestamp,
-            unreadCount: msg.read === false ? 1 : 0,
+            unreadCount: isUnread ? 1 : 0,
           });
         } else {
           const existing = conversationMap.get(friendUid)!;
@@ -181,7 +184,7 @@ export const subscribeToConversations = (
             existing.lastMessageTime = msg.timestamp;
           }
           // Count unread messages from this friend
-          if (msg.read === false) {
+          if (isUnread) {
             existing.unreadCount = (existing.unreadCount || 0) + 1;
           }
         }
@@ -207,6 +210,7 @@ export const subscribeToConversations = (
  */
 export const markMessagesAsRead = async (userUid: string, friendUid: string) => {
   try {
+    console.log('[markMessagesAsRead] Called with userUid:', userUid, 'friendUid:', friendUid);
     const messagesRef = collection(db, 'messages');
     
     // Get all unread messages from this friend
