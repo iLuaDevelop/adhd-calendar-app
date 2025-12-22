@@ -84,29 +84,44 @@ export const subscribeToConversation = (
     const messagesRef = collection(db, 'messages');
     
     // Query for messages sent by user to friend OR sent by friend to user
-    const q = query(
+    // We'll use two separate queries and merge results
+    const q1 = query(
       messagesRef,
-      where('senderUid', 'in', [userUid, friendUid]),
-      where('recipientUid', 'in', [userUid, friendUid]),
+      where('senderUid', '==', userUid),
+      where('recipientUid', '==', friendUid),
       orderBy('createdAt', 'asc')
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      // Filter messages between these two specific users
-      const messages = snapshot.docs
-        .map(doc => ({
+    const q2 = query(
+      messagesRef,
+      where('senderUid', '==', friendUid),
+      where('recipientUid', '==', userUid),
+      orderBy('createdAt', 'asc')
+    );
+
+    // Subscribe to both queries
+    const unsubscribe1 = onSnapshot(q1, (snapshot1) => {
+      const messages1 = snapshot1.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      } as FirebaseMessage));
+
+      onSnapshot(q2, (snapshot2) => {
+        const messages2 = snapshot2.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
-        } as FirebaseMessage))
-        .filter(msg => 
-          (msg.senderUid === userUid && msg.recipientUid === friendUid) ||
-          (msg.senderUid === friendUid && msg.recipientUid === userUid)
+        } as FirebaseMessage));
+
+        // Merge and sort by timestamp
+        const allMessages = [...messages1, ...messages2].sort(
+          (a, b) => a.createdAt - b.createdAt
         );
-      
-      callback(messages);
+
+        callback(allMessages);
+      });
     });
 
-    return unsubscribe;
+    return unsubscribe1;
   } catch (error) {
     console.error('Error subscribing to conversation:', error);
     throw error;
