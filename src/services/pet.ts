@@ -415,14 +415,15 @@ export const buyPet = (petShopId: string, customName?: string): Pet | null => {
   console.log('[pet] ✅ Pet purchased, total pets now:', allPets.length);
   localStorage.setItem(PETS_KEY, JSON.stringify(allPets));
 
-  // Set as current pet
-  setCurrentPet(newPet.id);
-  
-  // Sync to Firestore
+  // Sync to Firestore FIRST with all pets + new pet as current
   console.log('[pet] 📤 Syncing new pet purchase to Firestore:', newPet.id);
   syncPetsToFirestore(allPets, newPet.id).catch(err => {
     console.error('[pet] ❌ Failed to sync pet purchase:', err);
   });
+  
+  // Set as current pet in localStorage and dispatch event
+  localStorage.setItem(CURRENT_PET_KEY, newPet.id);
+  window.dispatchEvent(new CustomEvent('petSwitched', { detail: { petId: newPet.id } }));
 
   console.log('[pet] ✅ Pet bought successfully:', newPet.name);
   return newPet;

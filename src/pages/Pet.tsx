@@ -168,6 +168,21 @@ const PetPage: React.FC = () => {
     };
   }, []);
 
+  // Helper to reload current pet from storage to get latest state
+  const reloadCurrentPet = (petId: string) => {
+    const allPets = getAllPets();
+    const petToLoad = allPets.find(p => p.id === petId);
+    if (petToLoad) {
+      console.log('[Pet] Reloading pet from storage:', petToLoad.name);
+      setPet(petToLoad);
+      setNewName(petToLoad.name);
+      setGems(getGems());
+      setXp(getXp());
+      return petToLoad;
+    }
+    return null;
+  };
+
   const handleFeed = (method: 'gems' | 'xp') => {
     if (method === 'gems' && gems < feedCostGems) {
       alert('Not enough gems! You need 5 gems to feed your pet.');
@@ -280,14 +295,11 @@ const PetPage: React.FC = () => {
                     <button
                       key={p.id}
                       onClick={() => {
-                        // Update current pet in store pets if it's a store pet
-                        const storePet = getAllPets().find(sp => sp.id === p.id);
-                        if (storePet) {
-                          setCurrentPet(p.id);
-                        }
+                        // Set current pet in localStorage
+                        setCurrentPet(p.id);
                         setCurrentPetIdState(p.id);
-                        setPet(p);
-                        setNewName(p.name);
+                        // Reload the pet from storage to get current state
+                        reloadCurrentPet(p.id);
                       }}
                       style={{
                         padding: '8px',
