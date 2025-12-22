@@ -46,7 +46,7 @@ interface Message {
   timestamp: number;
 }
 
-const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }) => {
+const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, onNotificationCountChange }) => {
   const [activeTab, setActiveTab] = useState<'friends' | 'messages' | 'requests'>('friends');
   const [userProfile, setUserProfile] = useState<any>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
