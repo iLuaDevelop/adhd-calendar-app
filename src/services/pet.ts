@@ -78,6 +78,14 @@ export const createPet = (name: string = 'My Pet'): Pet => {
     mood: 'happy',
   };
   localStorage.setItem(PET_KEY, JSON.stringify(pet));
+  
+  // Also sync default pet to Firestore so it persists across logout/login
+  const allPets = getAllPets();
+  console.log('[pet] 🐣 Created default pet, syncing to Firestore...');
+  syncPetsToFirestore([pet, ...allPets], pet.id).catch(err => {
+    console.error('[pet] ❌ Failed to sync default pet:', err);
+  });
+  
   return pet;
 };
 
