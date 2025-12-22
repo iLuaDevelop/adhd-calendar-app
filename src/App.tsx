@@ -19,6 +19,7 @@ import QuestsMenu from './components/UI/QuestsMenu';
 import CurrencyDisplay from './components/UI/CurrencyDisplay';
 import DevMenuModal from './components/DevMenu/DevMenuModal';
 import { subscribeToConversations, subscribeToPendingRequests } from './services/messaging';
+import { initAudioContext } from './services/sounds';
 
 const App: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -29,6 +30,25 @@ const App: React.FC = () => {
   const [friendRequests, setFriendRequests] = useState<any[]>([]);
   const [currentAuthUser, setCurrentAuthUser] = useState<any>(null);
   const keySequenceRef = React.useRef<string[]>([]);
+
+  // Initialize AudioContext on first user interaction
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      console.log('[App] User interaction detected, initializing AudioContext');
+      initAudioContext();
+      // Remove listener after first interaction
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('touchstart', handleUserInteraction);
+
+    return () => {
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+  }, []);
 
   // Global dev menu trigger with Ctrl+Alt+D+F
   useEffect(() => {

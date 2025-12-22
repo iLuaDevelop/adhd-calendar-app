@@ -8,6 +8,22 @@ const isAudioSupported = () => {
 
 // Create a single shared AudioContext to avoid browser limits
 let audioContext: AudioContext | null = null;
+let audioContextInitialized = false;
+
+// Initialize AudioContext on first user gesture to satisfy browser autoplay policy
+export const initAudioContext = () => {
+  if (audioContextInitialized) return;
+  
+  try {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      console.log('[SOUND] AudioContext created on user gesture, state:', audioContext.state);
+    }
+    audioContextInitialized = true;
+  } catch (e) {
+    console.log('[SOUND] Failed to initialize AudioContext:', e);
+  }
+};
 
 const getAudioContext = async (): Promise<AudioContext | null> => {
   if (!isAudioSupported()) {
@@ -15,24 +31,28 @@ const getAudioContext = async (): Promise<AudioContext | null> => {
     return null;
   }
 
-  if (!audioContext) {
+  // If not initialized yet, try to initialize it now (though it may fail if no user gesture)
+  if (!audioContext && !audioContextInitialized) {
     try {
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      console.log('[SOUND] AudioContext created, state:', audioContext.state);
+      initAudioContext();
     } catch (e) {
-      console.log('[SOUND] Failed to create AudioContext:', e);
+      console.log('[SOUND] Cannot initialize AudioContext without user gesture');
       return null;
     }
   }
+
+  if (!audioContext) {
+    console.log('[SOUND] AudioContext not available');
+    return null;
+  }
   
-  // Resume if suspended due to browser autoplay policy
+  // Resume if suspended
   if (audioContext.state === 'suspended') {
     try {
       await audioContext.resume();
       console.log('[SOUND] AudioContext resumed, state:', audioContext.state);
     } catch (e) {
       console.log('[SOUND] Failed to resume AudioContext:', e);
-      return null;
     }
   }
   
