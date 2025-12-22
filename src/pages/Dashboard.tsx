@@ -15,6 +15,7 @@ import { getTitles, unlockTitle, setSelectedTitle, getUnlockedTitles, ALL_TITLES
 import { enableCriticalTestMode, disableCriticalTestMode, isCriticalTestModeEnabled, getCriticalChances, enableCrateTestMode, disableCrateTestMode, isCrateTestModeEnabled } from '../services/critical';
 import { signUpWithEmail, signInWithEmail, signOutUser, onAuthChange, getCurrentUserProfile } from '../services/auth';
 import { auth, db } from '../services/firebase';
+import { loadGameProgress } from '../services/gameProgress';
 
 const PURCHASES_KEY = 'adhd_purchases';
 const DAILY_CREATIONS_KEY = 'adhd_daily_creations';
@@ -189,7 +190,7 @@ const Dashboard: React.FC = () => {
     useEffect(() => {
         const unsubscribe = onAuthChange(async (firebaseUser) => {
             if (firebaseUser) {
-                // User is logged in - load their profile from Firestore
+                // User is logged in - load their profile and game progress from Firestore
                 setIsLoggedIn(true);
                 try {
                     const userProfile = await getCurrentUserProfile(firebaseUser.uid);
@@ -198,11 +199,52 @@ const Dashboard: React.FC = () => {
                         setProfile(userProfile);
                         localStorage.setItem(PROFILE_KEY, JSON.stringify(userProfile));
                     }
+
+                    // Load game progress
+                    const gameProgress = await loadGameProgress();
+                    if (gameProgress) {
+                        console.log('[Auth] Loaded game progress from Firestore:', gameProgress);
+                        // Restore XP
+                        if (gameProgress.xp !== undefined) {
+                            setXp(gameProgress.xp);
+                        }
+                        // Restore gems
+                        if (gameProgress.gems !== undefined) {
+                            setGems(gameProgress.gems);
+                        }
+                        // Restore purchases
+                        if (gameProgress.purchases) {
+                            setPurchases(new Set(gameProgress.purchases));
+                        }
+                        // Restore pets
+                        if (gameProgress.pets) {
+                            setOwnedPets(gameProgress.pets);
+                            if (gameProgress.currentPetId) {
+                                setCurrentPet(gameProgress.currentPetId);
+                            }
+                        }
+                        // Restore skills
+                        if (gameProgress.unlockedSkills) {
+                            // Note: would need to save this to localStorage too
+                            const skillsKey = 'adhd_unlocked_skills';
+                            localStorage.setItem(skillsKey, JSON.stringify(gameProgress.unlockedSkills));
+                        }
+                        // Restore titles
+                        if (gameProgress.unlockedTitles || gameProgress.selectedTitle) {
+                            const titlesKey = 'adhd_unlocked_titles';
+                            if (gameProgress.unlockedTitles) {
+                                localStorage.setItem(titlesKey, JSON.stringify(gameProgress.unlockedTitles));
+                            }
+                            if (gameProgress.selectedTitle) {
+                                localStorage.setItem('adhd_selected_title', gameProgress.selectedTitle);
+                            }
+                        }
+                    }
                 } catch (error) {
-                    console.error('[Auth] Error loading profile from Firestore:', error);
+                    console.error('[Auth] Error loading profile/progress from Firestore:', error);
                 }
             } else {
-                // User is logged out - reset EVERYTHING to default
+                // User is logged out - reset profile to guest
                 setIsLoggedIn(false);
                 setProfile({
                     username: 'Guest',

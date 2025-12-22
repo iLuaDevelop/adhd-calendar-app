@@ -1,4 +1,5 @@
 import { calculateCritical } from './critical';
+import { syncXpToFirestore } from './gameProgress';
 
 export const XP_KEY = 'adhd_xp';
 
@@ -56,6 +57,8 @@ export function getXp(): number {
 export function setXp(xp: number) {
   try {
     localStorage.setItem(XP_KEY, String(xp));
+    // Sync to Firestore if user is logged in
+    syncXpToFirestore(xp).catch(err => console.warn('Failed to sync XP to Firestore:', err));
   } catch {}
   window.dispatchEvent(new CustomEvent('xp:update', { detail: { xp } }));
 }
