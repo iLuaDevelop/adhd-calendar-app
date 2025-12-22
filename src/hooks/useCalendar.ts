@@ -66,8 +66,12 @@ const useCalendar = () => {
     };
 
     const addTask = (task: any) => {
+        console.log('[useCalendar.addTask] Adding task:', task);
         const taskWithTimestamp = { ...task, createdAt: Date.now() };
-        setTasks((prev) => [...prev, taskWithTimestamp]);
+        setTasks((prev) => {
+            console.log('[useCalendar.addTask] Updating tasks state from', prev.length, 'to', prev.length + 1);
+            return [...prev, taskWithTimestamp];
+        });
     };
 
     const removeTask = (taskId: number) => {
