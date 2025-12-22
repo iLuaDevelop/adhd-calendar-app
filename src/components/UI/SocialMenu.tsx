@@ -33,6 +33,7 @@ interface Friend {
   username: string;
   hashtag: string;
   avatar: string;
+  customAvatarUrl?: string;
 }
 
 interface Message {
@@ -148,6 +149,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                 ? {
                     ...f,
                     avatar: updatedProfile.avatar || f.avatar,
+                    customAvatarUrl: updatedProfile.customAvatarUrl || f.customAvatarUrl,
                     username: updatedProfile.username || f.username,
                     hashtag: updatedProfile.hashtag || f.hashtag,
                   }
@@ -175,6 +177,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                 ? {
                     ...prev,
                     avatar: updatedProfile.avatar || prev.avatar,
+                    customAvatarUrl: updatedProfile.customAvatarUrl || prev.customAvatarUrl,
                     username: updatedProfile.username || prev.username,
                     hashtag: updatedProfile.hashtag || prev.hashtag,
                   }
@@ -595,7 +598,11 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                         border: '1px solid var(--border)',
                       }}
                     >
-                      <div style={{ fontSize: '1.2rem' }}>{friend.avatar}</div>
+                      {friend.customAvatarUrl ? (
+                        <img src={friend.customAvatarUrl} alt={friend.username} style={{ width: '1.5rem', height: '1.5rem', borderRadius: '50%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ fontSize: '1.2rem' }}>{friend.avatar}</div>
+                      )}
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{friend.username}<span style={{ color: 'var(--muted)', marginLeft: 4 }}>#{friend.hashtag}</span></div>
                       </div>
@@ -871,9 +878,13 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                               e.currentTarget.style.boxShadow = 'none';
                             }}
                           >
-                            <div style={{ fontSize: '2rem', flexShrink: 0, lineHeight: 1 }}>
-                              {friend.avatar}
-                            </div>
+                            {friend.customAvatarUrl ? (
+                              <img src={friend.customAvatarUrl} alt={friend.username} style={{ width: '2rem', height: '2rem', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                            ) : (
+                              <div style={{ fontSize: '2rem', flexShrink: 0, lineHeight: 1 }}>
+                                {friend.avatar}
+                              </div>
+                            )}
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontWeight: 'bold', fontSize: '0.95rem', color: 'white', marginBottom: 4 }}>
                                 {friend.username}
