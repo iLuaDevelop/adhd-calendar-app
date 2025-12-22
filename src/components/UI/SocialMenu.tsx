@@ -78,25 +78,30 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
     }
   }, [initialFriendRequests]);
 
-  // Track conversation changes and play notification sounds when new messages arrive
+  // Track conversation changes and play notification sounds when NEW messages arrive (only when menu is closed)
   const prevConversationCountRef = React.useRef<number>(0);
   useEffect(() => {
-    if (open && conversations.length > 0) {
+    if (!open && conversations.length > 0) {
       const unreadCount = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
       const prevUnread = prevConversationCountRef.current || 0;
       
-      // Play sound only if unread count increased (new message arrived)
+      // Play sound only if unread count increased (new message arrived) AND menu is closed
       if (unreadCount > prevUnread) {
+        console.log('[SocialMenu] New message arrived while menu closed, playing sound');
         playMessageNotificationSound();
       }
       prevConversationCountRef.current = unreadCount;
+    } else if (open) {
+      // Reset counter when menu opens so we don't play sound when it opens
+      prevConversationCountRef.current = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
     }
   }, [conversations, open]);
 
-  // Play sound when new friend requests arrive
+  // Play sound when new friend requests arrive (only when menu is closed)
   const prevRequestCountRef = React.useRef<number>(0);
   useEffect(() => {
-    if (open && friendRequests.length > prevRequestCountRef.current) {
+    if (!open && friendRequests.length > prevRequestCountRef.current) {
+      console.log('[SocialMenu] New friend request arrived while menu closed, playing sound');
       playFriendRequestSound();
     }
     prevRequestCountRef.current = friendRequests.length;
