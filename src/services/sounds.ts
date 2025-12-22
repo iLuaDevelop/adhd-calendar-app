@@ -158,39 +158,44 @@ export const playMessageNotificationSound = async () => {
       console.log('[SOUND] No AudioContext available');
       return;
     }
-    const audioContext = ctx;
-    console.log('[SOUND] AudioContext state:', audioContext.state, 'sampleRate:', audioContext.sampleRate);
     
-    // Create a pleasant "message received" sound - ascending notes
-    const now = audioContext.currentTime;
-    const notes = [
-      { freq: 440, time: 0, duration: 0.08 },      // A4
-      { freq: 554.37, time: 0.08, duration: 0.08 }, // C#5
-    ];
+    try {
+      const audioContext = ctx;
+      console.log('[SOUND] AudioContext state:', audioContext.state, 'sampleRate:', audioContext.sampleRate);
+      
+      // Create a pleasant "message received" sound - ascending notes
+      const now = audioContext.currentTime;
+      const notes = [
+        { freq: 440, time: 0, duration: 0.08 },      // A4
+        { freq: 554.37, time: 0.08, duration: 0.08 }, // C#5
+      ];
 
-    notes.forEach((note, idx) => {
-      try {
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
+      notes.forEach((note, idx) => {
+        try {
+          const osc = audioContext.createOscillator();
+          const gain = audioContext.createGain();
 
-        osc.connect(gain);
-        gain.connect(audioContext.destination);
+          osc.connect(gain);
+          gain.connect(audioContext.destination);
 
-        osc.frequency.value = note.freq;
-        osc.type = 'sine';
+          osc.frequency.value = note.freq;
+          osc.type = 'sine';
 
-        // Lower gain values to prevent audio device errors
-        gain.gain.setValueAtTime(0.1, now + note.time);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
+          // Lower gain values to prevent audio device errors
+          gain.gain.setValueAtTime(0.1, now + note.time);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
 
-        osc.start(now + note.time);
-        osc.stop(now + note.time + note.duration);
-        console.log('[SOUND] Note', idx, 'freq:', note.freq, 'scheduled');
-      } catch (noteError) {
-        console.log('[SOUND] Error creating note', idx, ':', noteError);
-      }
-    });
-    console.log('[SOUND] Message sound setup complete');
+          osc.start(now + note.time);
+          osc.stop(now + note.time + note.duration);
+          console.log('[SOUND] Note', idx, 'freq:', note.freq, 'scheduled');
+        } catch (noteError) {
+          console.log('[SOUND] Error creating note', idx, ':', noteError);
+        }
+      });
+      console.log('[SOUND] Message sound setup complete');
+    } catch (audioError) {
+      console.log('[SOUND] Audio device error (this is safe to ignore)');
+    }
   } catch (e) {
     console.log('[SOUND] Error in playMessageNotificationSound:', e);
   }
@@ -201,32 +206,41 @@ export const playFriendRequestSound = async () => {
     console.log('[SOUND] playFriendRequestSound called - PLAYING FRIEND REQUEST SOUND NOW');
     const ctx = await getAudioContext();
     if (!ctx) return;
-    const audioContext = ctx;
     
-    // Create a distinctive "friend request" sound - three notes
-    const now = audioContext.currentTime;
-    const notes = [
-      { freq: 523.25, time: 0, duration: 0.1 },    // C5
-      { freq: 659.25, time: 0.1, duration: 0.1 },  // E5
-      { freq: 523.25, time: 0.2, duration: 0.15 }, // C5 again
-    ];
+    try {
+      const audioContext = ctx;
+      
+      // Create a distinctive "friend request" sound - three notes
+      const now = audioContext.currentTime;
+      const notes = [
+        { freq: 523.25, time: 0, duration: 0.1 },    // C5
+        { freq: 659.25, time: 0.1, duration: 0.1 },  // E5
+        { freq: 523.25, time: 0.2, duration: 0.15 }, // C5 again
+      ];
 
-    notes.forEach(note => {
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
+      notes.forEach(note => {
+        try {
+          const osc = audioContext.createOscillator();
+          const gain = audioContext.createGain();
 
-      osc.connect(gain);
-      gain.connect(audioContext.destination);
+          osc.connect(gain);
+          gain.connect(audioContext.destination);
 
-      osc.frequency.value = note.freq;
-      osc.type = 'sine';
+          osc.frequency.value = note.freq;
+          osc.type = 'sine';
 
-      gain.gain.setValueAtTime(0.1, now + note.time);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
+          gain.gain.setValueAtTime(0.1, now + note.time);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
 
-      osc.start(now + note.time);
-      osc.stop(now + note.time + note.duration);
-    });
+          osc.start(now + note.time);
+          osc.stop(now + note.time + note.duration);
+        } catch (e) {
+          console.log('[SOUND] Error in friend request sound:', e);
+        }
+      });
+    } catch (audioError) {
+      console.log('[SOUND] Audio device error (this is safe to ignore)');
+    }
   } catch (e) {
     console.log('Audio context not available');
   }
