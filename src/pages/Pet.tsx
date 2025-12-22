@@ -156,6 +156,8 @@ const PetPage: React.FC = () => {
       window.removeEventListener('pets:cleared', handlePetsCleared as EventListener);
     };
   }, []);
+
+  const handleFeed = (method: 'gems' | 'xp') => {
     if (method === 'gems' && gems < feedCostGems) {
       alert('Not enough gems! You need 5 gems to feed your pet.');
       return;
