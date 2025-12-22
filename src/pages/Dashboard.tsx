@@ -12,6 +12,8 @@ import { getPet, updatePetStats, getPetEmoji, feedPet, getAllPets, getCurrentPet
 import { getUnlockedSkills, unlockSkill, getAllSkills } from '../services/skillTree';
 import { getTitles, unlockTitle, setSelectedTitle, getUnlockedTitles, ALL_TITLES, getSelectedTitle } from '../services/titles';
 import { enableCriticalTestMode, disableCriticalTestMode, isCriticalTestModeEnabled, getCriticalChances, enableCrateTestMode, disableCrateTestMode, isCrateTestModeEnabled } from '../services/critical';
+import { signUpWithEmail, signInWithEmail, signOutUser, onAuthChange, getCurrentUserProfile } from '../services/auth';
+import { auth } from '../services/firebase';
 
 const PURCHASES_KEY = 'adhd_purchases';
 const DAILY_CREATIONS_KEY = 'adhd_daily_creations';
@@ -82,14 +84,13 @@ const Dashboard: React.FC = () => {
         const stored = localStorage.getItem(PURCHASES_KEY);
         return stored ? new Set(JSON.parse(stored)) : new Set();
     });
-    const [isLoggedIn, setIsLoggedIn] = useState(() => {
-        const stored = localStorage.getItem(CURRENT_USER_KEY);
-        return !!stored;
-    });
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [authTab, setAuthTab] = useState<'login' | 'signup'>('login');
-    const [loginUsername, setLoginUsername] = useState('');
-    const [loginHashtag, setLoginHashtag] = useState('');
+    const [loginEmail, setLoginEmail] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
     const [loginError, setLoginError] = useState('');
+    const [signupEmail, setSignupEmail] = useState('');
+    const [signupPassword, setSignupPassword] = useState('');
     const [signupUsername, setSignupUsername] = useState('');
     const [signupHashtag, setSignupHashtag] = useState('');
     const [signupError, setSignupError] = useState('');
@@ -182,6 +183,22 @@ const Dashboard: React.FC = () => {
         streakData.lastDate = today;
         localStorage.setItem(STREAK_KEY, JSON.stringify(streakData));
     };
+
+    // Firebase Auth listener
+    useEffect(() => {
+        const unsubscribe = onAuthChange(async (firebaseUser) => {
+            if (firebaseUser) {
+                // User is logged in
+                setIsLoggedIn(true);
+                // Optionally load user profile from Firestore here
+            } else {
+                // User is logged out
+                setIsLoggedIn(false);
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     // Update streak when task is completed
     useEffect(() => {
@@ -369,112 +386,75 @@ const Dashboard: React.FC = () => {
         localStorage.setItem(USERS_KEY, JSON.stringify(filteredUsers));
     };
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         setLoginError('');
         
-        if (!loginUsername.trim()) {
-            setLoginError('Username is required');
+        if (!loginEmail.trim() || !loginPassword.trim()) {
+            setLoginError('Email and password are required');
             return;
         }
 
-        // Get registered users
-        const usersStr = localStorage.getItem(USERS_KEY);
-        const users = usersStr ? JSON.parse(usersStr) : [];
-
-        // Find matching user
-        const matchingUser = users.find((user: any) => 
-            user.username.toLowerCase() === loginUsername.toLowerCase().trim() &&
-            (loginHashtag === '' || user.hashtag === loginHashtag.trim())
-        );
-
-        if (!matchingUser) {
-            setLoginError('User not found. Make sure username and hashtag are correct.');
-            return;
+        try {
+            await signInWithEmail(loginEmail, loginPassword);
+            setLoginEmail('');
+            setLoginPassword('');
+        } catch (error: any) {
+            setLoginError(error.message || 'Login failed. Check your email and password.');
         }
-
-        // Store current user and load their profile
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify({
-            username: matchingUser.username,
-            hashtag: matchingUser.hashtag
-        }));
-
-        setIsLoggedIn(true);
-        setLoginUsername('');
-        setLoginHashtag('');
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem(CURRENT_USER_KEY);
-        setIsLoggedIn(false);
-        setLoginError('');
+    const handleLogout = async () => {
+        try {
+            await signOutUser();
+            setLoginError('');
+        } catch (error: any) {
+            setLoginError('Logout failed');
+        }
     };
 
-    const handleSignUp = () => {
+    const handleSignUp = async () => {
         setSignupError('');
+
+        if (!signupEmail.trim() || !signupPassword.trim()) {
+            setSignupError('Email and password are required');
+            return;
+        }
 
         if (!signupUsername.trim()) {
             setSignupError('Username is required');
             return;
         }
 
-        // Check if username already exists
-        const usersStr = localStorage.getItem(USERS_KEY);
-        const users = usersStr ? JSON.parse(usersStr) : [];
-        
-        const userExists = users.some((user: any) => 
-            user.username.toLowerCase() === signupUsername.toLowerCase().trim()
-        );
-
-        if (userExists) {
-            setSignupError('Username already taken. Please choose another.');
-            return;
-        }
-
-        // Use provided hashtag or generate random one
-        const finalHashtag = signupHashtag.trim() || String(Math.floor(Math.random() * 9000) + 1000);
-
         // Validate hashtag format
+        const finalHashtag = signupHashtag.trim() || String(Math.floor(Math.random() * 9000) + 1000);
         if (!/^\d{1,6}$/.test(finalHashtag)) {
             setSignupError('Hashtag must be 1-6 digits (e.g., 1234)');
             return;
         }
 
-        // Create new user profile
-        const newProfile: ProfileData = {
-            username: signupUsername.trim(),
-            hashtag: finalHashtag,
-            tasksCompleted: 0,
-            eventsCreated: 0,
-            avatar: AVATAR_OPTIONS[0],
-            customAvatarUrl: undefined
-        };
+        try {
+            await signUpWithEmail(signupEmail, signupPassword, signupUsername, finalHashtag);
+            
+            // Create local profile
+            const newProfile: ProfileData = {
+                username: signupUsername.trim(),
+                hashtag: finalHashtag,
+                tasksCompleted: 0,
+                eventsCreated: 0,
+                avatar: AVATAR_OPTIONS[0],
+                customAvatarUrl: undefined
+            };
+            setProfile(newProfile);
+            localStorage.setItem(PROFILE_KEY, JSON.stringify(newProfile));
+            window.dispatchEvent(new Event('profileUpdated'));
 
-        // Save profile and register user
-        setProfile(newProfile);
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(newProfile));
-        
-        // Dispatch event to notify other components
-        window.dispatchEvent(new Event('profileUpdated'));
-
-        // Register in users list
-        const filteredUsers = users.filter((user: any) => user.id !== signupUsername.toLowerCase().replace(/\s+/g, '_'));
-        filteredUsers.push({
-            id: signupUsername.toLowerCase().replace(/\s+/g, '_'),
-            username: signupUsername.trim(),
-            hashtag: finalHashtag,
-            avatar: AVATAR_OPTIONS[0]
-        });
-        localStorage.setItem(USERS_KEY, JSON.stringify(filteredUsers));
-
-        // Auto-login
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify({
-            username: signupUsername.trim(),
-            hashtag: finalHashtag
-        }));
-
-        setIsLoggedIn(true);
-        setSignupUsername('');
-        setSignupHashtag('');
+            setSignupEmail('');
+            setSignupPassword('');
+            setSignupUsername('');
+            setSignupHashtag('');
+        } catch (error: any) {
+            setSignupError(error.message || 'Sign up failed. Try again.');
+        }
     };
 
     const handleSaveName = () => {
@@ -1476,24 +1456,24 @@ const Dashboard: React.FC = () => {
                                     <div>
                                         <h2 style={{textAlign: 'center', marginBottom: 24, fontSize: '1.5rem'}}>Login</h2>
                                         <div style={{marginBottom: 16}}>
-                                            <label className="subtle" style={{fontSize: '0.8rem', display: 'block', marginBottom: 6}}>USERNAME</label>
+                                            <label className="subtle" style={{fontSize: '0.8rem', display: 'block', marginBottom: 6}}>EMAIL</label>
                                             <input
-                                                type="text"
+                                                type="email"
                                                 className="input"
-                                                placeholder="Enter username"
-                                                value={loginUsername}
-                                                onChange={(e) => setLoginUsername(e.target.value)}
+                                                placeholder="Enter your email"
+                                                value={loginEmail}
+                                                onChange={(e) => setLoginEmail(e.target.value)}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                                             />
                                         </div>
                                         <div style={{marginBottom: 16}}>
-                                            <label className="subtle" style={{fontSize: '0.8rem', display: 'block', marginBottom: 6}}>HASHTAG (Optional)</label>
+                                            <label className="subtle" style={{fontSize: '0.8rem', display: 'block', marginBottom: 6}}>PASSWORD</label>
                                             <input
-                                                type="text"
+                                                type="password"
                                                 className="input"
-                                                placeholder="e.g., 1234"
-                                                value={loginHashtag}
-                                                onChange={(e) => setLoginHashtag(e.target.value)}
+                                                placeholder="Enter your password"
+                                                value={loginPassword}
+                                                onChange={(e) => setLoginPassword(e.target.value)}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                                             />
                                         </div>
@@ -1520,6 +1500,28 @@ const Dashboard: React.FC = () => {
                                     // Sign Up Tab
                                     <div>
                                         <h2 style={{textAlign: 'center', marginBottom: 24, fontSize: '1.5rem'}}>Create Account</h2>
+                                        <div style={{marginBottom: 16}}>
+                                            <label className="subtle" style={{fontSize: '0.8rem', display: 'block', marginBottom: 6}}>EMAIL</label>
+                                            <input
+                                                type="email"
+                                                className="input"
+                                                placeholder="Enter your email"
+                                                value={signupEmail}
+                                                onChange={(e) => setSignupEmail(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
+                                            />
+                                        </div>
+                                        <div style={{marginBottom: 16}}>
+                                            <label className="subtle" style={{fontSize: '0.8rem', display: 'block', marginBottom: 6}}>PASSWORD</label>
+                                            <input
+                                                type="password"
+                                                className="input"
+                                                placeholder="Create a password (min 6 chars)"
+                                                value={signupPassword}
+                                                onChange={(e) => setSignupPassword(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleSignUp()}
+                                            />
+                                        </div>
                                         <div style={{marginBottom: 16}}>
                                             <label className="subtle" style={{fontSize: '0.8rem', display: 'block', marginBottom: 6}}>USERNAME</label>
                                             <input
