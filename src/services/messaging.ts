@@ -148,11 +148,10 @@ export const subscribeToConversations = (
   try {
     const messagesRef = collection(db, 'messages');
     
-    // Get all messages involving this user
+    // Get all messages involving this user (no orderBy to avoid index requirement)
     const q = query(
       messagesRef,
-      where('senderUid', '==', userUid),
-      orderBy('createdAt', 'desc')
+      where('senderUid', '==', userUid)
     );
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
@@ -179,8 +178,7 @@ export const subscribeToConversations = (
       // Also get received messages
       const q2 = query(
         messagesRef,
-        where('recipientUid', '==', userUid),
-        orderBy('createdAt', 'desc')
+        where('recipientUid', '==', userUid)
       );
 
       const receivedSnapshot = await getDocs(q2);
@@ -208,6 +206,7 @@ export const subscribeToConversations = (
         }
       }
 
+      // Sort conversations client-side by last message time
       const conversations = Array.from(conversationMap.values())
         .sort((a, b) => b.lastMessageTime.toMillis() - a.lastMessageTime.toMillis());
       
