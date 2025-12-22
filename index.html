@@ -4,6 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ADHD Calendar App</title>
+    <script>
+        // Suppress AudioContext errors before anything loads
+        (function() {
+            const originalLog = console.log;
+            const originalError = console.error;
+            const originalWarn = console.warn;
+            const originalInfo = console.info;
+            
+            function shouldSuppress(args) {
+                const message = args.map(a => {
+                    if (a instanceof Error) return a.message;
+                    return String(a);
+                }).join(' ');
+                return message.includes('AudioContext') || message.includes('audio device') || message.includes('WebAudio');
+            }
+            
+            console.log = function(...args) {
+                if (!shouldSuppress(args)) originalLog.apply(console, args);
+            };
+            
+            console.error = function(...args) {
+                if (!shouldSuppress(args)) originalError.apply(console, args);
+            };
+            
+            console.warn = function(...args) {
+                if (!shouldSuppress(args)) originalWarn.apply(console, args);
+            };
+            
+            console.info = function(...args) {
+                if (!shouldSuppress(args)) originalInfo.apply(console, args);
+            };
+            
+            window.addEventListener('error', (event) => {
+                const message = event.message || String(event);
+                if (message.includes('AudioContext') || message.includes('audio device') || message.includes('WebAudio')) {
+                    event.preventDefault();
+                    return false;
+                }
+            }, true);
+        })();
+    </script>
 </head>
 <body>
     <div id="root"></div>
