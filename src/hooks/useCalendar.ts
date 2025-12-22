@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getFromLocalStorage, saveToLocalStorage } from '../services/storage';
+import { syncTasksToFirestore } from '../services/gameProgress';
+import { getAuth } from 'firebase/auth';
 
 const TASKS_KEY = 'adhd_tasks';
 const EVENTS_KEY = 'adhd_events';
@@ -13,6 +15,11 @@ const useCalendar = () => {
         // persist tasks when they change
         try {
             saveToLocalStorage(TASKS_KEY, tasks);
+            // Also sync to Firestore if user is logged in
+            const auth = getAuth();
+            if (auth.currentUser) {
+                syncTasksToFirestore(tasks).catch(err => console.warn('[useCalendar] Failed to sync tasks:', err));
+            }
         } catch {}
     }, [tasks]);
 

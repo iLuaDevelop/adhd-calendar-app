@@ -246,6 +246,11 @@ const Dashboard: React.FC = () => {
                                 localStorage.setItem('adhd_selected_title', gameProgress.selectedTitle);
                             }
                         }
+                        // Restore tasks
+                        if (gameProgress.tasks && Array.isArray(gameProgress.tasks)) {
+                            console.log('[Auth] Restoring tasks from Firestore:', gameProgress.tasks.length, 'tasks');
+                            localStorage.setItem('adhd_tasks', JSON.stringify(gameProgress.tasks));
+                        }
                     }
                 } catch (error) {
                     console.error('[Auth] Error loading profile/progress from Firestore:', error);
@@ -271,6 +276,7 @@ const Dashboard: React.FC = () => {
                 localStorage.removeItem(CURRENT_USER_KEY);
                 localStorage.removeItem(BRONZE_CRATE_KEY);
                 localStorage.removeItem(QUESTS_KEY);
+                localStorage.removeItem('adhd_tasks'); // Clear tasks on logout
                 
                 // Reset all game state
                 resetXp(false); // Don't sync - we're logging out
@@ -541,6 +547,7 @@ const Dashboard: React.FC = () => {
             localStorage.removeItem(CURRENT_USER_KEY);
             localStorage.removeItem(BRONZE_CRATE_KEY);
             localStorage.removeItem(QUESTS_KEY);
+            localStorage.removeItem('adhd_tasks'); // Clear tasks on logout
             
             // Reset all game state WITHOUT syncing to Firestore
             resetXp(false); // Don't sync the reset to Firestore

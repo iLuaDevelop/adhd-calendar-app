@@ -13,6 +13,7 @@ export interface GameProgress {
   selectedTitle: string | null;
   quests: any;
   streakData: any;
+  tasks: any[]; // Array of user's tasks
   lastUpdated: string;
 }
 
@@ -126,4 +127,15 @@ export const syncSkillsToFirestore = async (unlockedSkills: string[]) => {
 
 export const syncTitlesToFirestore = async (unlockedTitles: string[], selectedTitle: string | null) => {
   await saveGameProgress({ unlockedTitles, selectedTitle });
+};
+
+export const syncTasksToFirestore = async (tasks: any[]) => {
+  console.log('[syncTasksToFirestore] Syncing tasks to Firestore...');
+  try {
+    await saveGameProgress({ tasks });
+    console.log('[syncTasksToFirestore] ✅ Tasks sync complete');
+  } catch (error) {
+    console.error('[syncTasksToFirestore] ❌ Tasks sync failed:', error);
+    throw error;
+  }
 };
