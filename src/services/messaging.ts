@@ -517,3 +517,24 @@ export const removeFriend = async (currentUserUid: string, friendUid: string) =>
     throw error;
   }
 };
+/**
+ * Subscribe to real-time profile changes for a user
+ */
+export const subscribeToUserProfile = (
+  userUid: string,
+  callback: (profile: any) => void
+) => {
+  try {
+    const userDoc = doc(db, 'users', userUid);
+    const unsubscribe = onSnapshot(userDoc, (snapshot) => {
+      if (snapshot.exists()) {
+        callback({ uid: snapshot.id, ...snapshot.data() });
+      }
+    });
+
+    return unsubscribe;
+  } catch (error) {
+    console.error('Error subscribing to user profile:', error);
+    throw error;
+  }
+};

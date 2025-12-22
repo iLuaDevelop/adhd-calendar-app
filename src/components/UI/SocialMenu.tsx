@@ -13,7 +13,10 @@ import {
   sendFriendRequest,
   subscribeToPendingRequests,
   acceptFriendRequest,
-  rejectFriendRequest,  removeFriend as removeFriendService,} from '../../services/messaging';
+  rejectFriendRequest,
+  removeFriend as removeFriendService,
+  subscribeToUserProfile,
+} from '../../services/messaging';
 
 interface SocialMenuProps {
   open: boolean;
@@ -109,6 +112,54 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
       console.error('Error subscribing to conversations:', error);
     }
   }, [currentUser]);
+
+  // Subscribe to profile changes for all friends to update avatars in real-time
+  useEffect(() => {
+    if (friends.length === 0) return;
+
+    const unsubscribers: Array<() => void> = [];
+
+    friends.forEach(friend => {
+      try {
+        const unsubscribe = subscribeToUserProfile(friend.uid, (updatedProfile) => {
+          setFriends(prevFriends =>
+            prevFriends.map(f =>
+              f.uid === friend.uid
+                ? {
+                    ...f,
+                    avatar: updatedProfile.avatar || f.avatar,
+                    username: updatedProfile.username || f.username,
+                    hashtag: updatedProfile.hashtag || f.hashtag,
+                  }
+                : f
+            )
+          );
+
+          // Also update selected friend if it's this user
+          if (selectedFriend?.uid === friend.uid) {
+            setSelectedFriend(prev =>
+              prev
+                ? {
+                    ...prev,
+                    avatar: updatedProfile.avatar || prev.avatar,
+                    username: updatedProfile.username || prev.username,
+                    hashtag: updatedProfile.hashtag || prev.hashtag,
+                  }
+                : prev
+            );
+          }
+        });
+
+        unsubscribers.push(unsubscribe);
+      } catch (error) {
+        console.error('Error subscribing to friend profile:', error);
+      }
+    });
+
+    return () => {
+      unsubscribers.forEach(unsub => unsub());
+    };
+  }, [friends.length]);
 
   const addFriend = async () => {
     setErrorMessage('');
