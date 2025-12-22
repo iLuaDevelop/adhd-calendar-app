@@ -146,6 +146,7 @@ export const subscribeToConversations = (
   callback: (conversations: Conversation[]) => void
 ) => {
   try {
+    console.log('[subscribeToConversations] Setting up listener for user:', userUid);
     const messagesRef = collection(db, 'messages');
     
     // Get all messages involving this user (no orderBy to avoid index requirement)
@@ -155,6 +156,7 @@ export const subscribeToConversations = (
     );
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
+      console.log('[subscribeToConversations] Received update - sent messages count:', snapshot.docs.length);
       const conversationMap = new Map<string, Conversation>();
 
       // Process sent messages
@@ -195,13 +197,17 @@ export const subscribeToConversations = (
             friendUsername: friendUsername,
             lastMessage: msg.text,
             lastMessageTime: msg.timestamp,
-            unreadCount: msg.read ? 0 : 1,
+            unreadCount: msg.read === false ? 1 : 0,
           });
         } else {
           const existing = conversationMap.get(friendUid)!;
           if (msg.timestamp.toMillis() > existing.lastMessageTime.toMillis()) {
             existing.lastMessage = msg.text;
             existing.lastMessageTime = msg.timestamp;
+          }
+          // Count unread messages from this friend
+          if (msg.read === false) {
+            existing.unreadCount = (existing.unreadCount || 0) + 1;
           }
         }
       }
@@ -210,6 +216,7 @@ export const subscribeToConversations = (
       const conversations = Array.from(conversationMap.values())
         .sort((a, b) => b.lastMessageTime.toMillis() - a.lastMessageTime.toMillis());
       
+      console.log('[subscribeToConversations] Calling callback with conversations:', conversations.length, 'unread summary:', conversations.map(c => ({ friend: c.friendUsername, unread: c.unreadCount })));
       callback(conversations);
     });
 
@@ -217,6 +224,35 @@ export const subscribeToConversations = (
   } catch (error) {
     console.error('Error subscribing to conversations:', error);
     throw error;
+  }
+};
+
+/**
+ * Mark all unread messages from a friend as read
+ */
+export const markMessagesAsRead = async (userUid: string, friendUid: string) => {
+  try {
+    const messagesRef = collection(db, 'messages');
+    
+    // Get all unread messages from this friend
+    const q = query(
+      messagesRef,
+      where('recipientUid', '==', userUid),
+      where('senderUid', '==', friendUid),
+      where('read', '==', false)
+    );
+
+    const snapshot = await getDocs(q);
+    console.log('[markMessagesAsRead] Found', snapshot.docs.length, 'unread messages to mark as read');
+    
+    const updatePromises = snapshot.docs.map(doc =>
+      updateDoc(doc.ref, { read: true })
+    );
+
+    await Promise.all(updatePromises);
+    console.log('[markMessagesAsRead] Successfully marked all messages as read');
+  } catch (error) {
+    console.error('[markMessagesAsRead] Error:', error);
   }
 };
 
