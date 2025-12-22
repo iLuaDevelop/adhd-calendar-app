@@ -4,7 +4,7 @@
 // Create a single shared AudioContext to avoid browser limits
 let audioContext: AudioContext | null = null;
 
-const getAudioContext = (): AudioContext | null => {
+const getAudioContext = async (): Promise<AudioContext | null> => {
   if (!audioContext) {
     try {
       audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -16,15 +16,21 @@ const getAudioContext = (): AudioContext | null => {
   
   // Resume if suspended due to browser autoplay policy
   if (audioContext.state === 'suspended') {
-    audioContext.resume().catch(e => console.log('[SOUND] Failed to resume AudioContext:', e));
+    try {
+      await audioContext.resume();
+      console.log('[SOUND] AudioContext resumed');
+    } catch (e) {
+      console.log('[SOUND] Failed to resume AudioContext:', e);
+      return null;
+    }
   }
   
   return audioContext;
 };
 
-export const playLevelUpSound = () => {
+export const playLevelUpSound = async () => {
   try {
-    const ctx = getAudioContext();
+    const ctx = await getAudioContext();
     if (!ctx) return;
     const audioContext = ctx;
     
@@ -58,9 +64,9 @@ export const playLevelUpSound = () => {
   }
 };
 
-export const playXpSound = () => {
+export const playXpSound = async () => {
   try {
-    const ctx = getAudioContext();
+    const ctx = await getAudioContext();
     if (!ctx) return;
     const audioContext = ctx;
     const now = audioContext.currentTime;
@@ -75,7 +81,7 @@ export const playXpSound = () => {
     osc.frequency.value = 800;
     osc.type = 'sine';
 
-    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.setValueAtTime(0.4, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
 
     osc.start(now);
@@ -84,9 +90,9 @@ export const playXpSound = () => {
     console.log('Audio context not available');
   }
 };
-export const playCriticalSound = () => {
+export const playCriticalSound = async () => {
   try {
-    const ctx = getAudioContext();
+    const ctx = await getAudioContext();
     if (!ctx) return;
     const audioContext = ctx;
     
@@ -107,7 +113,7 @@ export const playCriticalSound = () => {
       osc.frequency.value = note.freq;
       osc.type = 'sine';
 
-      gain.gain.setValueAtTime(0.25, now + note.time);
+      gain.gain.setValueAtTime(0.5, now + note.time);
       gain.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
 
       osc.start(now + note.time);
@@ -118,10 +124,10 @@ export const playCriticalSound = () => {
   }
 };
 
-export const playMessageNotificationSound = () => {
+export const playMessageNotificationSound = async () => {
   try {
     console.log('[SOUND] playMessageNotificationSound called - PLAYING MESSAGE SOUND NOW');
-    const ctx = getAudioContext();
+    const ctx = await getAudioContext();
     if (!ctx) return;
     const audioContext = ctx;
     
@@ -142,7 +148,7 @@ export const playMessageNotificationSound = () => {
       osc.frequency.value = note.freq;
       osc.type = 'sine';
 
-      gain.gain.setValueAtTime(0.2, now + note.time);
+      gain.gain.setValueAtTime(0.5, now + note.time);
       gain.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
 
       osc.start(now + note.time);
@@ -153,10 +159,10 @@ export const playMessageNotificationSound = () => {
   }
 };
 
-export const playFriendRequestSound = () => {
+export const playFriendRequestSound = async () => {
   try {
     console.log('[SOUND] playFriendRequestSound called - PLAYING FRIEND REQUEST SOUND NOW');
-    const ctx = getAudioContext();
+    const ctx = await getAudioContext();
     if (!ctx) return;
     const audioContext = ctx;
     
@@ -178,7 +184,7 @@ export const playFriendRequestSound = () => {
       osc.frequency.value = note.freq;
       osc.type = 'sine';
 
-      gain.gain.setValueAtTime(0.25, now + note.time);
+      gain.gain.setValueAtTime(0.5, now + note.time);
       gain.gain.exponentialRampToValueAtTime(0.01, now + note.time + note.duration);
 
       osc.start(now + note.time);

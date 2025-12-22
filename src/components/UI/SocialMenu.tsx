@@ -92,7 +92,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
     // 3. Unread count just increased
     if (!open && unreadCount > prevUnread && (prevUnread > 0 || unreadCount > 0)) {
       console.log('[SocialMenu] Playing message sound');
-      playMessageNotificationSound();
+      playMessageNotificationSound().catch(e => console.log('[SocialMenu] Sound error:', e));
     }
     
     prevConversationCountRef.current = unreadCount;
@@ -105,7 +105,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
     
     if (!open && friendRequests.length > prevRequests && (prevRequests > 0 || friendRequests.length > 0)) {
       console.log('[SocialMenu] Playing friend request sound');
-      playFriendRequestSound();
+      playFriendRequestSound().catch(e => console.log('[SocialMenu] Sound error:', e));
     }
     prevRequestCountRef.current = friendRequests.length;
   }, [friendRequests, open]);
