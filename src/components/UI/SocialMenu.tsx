@@ -55,6 +55,9 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
   const [loading, setLoading] = useState(false);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [friendToRemove, setFriendToRemove] = useState<Friend | null>(null);
+  const [isScrolledUp, setIsScrolledUp] = useState(false);
+
+  const messagesContainerRef = React.useRef<HTMLDivElement>(null);
 
   // Common emojis for quick access
   const EMOJIS = ['😀', '😂', '😍', '🤔', '😎', '🎉', '🔥', '👍', '❤️', '✨', '🚀', '💪', '🤝', '😅', '🎊', '💯'];
@@ -296,6 +299,35 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
       console.error('Error subscribing to conversation:', error);
     }
   }, [selectedFriend, currentUser]);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+          setIsScrolledUp(false);
+        }
+      }, 0);
+    }
+  }, [messages, selectedFriend]);
+
+  // Handle scroll detection for showing "scroll to bottom" button
+  const handleMessagesScroll = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+      setIsScrolledUp(!isAtBottom);
+    }
+  };
+
+  // Scroll to bottom function
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      setIsScrolledUp(false);
+    }
+  };
 
   return (
     <>
@@ -578,7 +610,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                     </div>
                   </div>
 
-                  <div style={{ flex: 1, overflowY: 'auto', marginBottom: 12, minHeight: 200, maxHeight: 300, padding: 8, background: 'var(--panel)', borderRadius: 6 }}>
+                  <div style={{ flex: 1, overflowY: 'auto', marginBottom: 12, minHeight: 200, maxHeight: 300, padding: 8, background: 'var(--panel)', borderRadius: 6, position: 'relative' }} ref={messagesContainerRef} onScroll={handleMessagesScroll}>
                     {messages.length === 0 ? (
                       <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 16 }}>
                         No messages yet. Start a conversation!
@@ -602,6 +634,39 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile }
                           <div>{msg.text}</div>
                         </div>
                       ))
+                    )}
+
+                    {/* Scroll to Bottom Button */}
+                    {isScrolledUp && (
+                      <button
+                        onClick={scrollToBottom}
+                        style={{
+                          position: 'absolute',
+                          bottom: 8,
+                          right: 8,
+                          background: 'var(--primary)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: 20,
+                          padding: '6px 12px',
+                          cursor: 'pointer',
+                          fontSize: '0.8rem',
+                          fontWeight: 'bold',
+                          zIndex: 10,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'var(--accent)';
+                          e.currentTarget.style.transform = 'scale(1.05)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'var(--primary)';
+                          e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                      >
+                        ↓ Bottom
+                      </button>
                     )}
                   </div>
 
