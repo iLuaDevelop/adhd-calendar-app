@@ -440,10 +440,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
         currentUser.uid,
         selectedFriend.uid,
         (msgs) => {
-          // Play notification sound only if messages increased (new message arrived)
-          if (msgs.length > messages.length) {
-            playMessageNotificationSound();
-          }
+          // Don't play sounds when viewing a conversation - sounds only play from global listener when menu is closed
           setMessages(msgs);
         }
       );
