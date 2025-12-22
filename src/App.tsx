@@ -26,8 +26,8 @@ const App: React.FC = () => {
   const [socialMenuOpen, setSocialMenuOpen] = useState(false);
   const [questsMenuOpen, setQuestsMenuOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
-  const [conversationCount, setConversationCount] = useState(0);
-  const [friendRequestCount, setFriendRequestCount] = useState(0);
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [friendRequests, setFriendRequests] = useState<any[]>([]);
   const keySequenceRef = React.useRef<string[]>([]);
 
   // Global dev menu trigger with Ctrl+Alt+D+F
@@ -62,6 +62,8 @@ const App: React.FC = () => {
 
     if (!currentUser) {
       setNotificationCount(0);
+      setConversations([]);
+      setFriendRequests([]);
       return;
     }
 
@@ -70,34 +72,27 @@ const App: React.FC = () => {
     // Subscribe to conversations globally
     const unsubscribeConversations = subscribeToConversations(currentUser.uid, (convs) => {
       console.log('[App] Conversations updated globally:', convs.length, 'conversations');
+      setConversations(convs);
       const unreadCount = convs.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
-      setConversationCount(unreadCount);
+      setNotificationCount(prev => prev - (conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)) + unreadCount);
       playMessageNotificationSound();
     });
 
     // Subscribe to friend requests globally
     const unsubscribeRequests = subscribeToPendingRequests(currentUser.uid, (requests) => {
       console.log('[App] Friend requests updated globally:', requests.length, 'requests');
-      setFriendRequestCount(requests.length);
-      if (requests.length > 0) {
+      setFriendRequests(requests);
+      if (requests.length > friendRequests.length) {
         playFriendRequestSound();
       }
+      setNotificationCount(prev => prev - friendRequests.length + requests.length);
     });
-
-    // Update total notification count
-    setNotificationCount(conversationCount + friendRequestCount);
 
     return () => {
       unsubscribeConversations();
       unsubscribeRequests();
     };
   }, []);
-
-  // Update notification count whenever conversation or friend request counts change
-  useEffect(() => {
-    setNotificationCount(conversationCount + friendRequestCount);
-    console.log('[App] Total notifications:', conversationCount + friendRequestCount, '(conversations:', conversationCount, '+ requests:', friendRequestCount, ')');
-  }, [conversationCount, friendRequestCount]);
 
   return (
     <Router>
@@ -120,7 +115,13 @@ const App: React.FC = () => {
 
         <QuestsMenu open={questsMenuOpen} onClose={() => setQuestsMenuOpen(false)} />
 
-        <SocialMenu open={socialMenuOpen} onClose={() => setSocialMenuOpen(false)} onNotificationCountChange={setNotificationCount} />
+        <SocialMenu 
+          open={socialMenuOpen} 
+          onClose={() => setSocialMenuOpen(false)} 
+          onNotificationCountChange={setNotificationCount}
+          initialConversations={conversations}
+          initialFriendRequests={friendRequests}
+        />
 
         <div style={{ 
           flex: 1, 

@@ -22,6 +22,8 @@ interface SocialMenuProps {
   onClose: () => void;
   currentProfile?: any;
   onNotificationCountChange?: (count: number) => void;
+  initialConversations?: any[];
+  initialFriendRequests?: any[];
 }
 
 const FRIENDS_KEY = 'adhd_friends';
@@ -44,7 +46,7 @@ interface Message {
   timestamp: number;
 }
 
-const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, onNotificationCountChange }) => {
+const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, onNotificationCountChange, initialConversations = [], initialFriendRequests = [] }) => {
   const [activeTab, setActiveTab] = useState<'friends' | 'messages' | 'requests'>('friends');
   const [userProfile, setUserProfile] = useState<any>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -55,10 +57,23 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [messageText, setMessageText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
   const [loading, setLoading] = useState(false);
-  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>(initialFriendRequests);
   const [friendToRemove, setFriendToRemove] = useState<Friend | null>(null);
+
+  // Sync global data from App props
+  useEffect(() => {
+    if (initialConversations && initialConversations.length > 0) {
+      setConversations(initialConversations);
+    }
+  }, [initialConversations]);
+
+  useEffect(() => {
+    if (initialFriendRequests && initialFriendRequests.length > 0) {
+      setFriendRequests(initialFriendRequests);
+    }
+  }, [initialFriendRequests]);
 
   // Log whenever friends state changes
   useEffect(() => {
