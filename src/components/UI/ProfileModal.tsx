@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
-import { getUserProfile } from '../../services/messaging';
+import { subscribeToUserProfile } from '../../services/messaging';
 import { db } from '../../services/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -31,40 +31,56 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, userId, user
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!open || !userId) return;
+    console.log('[ProfileModal] useEffect triggered, open:', open, 'userId:', userId);
+    if (!open || !userId) {
+      console.log('[ProfileModal] Skipping load - open:', open, 'userId:', userId);
+      return;
+    }
 
     const loadProfile = async () => {
+      console.log('[ProfileModal] Starting to load profile for user:', userId);
       setLoading(true);
       try {
-        // Get messaging profile
-        const profileCallback = (data: UserProfile) => {
-          console.log('[ProfileModal] Profile data:', data);
+        // Subscribe to messaging profile (real-time updates)
+        console.log('[ProfileModal] Subscribing to user profile...');
+        const unsubscribe = subscribeToUserProfile(userId, (data: UserProfile) => {
+          console.log('[ProfileModal] Profile data received:', data);
           setProfileData(data);
-        };
-        
-        // Subscribe to profile updates
-        const unsubscribe = await getUserProfile(userId, profileCallback);
+        });
 
         // Get game progress data
         try {
+          console.log('[ProfileModal] Fetching game progress for user:', userId);
           const gameProgressDoc = await getDoc(doc(db, 'gameProgress', userId));
           if (gameProgressDoc.exists()) {
-            console.log('[ProfileModal] Game progress:', gameProgressDoc.data());
+            console.log('[ProfileModal] Game progress found:', gameProgressDoc.data());
             setGameProgress(gameProgressDoc.data());
+          } else {
+            console.log('[ProfileModal] No game progress document found');
           }
         } catch (e) {
-          console.log('[ProfileModal] Could not fetch game progress:', e);
+          console.log('[ProfileModal] Error fetching game progress:', e);
         }
 
-        return () => {
-          if (unsubscribe) unsubscribe();
-        };
-      } finally {
+        setLoading(false);
+        
+        // Return cleanup function
+        return unsubscribe;
+      } catch (error) {
+        console.log('[ProfileModal] Error loading profile:', error);
         setLoading(false);
       }
     };
 
-    loadProfile();
+    const unsubscribePromise = loadProfile();
+    return () => {
+      unsubscribePromise.then(unsubscribe => {
+        if (unsubscribe) {
+          console.log('[ProfileModal] Cleaning up profile subscription');
+          unsubscribe();
+        }
+      });
+    };
   }, [open, userId]);
 
   return (
