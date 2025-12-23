@@ -250,7 +250,7 @@ const App: React.FC = () => {
               </span>
             )}
           </button>
-        )}}
+        )}
 
         <DevMenuModal />
       </div>
