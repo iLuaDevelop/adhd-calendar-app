@@ -30,7 +30,10 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
     </div>
   );
 
-  return createPortal(modalContent, document.body);
+  console.log('[Modal] Creating portal, target:', document.body);
+  const portal = createPortal(modalContent, document.body);
+  console.log('[Modal] Portal created:', portal);
+  return portal;
 };
 
 export default Modal;
