@@ -91,7 +91,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, userId, user
   }, [open, userId]);
 
   return (
-    <Modal open={open} onClose={onClose} title={`${username}'s Profile`}>
+    <Modal isOpen={open} onClose={onClose} title={`${username}'s Profile`}>
       <div style={{ padding: 16, maxHeight: '70vh', overflowY: 'auto' }}>
         {loading ? (
           <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Loading profile...</div>
