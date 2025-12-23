@@ -1,3 +1,4 @@
+// Modal Portal Component - View Profile Modal
 import React from 'react';
 import { createPortal } from 'react-dom';
 
