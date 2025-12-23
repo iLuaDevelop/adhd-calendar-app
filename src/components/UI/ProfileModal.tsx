@@ -37,49 +37,56 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, userId, user
       return;
     }
 
-    const loadProfile = async () => {
-      console.log('[ProfileModal] Starting to load profile for user:', userId);
-      setLoading(true);
-      try {
-        // Subscribe to messaging profile (real-time updates)
-        console.log('[ProfileModal] Subscribing to user profile...');
-        const unsubscribe = subscribeToUserProfile(userId, (data: UserProfile) => {
+    console.log('[ProfileModal] Starting to load profile for user:', userId);
+    setLoading(true);
+
+    let isMounted = true;
+    let unsubscribe: (() => void) | null = null;
+
+    // Subscribe to messaging profile (real-time updates)
+    console.log('[ProfileModal] Subscribing to user profile...');
+    try {
+      unsubscribe = subscribeToUserProfile(userId, (data: UserProfile) => {
+        if (isMounted) {
           console.log('[ProfileModal] Profile data received:', data);
           setProfileData(data);
-        });
-
-        // Get game progress data
-        try {
-          console.log('[ProfileModal] Fetching game progress for user:', userId);
-          const gameProgressDoc = await getDoc(doc(db, 'gameProgress', userId));
-          if (gameProgressDoc.exists()) {
-            console.log('[ProfileModal] Game progress found:', gameProgressDoc.data());
-            setGameProgress(gameProgressDoc.data());
-          } else {
-            console.log('[ProfileModal] No game progress document found');
-          }
-        } catch (e) {
-          console.log('[ProfileModal] Error fetching game progress:', e);
         }
+      });
+    } catch (error) {
+      console.log('[ProfileModal] Error subscribing to profile:', error);
+    }
 
-        setLoading(false);
-        
-        // Return cleanup function
-        return unsubscribe;
-      } catch (error) {
-        console.log('[ProfileModal] Error loading profile:', error);
-        setLoading(false);
+    // Get game progress data
+    const loadGameProgress = async () => {
+      try {
+        console.log('[ProfileModal] Fetching game progress for user:', userId);
+        const gameProgressDoc = await getDoc(doc(db, 'gameProgress', userId));
+        if (gameProgressDoc.exists()) {
+          console.log('[ProfileModal] Game progress found:', gameProgressDoc.data());
+          if (isMounted) {
+            setGameProgress(gameProgressDoc.data());
+          }
+        } else {
+          console.log('[ProfileModal] No game progress document found');
+        }
+      } catch (e) {
+        console.log('[ProfileModal] Error fetching game progress:', e);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    const unsubscribePromise = loadProfile();
+    loadGameProgress();
+
+    // Cleanup function
     return () => {
-      unsubscribePromise.then(unsubscribe => {
-        if (unsubscribe) {
-          console.log('[ProfileModal] Cleaning up profile subscription');
-          unsubscribe();
-        }
-      });
+      console.log('[ProfileModal] Cleaning up - unsubscribing from profile');
+      isMounted = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
     };
   }, [open, userId]);
 
