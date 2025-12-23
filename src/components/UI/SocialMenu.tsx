@@ -704,8 +704,10 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
                       </button>
                       <button
                         onClick={() => {
+                          console.log('[SocialMenu] 👁️ Eye button clicked for friend:', friend.username, friend.uid);
                           setSelectedProfileFriend(friend);
                           setProfileModalOpen(true);
+                          console.log('[SocialMenu] Set profileModalOpen to true, selectedProfileFriend:', friend);
                         }}
                         className="btn ghost"
                         style={{ padding: '4px 8px', fontSize: '0.8rem' }}
@@ -1079,7 +1081,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
         onClick={onClose} 
       />
 
-      {selectedProfileFriend && (
+      {selectedProfileFriend && profileModalOpen && (
         <ProfileModal
           open={profileModalOpen}
           onClose={() => setProfileModalOpen(false)}

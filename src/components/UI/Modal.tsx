@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
@@ -8,20 +9,30 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
-  if (!isOpen) return null;
+  console.log('[Modal] Modal component rendering, isOpen:', isOpen);
+  if (!isOpen) {
+    console.log('[Modal] isOpen is false, returning null');
+    return null;
+  }
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="absolute inset-0 bg-black opacity-50" onClick={onClose} />
-      <div className="bg-white rounded-lg shadow-lg p-6 z-10">
-        {title && <h2 className="text-xl font-semibold mb-4">{title}</h2>}
+  const modalContent = (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, backgroundColor: 'rgba(0, 0, 0, 0.7)' }}>
+      <div style={{ backgroundColor: 'var(--panel)', borderRadius: '12px', padding: '24px', zIndex: 10000, maxWidth: '600px', width: '90%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)', border: '1px solid var(--border)' }}>
+        {title && <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px', color: 'var(--accent)' }}>{title}</h2>}
         <div>{children}</div>
-        <button className="mt-4 bg-blue-500 text-white rounded px-4 py-2" onClick={onClose}>
+        <button 
+          style={{ marginTop: '16px', backgroundColor: 'var(--accent)', color: 'white', borderRadius: '6px', padding: '10px 20px', border: 'none', cursor: 'pointer', fontWeight: 500 }}
+          onClick={onClose}
+          onMouseOver={(e) => (e.currentTarget.style.opacity = '0.8')}
+          onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
+        >
           Close
         </button>
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default Modal;
