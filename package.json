@@ -1,6 +1,6 @@
 {
   "name": "adhd-calendar-app",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A modern and clean calendar application designed for individuals with ADHD.",
   "main": "main.js",
   "homepage": "./",
