@@ -3,6 +3,7 @@ import { getXp, setXp } from '../services/xp';
 import { getGems, setGems } from '../services/currency';
 import Button from '../components/UI/Button';
 import LootCrate from '../components/UI/LootCrate';
+import PaymentModal from '../components/PaymentModal/PaymentModal';
 import { buyPet, PET_SHOP, hasBoughtPetType, getAllPets } from '../services/pet';
 
 const PURCHASES_KEY = 'adhd_purchases';
@@ -48,6 +49,9 @@ const Store: React.FC = () => {
         return stored ? Number(stored) : 0;
     });
     const [ownedPets, setOwnedPets] = useState(() => getAllPets());
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [selectedGemPackage, setSelectedGemPackage] = useState<{ amount: number; price: string } | null>(null);
+    const [subscriptionPaymentOpen, setSubscriptionPaymentOpen] = useState(false);
 
     const isSubscriptionActive = subscription.isActive && subscription.expiresAt > Date.now();
     const getDaysRemaining = () => {
@@ -114,16 +118,25 @@ const Store: React.FC = () => {
     };
 
     const buyGems = (amount: number, price: string) => {
-        // In a real app, this would integrate with Stripe, PayPal, etc.
-        const newGems = currentGems + amount;
-        setGems(newGems);
-        setCurrentGems(newGems);
-        alert(`Successfully purchased ${amount} Gems for ${price}!`);
-        window.dispatchEvent(new Event('currencyUpdated'));
+        setSelectedGemPackage({ amount, price });
+        setPaymentModalOpen(true);
+    };
+
+    const handleConfirmGemPurchase = () => {
+        if (selectedGemPackage) {
+            const newGems = currentGems + selectedGemPackage.amount;
+            setGems(newGems);
+            setCurrentGems(newGems);
+            setSelectedGemPackage(null);
+            window.dispatchEvent(new Event('currencyUpdated'));
+        }
     };
 
     const subscribeToPlus = () => {
-        // In a real app, this would integrate with Stripe, PayPal, etc.
+        setSubscriptionPaymentOpen(true);
+    };
+
+    const handleConfirmSubscription = () => {
         const expiresAt = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 days from now
         const newSubscription: Subscription = {
             isActive: true,
@@ -132,7 +145,6 @@ const Store: React.FC = () => {
         };
         setSubscription(newSubscription);
         localStorage.setItem(SUBSCRIPTION_KEY, JSON.stringify(newSubscription));
-        alert('Successfully subscribed to Plus! 🎉');
         window.dispatchEvent(new Event('subscriptionUpdated'));
     };
 
@@ -162,13 +174,13 @@ const Store: React.FC = () => {
         return purchaseSet.has(itemId);
     };
 
-    const handleBuyPet = (petShopId: string, petName: string, cost: number) => {
+    const handleBuyPet = async (petShopId: string, petName: string, cost: number) => {
         if (currentXp < cost) {
             alert('Not enough XP to buy this pet!');
             return;
         }
 
-        const newPet = buyPet(petShopId);
+        const newPet = await buyPet(petShopId);
         if (newPet) {
             const updatedXp = getXp();
             setCurrentXp(updatedXp);
@@ -465,6 +477,25 @@ const Store: React.FC = () => {
                     ))}
                 </div>
             </div>
+
+            <PaymentModal
+              isOpen={paymentModalOpen}
+              amount={selectedGemPackage?.amount || 0}
+              price={selectedGemPackage?.price || '$0.00'}
+              onClose={() => {
+                setPaymentModalOpen(false);
+                setSelectedGemPackage(null);
+              }}
+              onConfirm={handleConfirmGemPurchase}
+            />
+
+            <PaymentModal
+              isOpen={subscriptionPaymentOpen}
+              amount={0}
+              price="$9.99/month"
+              onClose={() => setSubscriptionPaymentOpen(false)}
+              onConfirm={handleConfirmSubscription}
+            />
         </div>
     );
 };

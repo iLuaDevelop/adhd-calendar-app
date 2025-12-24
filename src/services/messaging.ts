@@ -242,23 +242,28 @@ export const deleteConversation = async (userUid: string, friendUid: string) => 
   try {
     const messagesRef = collection(db, 'messages');
     
-    // Get all messages between these users
-    const q = query(
+    // Get all messages sent from user to friend
+    const q1 = query(
       messagesRef,
-      where('senderUid', 'in', [userUid, friendUid]),
-      where('recipientUid', 'in', [userUid, friendUid])
+      where('senderUid', '==', userUid),
+      where('recipientUid', '==', friendUid)
     );
 
-    const snapshot = await getDocs(q);
-    
-    // Delete each message
-    const deletePromises = snapshot.docs
-      .filter(doc => {
-        const msg = doc.data();
-        return (msg.senderUid === userUid && msg.recipientUid === friendUid) ||
-               (msg.senderUid === friendUid && msg.recipientUid === userUid);
-      })
-      .map(doc => deleteDoc(doc.ref));
+    // Get all messages sent from friend to user
+    const q2 = query(
+      messagesRef,
+      where('senderUid', '==', friendUid),
+      where('recipientUid', '==', userUid)
+    );
+
+    const snapshot1 = await getDocs(q1);
+    const snapshot2 = await getDocs(q2);
+
+    // Delete all messages from both directions
+    const deletePromises = [
+      ...snapshot1.docs.map(doc => deleteDoc(doc.ref)),
+      ...snapshot2.docs.map(doc => deleteDoc(doc.ref))
+    ];
 
     await Promise.all(deletePromises);
   } catch (error) {

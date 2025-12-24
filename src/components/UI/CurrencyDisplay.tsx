@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { getGems, setGems } from '../../services/currency';
 import { getXp, setXp } from '../../services/xp';
+import PaymentModal from '../PaymentModal/PaymentModal';
 
 const CurrencyDisplay: React.FC = () => {
   const [gems, setGemsState] = useState(getGems());
   const [showPurchaseMenu, setShowPurchaseMenu] = useState(false);
   const [currentXp, setCurrentXp] = useState(getXp());
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<{ amount: number; price: number; label: string } | null>(null);
 
   useEffect(() => {
     const handleCurrencyUpdate = () => {
@@ -23,13 +26,20 @@ const CurrencyDisplay: React.FC = () => {
     { amount: 1200, price: 59.99, label: '1200 💎' },
   ];
 
-  const handlePurchaseGems = (amount: number) => {
-    const newGems = getGems() + amount;
-    setGems(newGems);
-    setGemsState(newGems);
-    alert(`✨ Added ${amount} gems!`);
-    setShowPurchaseMenu(false);
-    window.dispatchEvent(new Event('currencyUpdated'));
+  const handlePurchaseGems = (pkg: { amount: number; price: number; label: string }) => {
+    setSelectedPackage(pkg);
+    setPaymentModalOpen(true);
+  };
+
+  const handleConfirmPayment = () => {
+    if (selectedPackage) {
+      const newGems = getGems() + selectedPackage.amount;
+      setGems(newGems);
+      setGemsState(newGems);
+      window.dispatchEvent(new Event('currencyUpdated'));
+      setShowPurchaseMenu(false);
+      setSelectedPackage(null);
+    }
   };
 
   return (
@@ -47,8 +57,6 @@ const CurrencyDisplay: React.FC = () => {
           fontSize: '0.95rem',
           fontWeight: 600,
           color: 'var(--text)',
-          marginLeft: 1700,
-          marginRight: 100,
           cursor: 'pointer',
           transition: 'all 0.2s ease',
         }}
@@ -96,7 +104,7 @@ const CurrencyDisplay: React.FC = () => {
               {gemPackages.map((pkg) => (
                 <button
                   key={pkg.amount}
-                  onClick={() => handlePurchaseGems(pkg.amount)}
+                  onClick={() => handlePurchaseGems(pkg)}
                   className="btn primary"
                   style={{
                     padding: 16,
@@ -120,6 +128,17 @@ const CurrencyDisplay: React.FC = () => {
               }}>
               Close
             </button>
+
+            <PaymentModal
+              isOpen={paymentModalOpen}
+              amount={selectedPackage?.amount || 0}
+              price={`$${selectedPackage?.price.toFixed(2) || '0.00'}`}
+              onClose={() => {
+                setPaymentModalOpen(false);
+                setSelectedPackage(null);
+              }}
+              onConfirm={handleConfirmPayment}
+            />
           </div>
         </div>
       )}

@@ -271,7 +271,7 @@ html {
 }
 
 /* topbar + hamburger */
-.topbar{position:fixed;left:16px;top:16px;z-index:75}
+.topbar{position:relative;width:100%;z-index:75}
 .hamburger{background:transparent;border:1px solid var(--border);padding:8px;border-radius:10px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.4);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;width:44px;height:40px}
 .hamburger:hover{transform:translateY(-2px)}
 .hamburger-line{display:block;width:22px;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:transform .16s ease,opacity .16s ease}
@@ -283,9 +283,9 @@ html {
 }
 
 /* sidebar */
-.sidebar{position:fixed;left:0;top:0;bottom:0;min-width:300px;width:auto;max-width:80vw;transform:translateX(-110%);transition:transform 260ms cubic-bezier(.2,.9,.2,1);z-index:90}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:350px;max-width:80vw;transform:translateX(-110%);transition:transform 260ms cubic-bezier(.2,.9,.2,1);z-index:90}
 .sidebar.open{transform:translateX(0)}
-.sidebar-inner{height:100%;display:flex;flex-direction:column;padding:20px}
+.sidebar-inner{height:100%;display:flex;flex-direction:column;padding:20px;overflow:hidden}
 /* make sidebar opaque so backdrop doesn't show through */
 .sidebar .panel{background:var(--panel);box-shadow:0 12px 40px rgba(2,8,23,0.25)}
 .sidebar-nav{display:flex;flex-direction:column;gap:8px;margin-top:6px}

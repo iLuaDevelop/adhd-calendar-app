@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Route, Switch } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { Elements } from '@stripe/react-stripe-js';
+import { getStripe } from './services/stripe';
 import Dashboard from './pages/Dashboard';
 import DayView from './pages/DayView';
 import WeekView from './pages/WeekView';
@@ -134,9 +136,10 @@ const App: React.FC = () => {
 
   return (
     <Router>
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Elements stripe={getStripe()}>
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         {/* top-left triple-dash hamburger and top-right currency display */}
-        <div className="topbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: 120, paddingLeft: 16 }}>
+        <div className="topbar" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', paddingRight: 24, paddingLeft: 16, paddingTop: 16, paddingBottom: 0, overflow: 'hidden' }}>
           <div style={{width: 40, height: 40}}>
             {!menuOpen && (
               <button className="hamburger" onClick={() => setMenuOpen(true)} aria-label="Open menu">
@@ -146,6 +149,7 @@ const App: React.FC = () => {
               </button>
             )}
           </div>
+          <div style={{flex: 1}} />
           <CurrencyDisplay />
         </div>
 
@@ -163,7 +167,8 @@ const App: React.FC = () => {
 
         <div style={{ 
           flex: 1, 
-          marginBottom: '120px'
+          marginBottom: '20px',
+          marginTop: '-50px'
         }}>
           <Switch>
             <Route path="/" exact component={Dashboard} />
@@ -180,7 +185,7 @@ const App: React.FC = () => {
           </Switch>
         </div>
 
-        <XPBar />
+        <XPBar key={currentAuthUser?.uid} />
 
         {/* Quests Menu Button - Bottom Right, Above Social Menu Button */}
         {!questsMenuOpen && !socialMenuOpen && (
@@ -260,6 +265,7 @@ const App: React.FC = () => {
 
         <DevMenuModal />
       </div>
+      </Elements>
     </Router>
   );
 };

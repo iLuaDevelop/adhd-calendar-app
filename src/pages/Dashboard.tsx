@@ -64,13 +64,8 @@ const Dashboard: React.FC = () => {
     const [templateMinute, setTemplateMinute] = useState<number>(0);
     const [templateAmPm, setTemplateAmPm] = useState<'AM' | 'PM'>('AM');
     const [view, setView] = useState<'day' | 'week' | 'month'>('month');
-    const [devMenuClicks, setDevMenuClicks] = useState(0);
-    const [showDevMenu, setShowDevMenu] = useState(false);
-    const [devXpInput, setDevXpInput] = useState('');
-    const [devPasswordPrompt, setDevPasswordPrompt] = useState(false);
-    const [devPasswordInput, setDevPasswordInput] = useState('');
-    const [devPasswordError, setDevPasswordError] = useState('');
     const [showProfile, setShowProfile] = useState(false);
+    const [isInitialLoginModal, setIsInitialLoginModal] = useState(false);
     const [profile, setProfile] = useState<ProfileData>(() => {
         const stored = localStorage.getItem(PROFILE_KEY);
         return stored ? JSON.parse(stored) : getDefaultProfile();
@@ -121,9 +116,11 @@ const Dashboard: React.FC = () => {
             // Don't show if user is anonymous (isAnonymous = true)
             if (!user) {
                 setShowProfile(true);
+                setIsInitialLoginModal(true);
             } else if (user.isAnonymous) {
                 // Guest user - hide modal
                 setShowProfile(false);
+                setIsInitialLoginModal(false);
             }
         });
         return () => unsubscribe();
@@ -437,40 +434,7 @@ const Dashboard: React.FC = () => {
         return () => window.removeEventListener('petSwitched', handlePetSwitch as EventListener);
     }, []);
 
-    // Listen for dev menu key combo (Ctrl+Shift+D)
-    useEffect(() => {
-        const handleDevMenuKeyCombo = () => {
-            setDevPasswordPrompt(true);
-            setDevMenuClicks(0);
-        };
-
-        window.addEventListener('devMenuKeyCombo', handleDevMenuKeyCombo as EventListener);
-        return () => window.removeEventListener('devMenuKeyCombo', handleDevMenuKeyCombo as EventListener);
-    }, []);
-
-    // Dev Menu
-    const handleDashboardClick = () => {
-        setDevMenuClicks(c => c + 1);
-        if (devMenuClicks + 1 === 7) {
-            setDevPasswordPrompt(true);
-            setDevMenuClicks(0);
-        }
-        setTimeout(() => setDevMenuClicks(0), 3000); // Reset after 3 seconds
-    };
-
-    const handleDevPassword = () => {
-        // Simple password (you can change this)
-        const DEV_PASSWORD = 'adhd123';
-        if (devPasswordInput === DEV_PASSWORD) {
-            setShowDevMenu(true);
-            setDevPasswordPrompt(false);
-            setDevPasswordInput('');
-            setDevPasswordError('');
-        } else {
-            setDevPasswordError('Incorrect password');
-            setDevPasswordInput('');
-        }
-    };
+    // Dev menu is now handled globally in App.tsx with Ctrl+Alt+D+F keyboard shortcut
 
     const devAddXp = (amount: number) => {
         grantXp(amount);
@@ -607,6 +571,8 @@ const Dashboard: React.FC = () => {
             await signInWithEmail(loginEmail, loginPassword);
             setLoginEmail('');
             setLoginPassword('');
+            setIsLoggedIn(true);
+            setIsInitialLoginModal(false);
         } catch (error: any) {
             setLoginError(error.message || 'Login failed. Check your email and password.');
         }
@@ -672,9 +638,10 @@ const Dashboard: React.FC = () => {
         setLoginError('');
         try {
             await signInAsGuest();
-            // Guest signin successful - modal will close when auth state updates
             setLoginEmail('');
             setLoginPassword('');
+            setIsInitialLoginModal(false);
+            setShowProfile(false);
         } catch (error: any) {
             setLoginError('Guest sign-in failed. Please try again.');
         }
@@ -720,6 +687,9 @@ const Dashboard: React.FC = () => {
             setSignupPassword('');
             setSignupUsername('');
             setSignupHashtag('');
+            setIsLoggedIn(true);
+            setIsInitialLoginModal(false);
+            setShowProfile(false);
         } catch (error: any) {
             setSignupError(error.message || 'Sign up failed. Try again.');
         }
@@ -857,7 +827,7 @@ const Dashboard: React.FC = () => {
         <div className="container">
             <div className="header" style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
                 <div>
-                    <h1 onClick={handleDashboardClick} style={{cursor:'pointer', userSelect:'none'}}>Dashboard</h1>
+                    <h1 style={{cursor:'pointer', userSelect:'none'}}>Dashboard</h1>
                     <div className="subtle">Plan your day — quick add tasks or jump to views</div>
                 </div>
                 <div style={{display:'flex', alignItems:'center', gap:0, justifyContent:'space-between'}}>
@@ -1063,476 +1033,6 @@ const Dashboard: React.FC = () => {
                 )}
             </div>
 
-            {/* Developer Password Prompt */}
-            {devPasswordPrompt && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 99998
-                }}>
-                    <div className="panel" style={{maxWidth: 400, padding: 24, backgroundColor: 'var(--panel)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)'}}>
-                        <h2 style={{margin: '0 0 16px 0', textAlign: 'center'}}>Developer Menu</h2>
-                        <p style={{textAlign: 'center', color: 'var(--muted)', marginBottom: 16}}>Enter password to continue</p>
-                        <input
-                            type="password"
-                            className="input"
-                            placeholder="Password"
-                            value={devPasswordInput}
-                            onChange={(e) => setDevPasswordInput(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleDevPassword()}
-                            autoFocus
-                            style={{marginBottom: 12}}
-                        />
-                        {devPasswordError && (
-                            <div style={{color: '#ef4444', marginBottom: 12, fontSize: '0.9rem', textAlign: 'center'}}>
-                                {devPasswordError}
-                            </div>
-                        )}
-                        <div style={{display: 'flex', gap: 8}}>
-                            <button className="btn primary" onClick={handleDevPassword} style={{flex: 1}}>
-                                Unlock
-                            </button>
-                            <button className="btn ghost" onClick={() => { setDevPasswordPrompt(false); setDevPasswordInput(''); setDevPasswordError(''); }} style={{flex: 1}}>
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Developer Menu */}
-            {showDevMenu && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 99999
-                }}>
-                    <div className="panel" style={{maxWidth: 500, maxHeight: '80vh', padding: 20, backgroundColor: 'var(--panel)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', userSelect: 'none', overflow: 'auto'}}>
-                        <h2 style={{margin: '0 0 12px 0', textAlign: 'center'}}>Development Menu</h2>
-                        <div style={{marginBottom: 16, fontSize: '0.9rem', color: 'var(--muted)'}}>
-                            <div>Current XP: {getXp()} | Daily Tasks Created: {getDailyCreationCount()}/{purchases.has(4) ? 6 : 3}</div>
-                            <div>Streak: {streak.current} current | {streak.longest} longest</div>
-                        </div>
-
-                        <div style={{display: 'flex', flexDirection: 'column', gap: 12}}>
-                            {/* XP Controls */}
-                            <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12}}>
-                                <h3 style={{margin: '0 0 8px 0'}}>XP Controls</h3>
-                                <div style={{display: 'flex', gap: 8}}>
-                                    <input
-                                        type="number"
-                                        className="input"
-                                        placeholder="XP amount"
-                                        value={devXpInput}
-                                        onChange={(e) => setDevXpInput(e.target.value)}
-                                        style={{flex: 1}}
-                                    />
-                                    <button className="btn" onClick={() => devAddXp(parseInt(devXpInput) || 0)}>Grant</button>
-                                </div>
-                                <button className="btn ghost" onClick={() => resetXp()} style={{marginTop: 8, width: '100%'}}>Reset XP</button>
-                            </div>
-
-                            {/* Task Limit Controls */}
-                            <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12}}>
-                                <h3 style={{margin: '0 0 8px 0'}}>Task Limit Controls</h3>
-                                <button className="btn ghost" onClick={devResetDailyLimit} style={{width: '100%'}}>Reset Daily Limit</button>
-                            </div>
-
-                            {/* Streak Controls */}
-                            <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12}}>
-                                <h3 style={{margin: '0 0 8px 0'}}>Streak Controls</h3>
-                                <div className="subtle" style={{fontSize: '0.85rem', marginBottom: 8}}>Current: {streak.current} days</div>
-                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8}}>
-                                    <button className="btn ghost" onClick={devAddStreak} style={{fontSize: '0.85rem'}}>+1 Streak</button>
-                                    <button className="btn ghost" onClick={devRemoveStreak} style={{fontSize: '0.85rem'}}>-1 Streak</button>
-                                    <button className="btn ghost" onClick={devResetStreak} style={{fontSize: '0.85rem'}}>Reset</button>
-                                </div>
-                            </div>
-
-                            {/* Purchase Controls */}
-                            <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12}}>
-                                <h3 style={{margin: '0 0 8px 0'}}>Purchases</h3>
-                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8}}>
-                                    <button className="btn ghost" onClick={() => devTogglePurchase(1)} style={{opacity: purchases.has(1) ? 1 : 0.5}}>
-                                        {purchases.has(1) ? '✓' : '✗'} Sunset Theme
-                                    </button>
-                                    <button className="btn ghost" onClick={() => devTogglePurchase(2)} style={{opacity: purchases.has(2) ? 1 : 0.5}}>
-                                        {purchases.has(2) ? '✓' : '✗'} Ocean Theme
-                                    </button>
-                                    <button className="btn ghost" onClick={() => devTogglePurchase(3)} style={{opacity: purchases.has(3) ? 1 : 0.5}}>
-                                        {purchases.has(3) ? '✓' : '✗'} Avatar Border
-                                    </button>
-                                    <button className="btn ghost" onClick={() => devTogglePurchase(4)} style={{opacity: purchases.has(4) ? 1 : 0.5}}>
-                                        {purchases.has(4) ? '✓' : '✗'} Extra Slots
-                                    </button>
-                                    <button className="btn ghost" onClick={() => devTogglePurchase(5)} style={{opacity: purchases.has(5) ? 1 : 0.5}}>
-                                        {purchases.has(5) ? '✓' : '✗'} Custom Avatar
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Social/Friend Testing */}
-                            <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12}}>
-                                <h3 style={{margin: '0 0 8px 0'}}>Social Testing</h3>
-                                <button className="btn ghost" onClick={devAddTestFriend} style={{width: '100%'}}>Add Test Friend (TestBot#9999)</button>
-                            </div>
-
-                            {/* Gem Controls */}
-                            <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12}}>
-                                <h3 style={{margin: '0 0 8px 0'}}>Gem Controls</h3>
-                                <div style={{marginBottom: 8}}>
-                                    <div style={{fontSize: '0.9rem', marginBottom: 8}}>Current Gems: <strong>{currentGems}</strong></div>
-                                    <div style={{display: 'flex', gap: 8}}>
-                                        <input
-                                            type="number"
-                                            className="input"
-                                            placeholder="Gem amount"
-                                            value={gemInput}
-                                            onChange={(e) => setGemInput(e.target.value)}
-                                            style={{flex: 1}}
-                                        />
-                                        <button className="btn" onClick={() => {
-                                            const amount = parseInt(gemInput);
-                                            if (!isNaN(amount) && amount > 0) {
-                                                addGems(amount);
-                                                setCurrentGems(getGems());
-                                                setGemInput('');
-                                                window.dispatchEvent(new Event('currencyUpdated'));
-                                            }
-                                        }}>Add</button>
-                                    </div>
-                                </div>
-                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8}}>
-                                    <button className="btn ghost" onClick={() => {
-                                        setGems(0);
-                                        setCurrentGems(0);
-                                        setGemInput('');
-                                        window.dispatchEvent(new Event('currencyUpdated'));
-                                    }}>Set to 0</button>
-                                    <button className="btn ghost" onClick={() => {
-                                        setGems(1000);
-                                        setCurrentGems(1000);
-                                        setGemInput('');
-                                        window.dispatchEvent(new Event('currencyUpdated'));
-                                    }}>Set to 1000</button>
-                                </div>
-                            </div>
-
-                            {/* Skill Tree Controls */}
-                            <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12}}>
-                                <h3 style={{margin: '0 0 8px 0'}}>Skill Tree Controls</h3>
-                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, maxHeight: 200, overflowY: 'auto'}}>
-                                    {getAllSkills().map((skill) => (
-                                        <button 
-                                            key={skill.id} 
-                                            className="btn ghost" 
-                                            onClick={() => unlockSkill(skill.id)}
-                                            style={{fontSize: '0.75rem', opacity: getUnlockedSkills().includes(skill.id) ? 1 : 0.5}}
-                                        >
-                                            {getUnlockedSkills().includes(skill.id) ? '✓' : '✗'} {skill.name}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Pet Controls */}
-                            <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12, marginBottom: 12}}>
-                                <h3 style={{margin: '0 0 8px 0'}}>Pet Controls</h3>
-                                {pet && (
-                                    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12}}>
-                                        <button className="btn ghost" onClick={() => {
-                                            if (pet) {
-                                                pet.hunger = 0;
-                                                const updatedPet = feedPet('gems');
-                                                if (updatedPet) {
-                                                    setPet(updatedPet);
-                                                    window.dispatchEvent(new CustomEvent('petUpdated', { detail: { pet: updatedPet } }));
-                                                }
-                                            }
-                                        }} style={{fontSize: '0.8rem'}}>
-                                            Feed Pet
-                                        </button>
-                                        <button className="btn ghost" onClick={() => {
-                                            if (pet) {
-                                                pet.happiness = 100;
-                                                const updatedPet = updatePetStats();
-                                                if (updatedPet) {
-                                                    setPet(updatedPet);
-                                                    window.dispatchEvent(new CustomEvent('petUpdated', { detail: { pet: updatedPet } }));
-                                                }
-                                            }
-                                        }} style={{fontSize: '0.8rem'}}>
-                                            Max Happiness
-                                        </button>
-                                        <button className="btn ghost" onClick={() => {
-                                            if (pet) {
-                                                pet.health = 100;
-                                                const updatedPet = updatePetStats();
-                                                if (updatedPet) {
-                                                    setPet(updatedPet);
-                                                    window.dispatchEvent(new CustomEvent('petUpdated', { detail: { pet: updatedPet } }));
-                                                }
-                                            }
-                                        }} style={{fontSize: '0.8rem'}}>
-                                            Max Health
-                                        </button>
-                                        <button className="btn ghost" onClick={() => {
-                                            if (pet) {
-                                                pet.level = Math.min(pet.level + 1, 10);
-                                                const updatedPet = updatePetStats();
-                                                if (updatedPet) {
-                                                    setPet(updatedPet);
-                                                    window.dispatchEvent(new CustomEvent('petUpdated', { detail: { pet: updatedPet } }));
-                                                }
-                                            }
-                                        }} style={{fontSize: '0.8rem'}}>
-                                            +1 Level
-                                        </button>
-                                    </div>
-                                )}
-                                <div style={{marginBottom: 12}}>
-                                    <h4 style={{margin: '0 0 8px 0', fontSize: '0.8rem', color: 'var(--muted)'}}>Delete Pet</h4>
-                                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: 6}}>
-                                        {ownedPets.map(p => (
-                                            <button
-                                                key={p.id}
-                                                className="btn ghost"
-                                                onClick={() => {
-                                                    if (window.confirm(`Delete ${p.name}?`)) {
-                                                        deletePet(p.id);
-                                                        setOwnedPets(getAllPets());
-                                                        setPet(getPet());
-                                                        alert(`${p.name} deleted!`);
-                                                    }
-                                                }}
-                                                style={{fontSize: '0.7rem', padding: '4px 8px'}}
-                                            >
-                                                Delete {p.name}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Crate Timer Controls */}
-                            <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12}}>
-                                <h3 style={{margin: '0 0 8px 0'}}>Crate Timer Controls</h3>
-                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8}}>
-                                    <button className="btn ghost" onClick={() => {
-                                        localStorage.setItem(BRONZE_CRATE_KEY, '0');
-                                        alert('Bronze crate timer reset!');
-                                    }} style={{fontSize: '0.8rem'}}>
-                                        Reset Bronze Timer
-                                    </button>
-                                    <button className="btn ghost" onClick={() => {
-                                        localStorage.setItem(BRONZE_CRATE_KEY, String(Date.now() - (12 * 60 * 60 * 1000)));
-                                        alert('Bronze crate ready!');
-                                    }} style={{fontSize: '0.8rem'}}>
-                                        Bronze Ready Now
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Title Controls */}
-                            <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12, marginBottom: 12}}>
-                                <h3 style={{margin: '0 0 8px 0'}}>Title Controls</h3>
-                                <div style={{marginBottom: 12}}>
-                                    <button className="btn ghost" onClick={() => {
-                                        unlockTitle('developer');
-                                        setUnlockedTitles(getUnlockedTitles());
-                                        alert('Developer title unlocked!');
-                                    }} style={{fontSize: '0.8rem', width: '100%', marginBottom: 8}}>
-                                        Unlock Developer Title
-                                    </button>
-                                    <button className="btn ghost" onClick={() => {
-                                        setSelectedTitle('developer');
-                                        setSelectedTitleState(getSelectedTitle());
-                                        alert('Developer title equipped!');
-                                    }} style={{fontSize: '0.8rem', width: '100%'}}>
-                                        Equip Developer Title
-                                    </button>
-                                </div>
-                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8}}>
-                                    {getUnlockedTitles().map(title => (
-                                        <button
-                                            key={title.id}
-                                            className="btn ghost"
-                                            onClick={() => {
-                                                setSelectedTitle(title.id);
-                                                setSelectedTitleState(getSelectedTitle());
-                                            }}
-                                            style={{
-                                                fontSize: '0.75rem',
-                                                padding: 6,
-                                                background: selectedTitle?.id === title.id ? 'rgba(167, 139, 250, 0.3)' : 'transparent',
-                                                border: selectedTitle?.id === title.id ? '1px solid var(--accent)' : '1px solid var(--border)',
-                                            }}
-                                        >
-                                            {title.id === 'developer' ? (
-                                                <span style={{
-                                                    background: 'linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899)',
-                                                    WebkitBackgroundClip: 'text',
-                                                    WebkitTextFillColor: 'transparent',
-                                                    backgroundClip: 'text',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    {title.name}
-                                                </span>
-                                            ) : (
-                                                title.name
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Critical Hit Testing */}
-                            <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12}}>
-                                <h3 style={{margin: '0 0 8px 0'}}>Critical Hit Testing</h3>
-                                <div style={{marginBottom: 12, fontSize: '0.85rem', color: 'var(--muted)'}}>
-                                    <div>2x XP Chance: <strong>{criticalChances.criticalHitChance}%</strong></div>
-                                    <div>Crate Chance: <strong>{criticalChances.crateRewardChance}%</strong></div>
-                                </div>
-                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8}}>
-                                    <button 
-                                        className={`btn ${criticalTestMode ? 'primary' : 'ghost'}`}
-                                        onClick={() => {
-                                            enableCriticalTestMode();
-                                            setCriticalTestMode(true);
-                                            setCriticalChances(getCriticalChances());
-                                            alert('Critical test mode enabled (100% chance)!');
-                                        }} 
-                                        style={{fontSize: '0.8rem'}}
-                                    >
-                                        {criticalTestMode ? '✓ ' : ''}Max Critical (100%)
-                                    </button>
-                                    <button 
-                                        className="btn ghost"
-                                        onClick={() => {
-                                            disableCriticalTestMode();
-                                            setCriticalTestMode(false);
-                                            setCriticalChances(getCriticalChances());
-                                            alert('Critical test mode disabled (normal chances)!');
-                                        }} 
-                                        style={{fontSize: '0.8rem'}}
-                                    >
-                                        Reset Critical
-                                    </button>
-                                </div>
-                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8}}>
-                                    <button 
-                                        className={`btn ${crateTestMode ? 'primary' : 'ghost'}`}
-                                        onClick={() => {
-                                            enableCrateTestMode();
-                                            setCrateTestMode(true);
-                                            setCriticalChances(getCriticalChances());
-                                            alert('Crate test mode enabled (100% chance)!');
-                                        }} 
-                                        style={{fontSize: '0.8rem'}}
-                                    >
-                                        {crateTestMode ? '✓ ' : ''}Max Crate (100%)
-                                    </button>
-                                    <button 
-                                        className="btn ghost"
-                                        onClick={() => {
-                                            disableCrateTestMode();
-                                            setCrateTestMode(false);
-                                            setCriticalChances(getCriticalChances());
-                                            alert('Crate test mode disabled (normal chances)!');
-                                        }} 
-                                        style={{fontSize: '0.8rem'}}
-                                    >
-                                        Reset Crate
-                                    </button>
-                                </div>
-                                <button 
-                                    className="btn ghost"
-                                    onClick={() => {
-                                        grantXp(10);
-                                        alert('Granted 10 XP - check for critical!');
-                                    }} 
-                                    style={{fontSize: '0.8rem', width: '100%'}}
-                                >
-                                    Test Grant 10 XP
-                                </button>
-                            </div>
-
-                            {/* Quest Controls */}
-                            <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12}}>
-                                <h3 style={{margin: '0 0 8px 0'}}>Quest Controls</h3>
-                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8}}>
-                                    <button className="btn ghost" onClick={() => {
-                                        const quests = JSON.parse(localStorage.getItem(QUESTS_KEY) || '[]');
-                                        quests.forEach((q: any) => q.completed = false);
-                                        localStorage.setItem(QUESTS_KEY, JSON.stringify(quests));
-                                        window.dispatchEvent(new CustomEvent('questsReset'));
-                                        alert('All quests reset!');
-                                    }} style={{fontSize: '0.8rem'}}>
-                                        Reset All Quests
-                                    </button>
-                                    <button className="btn ghost" onClick={() => {
-                                        const quests = JSON.parse(localStorage.getItem(QUESTS_KEY) || '[]');
-                                        quests.forEach((q: any) => q.completed = true);
-                                        localStorage.setItem(QUESTS_KEY, JSON.stringify(quests));
-                                        window.dispatchEvent(new CustomEvent('questsReset'));
-                                        alert('All quests completed!');
-                                    }} style={{fontSize: '0.8rem'}}>
-                                        Complete All Quests
-                                    </button>
-                                    <button className="btn ghost" onClick={() => {
-                                        const quests = JSON.parse(localStorage.getItem(QUESTS_KEY) || '[]');
-                                        const quest = quests.find((q: any) => q.id === 1);
-                                        if (quest) quest.progress = 5;
-                                        localStorage.setItem(QUESTS_KEY, JSON.stringify(quests));
-                                        window.dispatchEvent(new CustomEvent('questsReset'));
-                                        alert('Task Master quest progressed!');
-                                    }} style={{fontSize: '0.8rem'}}>
-                                        +5 Tasks (Q1)
-                                    </button>
-                                    <button className="btn ghost" onClick={() => {
-                                        const quests = JSON.parse(localStorage.getItem(QUESTS_KEY) || '[]');
-                                        const quest = quests.find((q: any) => q.id === 4);
-                                        if (quest) quest.progress = 7;
-                                        localStorage.setItem(QUESTS_KEY, JSON.stringify(quests));
-                                        window.dispatchEvent(new CustomEvent('questsReset'));
-                                        alert('Streak Keeper quest progressed!');
-                                    }} style={{fontSize: '0.8rem'}}>
-                                        +7 Streak (Q4)
-                                    </button>
-                                    <button className="btn ghost" onClick={() => {
-                                        const quests = JSON.parse(localStorage.getItem(QUESTS_KEY) || '[]');
-                                        const quest = quests.find((q: any) => q.id === 5);
-                                        if (quest) quest.progress = 5;
-                                        localStorage.setItem(QUESTS_KEY, JSON.stringify(quests));
-                                        window.dispatchEvent(new CustomEvent('questsReset'));
-                                        alert('Level Up quest progressed!');
-                                    }} style={{fontSize: '0.8rem'}}>
-                                        +Level 5 (Q5)
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Close */}
-                            <button className="btn" onClick={() => setShowDevMenu(false)} style={{width: '100%'}}>Close</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* Quick Add Templates Popup */}
             {showTemplates && !selectedTemplate && (
                 <div style={{
@@ -1689,7 +1189,7 @@ const Dashboard: React.FC = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     zIndex: 9998
-                }} onClick={() => setShowProfile(false)}>
+                }} onClick={() => !isInitialLoginModal && setShowProfile(false)}>
                     <div className="panel custom-scrollbar" style={{
                         maxWidth: 500,
                         padding: 24,
@@ -1741,6 +1241,7 @@ const Dashboard: React.FC = () => {
                                                 value={loginEmail}
                                                 onChange={(e) => setLoginEmail(e.target.value)}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                                                autoFocus
                                             />
                                         </div>
                                         <div style={{marginBottom: 16}}>

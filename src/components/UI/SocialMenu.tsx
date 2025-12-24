@@ -385,7 +385,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
     if (!currentUser) return;
 
     try {
-      await deleteConversationFirestore(currentUser.uid, friendUid);
+      await deleteConversationFirebase(currentUser.uid, friendUid);
       if (selectedFriend?.uid === friendUid) {
         setSelectedFriend(null);
       }
@@ -801,7 +801,7 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
                     </div>
                   </div>
 
-                  <div style={{ flex: 1, overflowY: 'auto', marginBottom: 12, minHeight: 200, maxHeight: 300, padding: 8, background: 'var(--panel)', borderRadius: 6, position: 'relative' }} ref={messagesContainerRef} onScroll={handleMessagesScroll}>
+                  <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', marginBottom: 12, minHeight: 200, maxHeight: 300, padding: 8, background: 'var(--panel)', borderRadius: 6, position: 'relative', width: '100%' }} ref={messagesContainerRef} onScroll={handleMessagesScroll}>
                     {messages.length === 0 ? (
                       <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 16 }}>
                         No messages yet. Start a conversation!
@@ -817,12 +817,17 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
                             borderRadius: 6,
                             color: msg.senderUid === currentUser?.uid ? 'white' : 'var(--text)',
                             textAlign: msg.senderUid === currentUser?.uid ? 'right' : 'left',
+                            wordWrap: 'break-word',
+                            overflowWrap: 'break-word',
+                            wordBreak: 'break-word',
+                            maxWidth: '100%',
+                            overflow: 'hidden',
                           }}
                         >
                           <div style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: 4 }}>
                             {new Date(msg.createdAt).toLocaleTimeString()}
                           </div>
-                          <div>{msg.text}</div>
+                          <div style={{ wordWrap: 'break-word', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{msg.text}</div>
                         </div>
                       ))
                     )}

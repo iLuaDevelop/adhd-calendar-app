@@ -5,12 +5,27 @@ import CrateRewardModal from '../CrateRewardModal/CrateRewardModal';
 
 const XPBar: React.FC = () => {
   const [xp, setXp] = useState<number>(getXp());
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const prevLevelRef = useRef<number>(getLevelFromXp(xp));
   const [showCongrats, setShowCongrats] = useState(false);
   const [confetti, setConfetti] = useState<number[]>([]);
   const [popups, setPopups] = useState<Array<{ id: number; amount: number; isCritical?: boolean }>>([]);
   const [showCrateModal, setShowCrateModal] = useState(false);
+
+  useEffect(() => {
+    // Mark initial load as done on component mount after a longer delay
+    // This ensures all XP data is loaded before we start checking for level ups
+    const initialLevel = getLevelFromXp(getXp());
+    console.log('[XPBar] Mount - initial level:', initialLevel);
+    const timer = setTimeout(() => {
+      const afterDelay = getLevelFromXp(getXp());
+      console.log('[XPBar] Initial load timer done - level:', afterDelay);
+      prevLevelRef.current = afterDelay;
+      setIsInitialLoad(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
   const STACK_SPACING = 72; // px between stacked popups
 
   const level = getLevelFromXp(xp);
@@ -23,7 +38,9 @@ const XPBar: React.FC = () => {
     const POPUP_DURATION = 4200; // ms — how long each +XP popup stays visible
     const MAX_STACK = 5;
     const BRONZE_CRATE_KEY = 'adhd_bronze_crate_last_opened';
-    const onUpdate = (e: any) => setXp(e.detail?.xp ?? getXp());
+    const onUpdate = (e: any) => {
+      setXp(e.detail?.xp ?? getXp());
+    };
     const onGranted = (e: any) => {
       const amount = e.detail?.amount ?? 0;
       const isCritical = e.detail?.isCritical ?? false;
@@ -60,8 +77,11 @@ const XPBar: React.FC = () => {
 
   useEffect(() => {
     const prev = prevLevelRef.current;
-    if (level > prev) {
-      // level up!
+    console.log('[XPBar] Level check:', { level, prev, isInitialLoad, willTrigger: level > prev && !isInitialLoad });
+    // Only check for level up if NOT initial load AND level actually increased
+    if (level > prev && !isInitialLoad) {
+      console.log('[XPBar] LEVEL UP TRIGGERED - playing sound');
+      // level up! (but only if not initial load)
       playLevelUpSound();
       setShowCongrats(true);
       setConfetti(Array.from({ length: 20 }, (_, i) => i));
@@ -72,8 +92,9 @@ const XPBar: React.FC = () => {
         clearTimeout(t2);
       };
     }
+    // Always update prevLevelRef, even during initial load
     prevLevelRef.current = level;
-  }, [level]);
+  }, [level, isInitialLoad]);
 
   const grantXp = (amount = 10) => {
     grantXpService(amount);

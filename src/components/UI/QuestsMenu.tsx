@@ -20,6 +20,75 @@ interface Quest {
   completed: boolean;
 }
 
+const DEFAULT_QUESTS: Quest[] = [
+  {
+    id: 1,
+    title: 'Task Master',
+    description: 'Complete 5 tasks',
+    category: 'daily',
+    progress: 0,
+    target: 5,
+    reward: { xp: 50, gems: 10 },
+    icon: '✅',
+    completed: false,
+  },
+  {
+    id: 2,
+    title: 'Focus Time',
+    description: 'Use the focus timer for 30 minutes',
+    category: 'daily',
+    progress: 0,
+    target: 30,
+    reward: { xp: 30, gems: 5 },
+    icon: '⏱️',
+    completed: false,
+  },
+  {
+    id: 3,
+    title: 'Social Butterfly',
+    description: 'Add 3 friends to your social circle',
+    category: 'weekly',
+    progress: 0,
+    target: 3,
+    reward: { xp: 100, gems: 25 },
+    icon: '👥',
+    completed: false,
+  },
+  {
+    id: 4,
+    title: 'Streak Keeper',
+    description: 'Maintain a 7-day streak',
+    category: 'weekly',
+    progress: 0,
+    target: 7,
+    reward: { xp: 150, gems: 30 },
+    icon: '🔥',
+    completed: false,
+  },
+  {
+    id: 5,
+    title: 'Level Up',
+    description: 'Reach Level 5',
+    category: 'long-term',
+    progress: 0,
+    target: 5,
+    reward: { xp: 500, gems: 100 },
+    icon: '⭐',
+    completed: false,
+  },
+  {
+    id: 6,
+    title: 'Premium Journey',
+    description: 'Subscribe to Plus for 30 days',
+    category: 'long-term',
+    progress: 0,
+    target: 30,
+    reward: { xp: 300, gems: 150 },
+    icon: '💎',
+    completed: false,
+  },
+];
+
 const QuestsMenu: React.FC<QuestMenuProps> = ({ open, onClose }) => {
   const history = useHistory();
   const [quests, setQuests] = useState<Quest[]>(() => {
@@ -27,7 +96,7 @@ const QuestsMenu: React.FC<QuestMenuProps> = ({ open, onClose }) => {
     if (stored) {
       return JSON.parse(stored);
     }
-    return [];
+    return DEFAULT_QUESTS;
   });
 
   useEffect(() => {
@@ -36,6 +105,8 @@ const QuestsMenu: React.FC<QuestMenuProps> = ({ open, onClose }) => {
       const stored = localStorage.getItem(QUESTS_KEY);
       if (stored) {
         setQuests(JSON.parse(stored));
+      } else {
+        setQuests(DEFAULT_QUESTS);
       }
     }
   }, [open]);

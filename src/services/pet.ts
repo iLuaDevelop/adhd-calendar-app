@@ -385,7 +385,7 @@ export const setCurrentPet = (petId: string): void => {
 };
 
 // Buy a new pet from the shop
-export const buyPet = (petShopId: string, customName?: string): Pet | null => {
+export const buyPet = async (petShopId: string, customName?: string): Promise<Pet | null> => {
   console.log('[pet] 🛍️ buyPet called with petShopId:', petShopId);
   const petShop = PET_SHOP.find(p => p.petId === petShopId);
   if (!petShop) {
@@ -431,9 +431,7 @@ export const buyPet = (petShopId: string, customName?: string): Pet | null => {
 
   // Sync to Firestore FIRST with all pets + new pet as current
   console.log('[pet] 📤 Syncing new pet purchase to Firestore:', newPet.id);
-  syncPetsToFirestore(allPets, newPet.id).catch(err => {
-    console.error('[pet] ❌ Failed to sync pet purchase:', err);
-  });
+  await syncPetsToFirestore(allPets, newPet.id);
   
   // Set as current pet in localStorage and dispatch event
   localStorage.setItem(CURRENT_PET_KEY, newPet.id);
