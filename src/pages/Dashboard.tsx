@@ -13,7 +13,7 @@ import { getPet, updatePetStats, getPetEmoji, feedPet, getAllPets, getCurrentPet
 import { getUnlockedSkills, unlockSkill, getAllSkills } from '../services/skillTree';
 import { getTitles, unlockTitle, setSelectedTitle, getUnlockedTitles, ALL_TITLES, getSelectedTitle } from '../services/titles';
 import { enableCriticalTestMode, disableCriticalTestMode, isCriticalTestModeEnabled, getCriticalChances, enableCrateTestMode, disableCrateTestMode, isCrateTestModeEnabled } from '../services/critical';
-import { signUpWithEmail, signInWithEmail, signOutUser, onAuthChange, getCurrentUserProfile } from '../services/auth';
+import { signUpWithEmail, signInWithEmail, signOutUser, onAuthChange, getCurrentUserProfile, signInAsGuest } from '../services/auth';
 import { auth, db } from '../services/firebase';
 import { loadGameProgress } from '../services/gameProgress';
 
@@ -112,6 +112,22 @@ const Dashboard: React.FC = () => {
 
     const taskLimit = purchases.has(4) ? 6 : 3;
     const displayedTasks = tasks.slice(0, taskLimit);
+
+    // Show login modal on initial load if not authenticated
+    useEffect(() => {
+        // Check if user is already logged in
+        const unsubscribe = onAuthChange((user) => {
+            // Show modal only if no user AND not already shown
+            // Don't show if user is anonymous (isAnonymous = true)
+            if (!user) {
+                setShowProfile(true);
+            } else if (user.isAnonymous) {
+                // Guest user - hide modal
+                setShowProfile(false);
+            }
+        });
+        return () => unsubscribe();
+    }, []);
 
     // Anti-spam: Track daily task creations (not affected by deletions)
     const getTodayDate = () => new Date().toDateString();
@@ -649,6 +665,18 @@ const Dashboard: React.FC = () => {
             await signOutUser();
         } catch (error: any) {
             setLoginError('Logout failed');
+        }
+    };
+
+    const handleGuestSignIn = async () => {
+        setLoginError('');
+        try {
+            await signInAsGuest();
+            // Guest signin successful - modal will close when auth state updates
+            setLoginEmail('');
+            setLoginPassword('');
+        } catch (error: any) {
+            setLoginError('Guest sign-in failed. Please try again.');
         }
     };
 
@@ -1675,7 +1703,7 @@ const Dashboard: React.FC = () => {
                             // Login/Signup Screen
                             <div>
                                 {/* Tabs */}
-                                <div style={{display: 'flex', gap: 8, marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 0}}>
+                                <div style={{display: 'flex', gap: 12, marginBottom: 24}}>
                                     <button
                                         className={authTab === 'login' ? 'btn' : 'btn ghost'}
                                         onClick={() => {
@@ -1683,9 +1711,9 @@ const Dashboard: React.FC = () => {
                                             setLoginError('');
                                             setSignupError('');
                                         }}
-                                        style={{flex: 1, borderBottom: authTab === 'login' ? '2px solid var(--accent)' : 'none'}}
+                                        style={{flex: 1, borderBottom: authTab === 'login' ? '2px solid var(--accent)' : '1px solid var(--border)', padding: '4px 12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '32px'}}
                                     >
-                                        Login
+                                        Existing Account
                                     </button>
                                     <button
                                         className={authTab === 'signup' ? 'btn' : 'btn ghost'}
@@ -1694,7 +1722,7 @@ const Dashboard: React.FC = () => {
                                             setLoginError('');
                                             setSignupError('');
                                         }}
-                                        style={{flex: 1, borderBottom: authTab === 'signup' ? '2px solid var(--accent)' : 'none'}}
+                                        style={{flex: 1, borderBottom: authTab === 'signup' ? '2px solid var(--accent)' : '1px solid var(--border)', padding: '4px 12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '32px'}}
                                     >
                                         Sign Up
                                     </button>
@@ -1741,8 +1769,8 @@ const Dashboard: React.FC = () => {
                                         <button className="btn" onClick={handleLogin} style={{width: '100%', marginBottom: 12}}>
                                             Login
                                         </button>
-                                        <button className="btn ghost" onClick={() => setShowProfile(false)} style={{width: '100%'}}>
-                                            Close
+                                        <button className="btn ghost" onClick={handleGuestSignIn} style={{width: '100%'}}>
+                                            Play as Guest
                                         </button>
                                     </div>
                                 ) : (

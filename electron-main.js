@@ -1,7 +1,17 @@
+// Disable V8 code caching and ICU issues
+process.noDeprecation = true;
+process.env.ELECTRON_OZONE_PLATFORM_HINT = 'auto';
+process.env.ELECTRON_ENABLE_LOGGING = '0';
+
 const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
+const fs = require('fs');
+
+// Disable Chromium media codecs to avoid ffmpeg.dll loading
+app.commandLine.appendSwitch('disable-features', 'PlatformMediaCodecs');
 
 let mainWindow;
+const isDev = process.env.ELECTRON_START_URL ? true : false;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -11,17 +21,36 @@ function createWindow() {
     minHeight: 600,
     webPreferences: {
       nodeIntegration: false,
-      contextIsolation: true,
+      contextIsolation: false,
       enableRemoteModule: false,
+      sandbox: false,
     },
   });
 
-  const startUrl = process.env.ELECTRON_START_URL || `file://${path.join(__dirname, '../dist/index.html')}`;
+  let startUrl;
+  if (isDev || process.env.ELECTRON_START_URL) {
+    startUrl = process.env.ELECTRON_START_URL || 'http://localhost:3000';
+  } else {
+    // In production, the dist folder is inside app.asar in the resources folder
+    // Try multiple paths
+    let distPath = path.join(__dirname, '..', 'resources', 'app.asar.unpacked', 'dist', 'index.html');
+    if (!fs.existsSync(distPath)) {
+      // If unpacked version doesn't exist, try the asar version
+      distPath = path.join(__dirname, '..', 'resources', 'app', 'dist', 'index.html');
+    }
+    if (!fs.existsSync(distPath)) {
+      // Last resort - try relative to app
+      distPath = path.join(__dirname, 'dist', 'index.html');
+    }
+    startUrl = `file://${distPath}`;
+    console.log('Using dist path:', distPath, 'Exists:', fs.existsSync(distPath));
+  }
 
-  console.log('Loading URL:', startUrl);
+  console.log('Loading URL:', startUrl, 'isDev:', isDev);
   mainWindow.loadURL(startUrl);
 
-  if (process.env.ELECTRON_START_URL) {
+  // Only open DevTools in development mode
+  if (isDev || process.env.ELECTRON_START_URL) {
     mainWindow.webContents.openDevTools();
   }
 

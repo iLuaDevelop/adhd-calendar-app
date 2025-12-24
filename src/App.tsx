@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { HashRouter as Router, Route, Switch } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Dashboard from './pages/Dashboard';
 import DayView from './pages/DayView';
@@ -29,7 +29,13 @@ const App: React.FC = () => {
   const [conversations, setConversations] = useState<any[]>([]);
   const [friendRequests, setFriendRequests] = useState<any[]>([]);
   const [currentAuthUser, setCurrentAuthUser] = useState<any>(null);
+  const [forceRender, setForceRender] = useState(false);
   const keySequenceRef = React.useRef<string[]>([]);
+
+  // Force re-render immediately on mount to ensure all elements display
+  React.useLayoutEffect(() => {
+    setForceRender(true);
+  }, []);
 
   // Initialize AudioContext on first user interaction
   useEffect(() => {

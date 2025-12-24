@@ -1,6 +1,7 @@
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
+  signInAnonymously,
   signOut,
   onAuthStateChanged,
   User
@@ -92,4 +93,16 @@ export const onAuthChange = (callback: (user: User | null) => void) => {
 export const getCurrentUserProfile = async (uid: string): Promise<UserProfile | null> => {
   const userDoc = await getDoc(doc(db, "users", uid));
   return userDoc.exists() ? (userDoc.data() as UserProfile) : null;
+};
+
+// Sign in as guest anonymously
+export const signInAsGuest = async (): Promise<User> => {
+  try {
+    const result = await signInAnonymously(auth);
+    console.log('[Auth] Guest sign-in successful:', result.user.uid);
+    return result.user;
+  } catch (error: any) {
+    console.error('[Auth] Guest sign-in failed:', error.code, error.message);
+    throw error;
+  }
 };

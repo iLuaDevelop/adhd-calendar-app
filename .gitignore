@@ -1,2 +1,9 @@
-node_modulesdist/
 node_modules
+dist/
+out/
+build/
+.DS_Store
+*.log
+.env.local
+customSign.js
+preload.js
