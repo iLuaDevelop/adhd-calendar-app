@@ -34,8 +34,8 @@ const ToastDisplay: React.FC = () => {
       },
       warning: {
         ...baseStyles,
-        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(245, 158, 11, 0.85) 100%)',
-        border: '1px solid rgba(245, 158, 11, 0.9)',
+        background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.95) 0%, rgba(139, 92, 246, 0.85) 100%)',
+        border: '1px solid rgba(168, 85, 247, 0.9)',
         color: '#fff',
       },
       info: {

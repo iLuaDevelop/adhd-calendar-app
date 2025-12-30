@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { usePreferences } from '../context/PreferencesContext';
+import { useLanguage } from '../context/LanguageContext';
 import Button from '../components/UI/Button';
 import { useToast } from '../context/ToastContext';
 import { resetXp } from '../services/xp';
@@ -8,6 +9,8 @@ const PURCHASES_KEY = 'adhd_purchases';
 
 const Settings: React.FC = () => {
     const { showToast } = useToast();
+    const { language, setLanguage } = useLanguage();
+    const { t } = useLanguage();
     const { preferences, setPreferences } = usePreferences();
     const [localTheme] = useState(preferences.theme || 'dark');
     const [notificationsEnabled, setNotificationsEnabled] = useState(preferences.notificationsEnabled ?? true);
@@ -29,28 +32,40 @@ const Settings: React.FC = () => {
         <div className="container">
             <div className="panel" style={{maxWidth:900,margin:'24px auto'}}>
                 <div style={{textAlign: 'center', marginBottom: 24}}>
-                    <h2 style={{margin: '0 0 8px 0', fontSize: '2.5rem'}}>Settings</h2>
-                    <div className="subtle" style={{fontSize: '1.1rem'}}>Customize your experience</div>
+                    <h2 style={{margin: '0 0 8px 0', fontSize: '2.5rem'}}>{t('settings.title')}</h2>
+                    <div className="subtle" style={{fontSize: '1.1rem'}}>{t('settings.customize')}</div>
                 </div>
 
                 <div className="settings-grid">
                     <section className="settings-section panel" style={{padding:16}}>
-                        <h4 style={{marginTop:0}}>Appearance</h4>
+                        <h4 style={{marginTop:0}}>{t('settings.language')}</h4>
                         <div className="setting-row">
-                            <label>Theme</label>
+                            <label>{t('settings.chooseLanguage')}</label>
                             <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-                                <button className={`btn ${preferences.theme === 'light' ? '' : 'ghost'}`} onClick={() => pickTheme('light')}>Light</button>
-                                <button className={`btn ${preferences.theme === 'dark' ? '' : 'ghost'}`} onClick={() => pickTheme('dark')}>Dark</button>
-                                {purchases.has(1) && <button className={`btn ${preferences.theme === 'sunset' ? '' : 'ghost'}`} onClick={() => pickTheme('sunset')}>Sunset</button>}
-                                {purchases.has(2) && <button className={`btn ${preferences.theme === 'ocean' ? '' : 'ghost'}`} onClick={() => pickTheme('ocean')}>Ocean</button>}
+                                <button className={`btn ${language === 'en' ? '' : 'ghost'}`} onClick={() => { setLanguage('en'); showToast(t('settings.languageChanged'), 'success'); }}>English</button>
+                                <button className={`btn ${language === 'es' ? '' : 'ghost'}`} onClick={() => { setLanguage('es'); showToast(t('settings.languageChanged'), 'success'); }}>Español</button>
+                                <button className={`btn ${language === 'fr' ? '' : 'ghost'}`} onClick={() => { setLanguage('fr'); showToast(t('settings.languageChanged'), 'success'); }}>Français</button>
                             </div>
                         </div>
                     </section>
 
                     <section className="settings-section panel" style={{padding:16}}>
-                        <h4 style={{marginTop:0}}>Notifications</h4>
+                        <h4 style={{marginTop:0}}>{t('settings.appearance')}</h4>
                         <div className="setting-row">
-                            <label style={{marginRight:12}}>Enable notifications</label>
+                            <label>{t('settings.theme')}</label>
+                            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                                <button className={`btn ${preferences.theme === 'light' ? '' : 'ghost'}`} onClick={() => pickTheme('light')}>{t('settings.light')}</button>
+                                <button className={`btn ${preferences.theme === 'dark' ? '' : 'ghost'}`} onClick={() => pickTheme('dark')}>{t('settings.dark')}</button>
+                                {purchases.has(1) && <button className={`btn ${preferences.theme === 'sunset' ? '' : 'ghost'}`} onClick={() => pickTheme('sunset')}>{t('settings.sunset')}</button>}
+                                {purchases.has(2) && <button className={`btn ${preferences.theme === 'ocean' ? '' : 'ghost'}`} onClick={() => pickTheme('ocean')}>{t('settings.ocean')}</button>}
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="settings-section panel" style={{padding:16}}>
+                        <h4 style={{marginTop:0}}>{t('settings.notifications')}</h4>
+                        <div className="setting-row">
+                            <label style={{marginRight:12}}>{t('settings.enableNotifications')}</label>
                             <label className="switch">
                                 <input type="checkbox" checked={notificationsEnabled} onChange={(e) => setNotificationsEnabled(e.target.checked)} />
                                 <span className="slider" />
@@ -60,22 +75,22 @@ const Settings: React.FC = () => {
                     </section>
 
                     <section className="settings-section panel" style={{padding:16}}>
-                        <h4 style={{marginTop:0}}>Account</h4>
+                        <h4 style={{marginTop:0}}>{t('settings.account')}</h4>
                         <div className="setting-row">
-                            <label>Export data</label>
+                            <label>{t('settings.exportData')}</label>
                             <div>
-                                <Button onClick={() => showToast('Exporting...', 'info')}>Export JSON</Button>
+                                <Button onClick={() => showToast('Exporting...', 'info')}>{t('settings.exportJSON')}</Button>
                             </div>
                         </div>
                         <div style={{marginTop:12}} className="setting-row">
-                            <label>Reset Level</label>
+                            <label>{t('settings.resetLevel')}</label>
                             <div>
                                 <Button variant="ghost" onClick={() => {
                                     if (confirm('Reset your XP to zero? This cannot be undone.')) {
                                         resetXp();
                                         showToast('XP reset to 0', 'success');
                                     }
-                                }}>Reset XP</Button>
+                                }}>{t('settings.resetXp')}</Button>
                             </div>
                         </div>
                     </section>
