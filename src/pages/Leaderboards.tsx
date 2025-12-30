@@ -9,6 +9,7 @@ interface LeaderboardEntry {
     userId: string;
     username: string;
     avatar: string;
+    customAvatarUrl?: string;
     xp: number;
     level: number;
     currentStreak?: number;
@@ -76,6 +77,7 @@ const Leaderboards: React.FC = () => {
                     userId: player.userId,
                     username: player.username,
                     avatar: player.avatar,
+                    customAvatarUrl: player.customAvatarUrl,
                     xp: player.xp,
                     level: player.level,
                     currentStreak: player.currentStreak,
@@ -188,8 +190,24 @@ const Leaderboards: React.FC = () => {
                                     fontSize: '1.8rem',
                                     minWidth: 40,
                                     textAlign: 'center',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
                                 }}>
-                                    {entry.avatar}
+                                    {entry.customAvatarUrl ? (
+                                        <img 
+                                            src={entry.customAvatarUrl} 
+                                            alt={entry.username}
+                                            style={{
+                                                width: '2rem',
+                                                height: '2rem',
+                                                borderRadius: '50%',
+                                                objectFit: 'cover'
+                                            }}
+                                        />
+                                    ) : (
+                                        entry.avatar
+                                    )}
                                 </div>
 
                                 <div style={{ flex: 1 }}>

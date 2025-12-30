@@ -22,6 +22,7 @@ export interface LeaderboardPlayer {
   username: string;
   email?: string;
   avatar: string;
+  customAvatarUrl?: string;
   xp: number;
   level: number;
   tasksCompleted: number;
@@ -94,6 +95,7 @@ export const syncPlayerToLeaderboard = async (): Promise<void> => {
       userId: user.uid,
       username: profile.username || user.email?.split('@')[0] || 'Player',
       avatar: profile.avatar || '👤',
+      customAvatarUrl: profile.customAvatarUrl || null,
       xp: xp || 0,
       level: Math.floor((xp || 0) / 500) + 1,
       gems: gems || 0,
@@ -109,6 +111,7 @@ export const syncPlayerToLeaderboard = async (): Promise<void> => {
     await setDoc(profileRef, {
       username: profile.username || user.email?.split('@')[0] || 'Player',
       avatar: profile.avatar || '👤',
+      customAvatarUrl: profile.customAvatarUrl || null,
       userId: user.uid,
       lastSeen: serverTimestamp(),
     }, { merge: true });
