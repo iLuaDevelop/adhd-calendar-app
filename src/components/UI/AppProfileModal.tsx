@@ -41,9 +41,20 @@ const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
   const [selectedTitle, setSelectedTitle] = useState<any>(null);
   const [medals, setMedals] = useState<any[]>([]);
   const [streak, setStreak] = useState({ current: 0, longest: 0 });
+  const [xp, setXp] = useState(getXp());
+  const [level, setLevel] = useState(getLevelFromXp(getXp()));
 
   useEffect(() => {
     if (!open) return;
+
+    // Subscribe to XP updates
+    const handleXpUpdate = () => {
+      const newXp = getXp();
+      setXp(newXp);
+      setLevel(getLevelFromXp(newXp));
+    };
+
+    window.addEventListener('xp:update', handleXpUpdate as EventListener);
 
     // Load profile from localStorage
     const stored = localStorage.getItem('adhd_profile');
@@ -81,8 +92,15 @@ const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
           });
         }
       });
-      return () => unsubscribe();
+      return () => {
+        window.removeEventListener('xp:update', handleXpUpdate as EventListener);
+        unsubscribe();
+      };
     }
+
+    return () => {
+      window.removeEventListener('xp:update', handleXpUpdate as EventListener);
+    };
   }, [open, auth.currentUser?.uid]);
 
   const handleSaveName = () => {
@@ -256,7 +274,7 @@ const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
               </button>
             </div>
           )}
-          <div className="subtle">Level {Math.floor(getXp() / 100) + 1} • {getXp()} XP</div>
+          <div className="subtle">Level {level} • {xp} XP</div>
           {selectedTitle && (
             <div style={{ fontSize: '0.9rem', marginTop: 4 }}>
               {selectedTitle.id === 'developer' ? (
