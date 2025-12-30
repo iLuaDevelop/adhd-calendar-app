@@ -804,8 +804,8 @@ const Dashboard: React.FC = () => {
     return (
         <div className="container">
             <div className="header">
-                <h1>Dashboard</h1>
-                <div className="subtle">Plan your day — quick add tasks or jump to views</div>
+                <h1>{t('dashboard.title')}</h1>
+                <div className="subtle">{t('dashboard.planYourDay')}</div>
             </div>
 
             {/* Recommended Tasks Section */}
@@ -817,8 +817,8 @@ const Dashboard: React.FC = () => {
                             <span className="subtle" style={{fontSize:'0.875rem'}}>{getDailyCreationCount()}/{purchases.has(4) ? 6 : 3}</span>
                         </div>
                         <div style={{display:'flex', gap:8}}>
-                            <Button onClick={() => setShowTemplates(true)} title="Quick add from templates">Quick Add</Button>
-                            <Button onClick={() => setAdding((s) => !s)} disabled={getDailyCreationCount() >= (purchases.has(4) ? 6 : 3) && !adding}>{adding ? 'Close' : '+ Add'}</Button>
+                            <Button onClick={() => setShowTemplates(true)} title="Quick add from templates">{t('dashboard.quickAdd')}</Button>
+                            <Button onClick={() => setAdding((s) => !s)} disabled={getDailyCreationCount() >= (purchases.has(4) ? 6 : 3) && !adding}>{adding ? t('dashboard.close') : `+ ${t('dashboard.add')}`}</Button>
                         </div>
                     </div>
 
@@ -863,13 +863,13 @@ const Dashboard: React.FC = () => {
                 <main className="panel">
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
                         <div>
-                            <h3 style={{margin:0}}>Upcoming Events</h3>
+                            <h3 style={{margin:0}}>{t('dashboard.upcomingEvents')}</h3>
                             <div className="subtle">{new Date().toLocaleDateString()}</div>
                         </div>
                         <div style={{display:'flex',gap:8}}>
-                            <Button variant={view === 'day' ? undefined : 'ghost'} onClick={() => setView('day')}>Day</Button>
-                            <Button variant={view === 'week' ? undefined : 'ghost'} onClick={() => setView('week')}>Week</Button>
-                            <Button variant={view === 'month' ? undefined : 'ghost'} onClick={() => setView('month')}>Month</Button>
+                            <Button variant={view === 'day' ? undefined : 'ghost'} onClick={() => setView('day')}>{t('calendar.day')}</Button>
+                            <Button variant={view === 'week' ? undefined : 'ghost'} onClick={() => setView('week')}>{t('calendar.week')}</Button>
+                            <Button variant={view === 'month' ? undefined : 'ghost'} onClick={() => setView('month')}>{t('calendar.month')}</Button>
                         </div>
                     </div>
 
@@ -879,17 +879,17 @@ const Dashboard: React.FC = () => {
                 {/* Pet Widget */}
                 {pet && (
                     <aside className="panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 16 }}>
-                        <h3 style={{ margin: 0, marginBottom: 8 }}>Your Pet</h3>
+                        <h3 style={{ margin: 0, marginBottom: 8 }}>{t('dashboard.yourPet')}</h3>
                         <div style={{ fontSize: '3rem' }}>{getPetEmoji(pet.stage, pet.color, pet.emoji)}</div>
                         <div style={{ textAlign: 'center', fontSize: '0.85rem' }}>
                             <div style={{ fontWeight: 'bold', marginBottom: 2 }}>{pet.name}</div>
                             <div style={{ color: 'var(--muted)', fontSize: '0.8rem', marginBottom: 8 }}>
-                                Level {pet.level} {pet.stage.charAt(0).toUpperCase() + pet.stage.slice(1)}
+                                {t('dashboard.level')} {pet.level} {pet.stage.charAt(0).toUpperCase() + pet.stage.slice(1)}
                             </div>
                         </div>
                         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
                             {/* Hunger */}
-                            <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>Hunger</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pet.hunger')}</div>
                             <div style={{ height: 6, background: 'var(--border)', borderRadius: 3 }}>
                                 <div style={{
                                     height: '100%',
@@ -900,7 +900,7 @@ const Dashboard: React.FC = () => {
                             </div>
                         </div>
                             <div style={{ width: '100%', marginBottom: 6 }}>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginBottom: 12, textAlign: 'center' }}>Switch Pet</div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginBottom: 12, textAlign: 'center' }}>{t('dashboard.switchPet')}</div>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))', gap: 4 }}>
                                     {ownedPets.map(p => (
                                         <button

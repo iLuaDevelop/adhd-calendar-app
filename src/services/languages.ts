@@ -32,8 +32,19 @@ export const translations: Record<Language, Record<string, string>> = {
     'dashboard.days': 'days',
     'dashboard.totalXP': 'Total XP',
     'dashboard.nextLevel': 'Next Level',
+    'dashboard.title': 'Dashboard',
+    'dashboard.planYourDay': 'Plan your day — quick add tasks or jump to views',
+    'dashboard.upcomingEvents': 'Upcoming Events',
+    'dashboard.quickAdd': 'Quick Add',
+    'dashboard.add': 'Add',
+    'dashboard.close': 'Close',
+    'dashboard.yourPet': 'Your Pet',
+    'dashboard.switchPet': 'Switch Pet',
 
     // Calendar
+    'calendar.day': 'Day',
+    'calendar.week': 'Week',
+    'calendar.month': 'Month',
     'calendar.monthView': 'Month View',
     'calendar.weekView': 'Week View',
     'calendar.dayView': 'Day View',
@@ -64,8 +75,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'tasks.low': 'Low',
 
     // Pet
-    'pet.feedWithGems': 'Feed with Gems',
-    'pet.feedWithXp': 'Feed with XP',
+    'pet.feedWithGems': 'Feed with Gems (5)',
+    'pet.feedWithXp': 'Feed with XP (10)',
     'pet.experience': 'Experience',
     'pet.hunger': 'Hunger',
     'pet.happiness': 'Happiness',
@@ -257,8 +268,19 @@ export const translations: Record<Language, Record<string, string>> = {
     'dashboard.days': 'días',
     'dashboard.totalXP': 'XP Total',
     'dashboard.nextLevel': 'Próximo Nivel',
+    'dashboard.title': 'Panel de Control',
+    'dashboard.planYourDay': 'Planifica tu día — agrega tareas rápidamente o salta a las vistas',
+    'dashboard.upcomingEvents': 'Próximos Eventos',
+    'dashboard.quickAdd': 'Agregar Rápido',
+    'dashboard.add': 'Agregar',
+    'dashboard.close': 'Cerrar',
+    'dashboard.yourPet': 'Tu Mascota',
+    'dashboard.switchPet': 'Cambiar Mascota',
 
     // Calendar
+    'calendar.day': 'Día',
+    'calendar.week': 'Semana',
+    'calendar.month': 'Mes',
     'calendar.monthView': 'Vista Mensual',
     'calendar.weekView': 'Vista Semanal',
     'calendar.dayView': 'Vista Diaria',
@@ -289,8 +311,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'tasks.low': 'Baja',
 
     // Pet
-    'pet.feedWithGems': 'Alimentar con Gemas',
-    'pet.feedWithXp': 'Alimentar con XP',
+    'pet.feedWithGems': 'Alimentar con Gemas (5)',
+    'pet.feedWithXp': 'Alimentar con XP (10)',
     'pet.experience': 'Experiencia',
     'pet.hunger': 'Hambre',
     'pet.happiness': 'Felicidad',
@@ -482,8 +504,19 @@ export const translations: Record<Language, Record<string, string>> = {
     'dashboard.days': 'jours',
     'dashboard.totalXP': 'XP Total',
     'dashboard.nextLevel': 'Prochain Niveau',
+    'dashboard.title': 'Tableau de Bord',
+    'dashboard.planYourDay': 'Planifiez votre journée — ajoutez rapidement des tâches ou accédez aux vues',
+    'dashboard.upcomingEvents': 'Événements à Venir',
+    'dashboard.quickAdd': 'Ajout Rapide',
+    'dashboard.add': 'Ajouter',
+    'dashboard.close': 'Fermer',
+    'dashboard.yourPet': 'Votre Animal',
+    'dashboard.switchPet': 'Changer d\'Animal',
 
     // Calendar
+    'calendar.day': 'Jour',
+    'calendar.week': 'Semaine',
+    'calendar.month': 'Mois',
     'calendar.monthView': 'Affichage Mensuel',
     'calendar.weekView': 'Affichage Hebdomadaire',
     'calendar.dayView': 'Affichage Journalier',
@@ -514,8 +547,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'tasks.low': 'Basse',
 
     // Pet
-    'pet.feedWithGems': 'Nourrir avec des Gemmes',
-    'pet.feedWithXp': 'Nourrir avec de l\'XP',
+    'pet.feedWithGems': 'Nourrir avec des Gemmes (5)',
+    'pet.feedWithXp': 'Nourrir avec de l\'XP (10)',
     'pet.experience': 'Expérience',
     'pet.hunger': 'Faim',
     'pet.happiness': 'Bonheur',
