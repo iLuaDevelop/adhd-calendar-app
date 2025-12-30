@@ -155,6 +155,10 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
     // Subscribe to user's own profile changes
     const unsubscribeOwnProfile = subscribeToUserProfile(currentUser.uid, (updatedProfile) => {
       setUserProfile(prev => prev ? { ...prev, ...updatedProfile } : updatedProfile);
+      // Also update friends list when profile changes
+      if (updatedProfile.friends) {
+        setFriends(updatedProfile.friends);
+      }
     });
 
     return () => {
