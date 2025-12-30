@@ -118,15 +118,11 @@ const Character: React.FC = () => {
     const rewardDisplay = reward.type === 'xp' ? `${reward.amount} XP` : `${reward.amount} 💎`;
     showToast(`You won ${rewardDisplay}!`, 'success');
     
-    // Remove crate from inventory after a short delay
-    setTimeout(() => {
-      if (selectedCrate) {
-        removeFromInventory(selectedCrate.id, 1);
-        setInventory(getInventory());
-        setCrateModalOpen(false);
-        setSelectedCrate(null);
-      }
-    }, 500);
+    // Mark crate as opened (don't remove yet, let user close modal first)
+    if (selectedCrate) {
+      removeFromInventory(selectedCrate.id, 1);
+      setInventory(getInventory());
+    }
   };
 
   return (

@@ -27,7 +27,7 @@ const InventoryCrateModal: React.FC<InventoryCrateModalProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'rgba(0, 0, 0, 0.95)',
+        background: 'rgba(0, 0, 0, 0.3)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -43,10 +43,11 @@ const InventoryCrateModal: React.FC<InventoryCrateModalProps> = ({
       <div
         className="panel"
         style={{
-          padding: 32,
+          padding: 24,
           maxWidth: 320,
           textAlign: 'center',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)',
+          background: 'var(--panel)',
+          border: '1px solid var(--border)',
         }}
       >
         {/* LootCrate Component for animation */}
@@ -61,6 +62,7 @@ const InventoryCrateModal: React.FC<InventoryCrateModalProps> = ({
             }}
             isDisabled={false}
             isFree={true}
+            hideCloseButton={true}
           />
         </div>
 

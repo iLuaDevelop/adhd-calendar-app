@@ -18,6 +18,7 @@ interface LootCrateProps {
   cooldownMs?: number;
   lastOpenedTime?: number;
   triggerAnimation?: boolean;
+  hideCloseButton?: boolean;
 }
 
 const LootCrate: React.FC<LootCrateProps> = ({
@@ -32,6 +33,7 @@ const LootCrate: React.FC<LootCrateProps> = ({
   cooldownMs = 0,
   lastOpenedTime = 0,
   triggerAnimation = false,
+  hideCloseButton = false,
 }) => {
   const [isOpening, setIsOpening] = useState(false);
   const [selectedReward, setSelectedReward] = useState<LootReward | null>(null);
@@ -192,7 +194,7 @@ const LootCrate: React.FC<LootCrateProps> = ({
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginTop: 12 }}>
-          {selectedReward ? (
+          {selectedReward && !hideCloseButton ? (
             <button
               onClick={() => {
                 setSelectedReward(null);
