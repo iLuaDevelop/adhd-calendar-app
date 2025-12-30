@@ -6,6 +6,7 @@ import { PreferencesProvider } from './context/PreferencesContext';
 import { ToastProvider } from './context/ToastContext';
 import { CalendarProvider } from './context/CalendarContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { ProfileModalProvider } from './context/ProfileModalContext';
 
 // Suppress AudioContext device errors from console - these are harmless system-level issues
 const originalError = console.error;
@@ -49,7 +50,9 @@ ReactDOM.render(
       <ToastProvider>
         <CalendarProvider>
           <LanguageProvider>
-            <App />
+            <ProfileModalProvider>
+              <App />
+            </ProfileModalProvider>
           </LanguageProvider>
         </CalendarProvider>
       </ToastProvider>

@@ -4,6 +4,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { useCalendar } from '../hooks/useCalendar';
 import { useToast } from '../context/ToastContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useProfileModal } from '../context/ProfileModalContext';
 import TaskCard from '../components/Task/TaskCard';
 import Calendar from '../components/Calendar/Calendar';
 import Button from '../components/UI/Button';
@@ -59,6 +60,7 @@ const Dashboard: React.FC = () => {
     const { tasks, events, addTask, updateTask, removeTask } = useCalendar();
     const { showToast } = useToast();
     const { t } = useLanguage();
+    const { isOpen: showProfile, closeProfileModal: setShowProfileFalse, openProfileModal } = useProfileModal();
     const history = useHistory();
     const [adding, setAdding] = useState(false);
     const [showTemplates, setShowTemplates] = useState(false);
@@ -68,7 +70,6 @@ const Dashboard: React.FC = () => {
     const [templateMinute, setTemplateMinute] = useState<number>(0);
     const [templateAmPm, setTemplateAmPm] = useState<'AM' | 'PM'>('AM');
     const [view, setView] = useState<'day' | 'week' | 'month'>('month');
-    const [showProfile, setShowProfile] = useState(false);
     const [isInitialLoginModal, setIsInitialLoginModal] = useState(false);
     const [profile, setProfile] = useState<ProfileData>(() => {
         const stored = localStorage.getItem(PROFILE_KEY);
@@ -119,11 +120,11 @@ const Dashboard: React.FC = () => {
             // Show modal only if no user AND not already shown
             // Don't show if user is anonymous (isAnonymous = true)
             if (!user) {
-                setShowProfile(true);
+                openProfileModal('', '', '');
                 setIsInitialLoginModal(true);
             } else if (user.isAnonymous) {
                 // Guest user - hide modal
-                setShowProfile(false);
+                setShowProfileFalse();
                 setIsInitialLoginModal(false);
             }
         });
@@ -361,12 +362,14 @@ const Dashboard: React.FC = () => {
     // Listen for profile modal open event
     useEffect(() => {
         const handleOpenProfileModal = () => {
-            setShowProfile(true);
+            if (auth.currentUser) {
+                openProfileModal(auth.currentUser.uid, profile.username, profile.avatar);
+            }
         };
 
         window.addEventListener('openProfileModal', handleOpenProfileModal as EventListener);
         return () => window.removeEventListener('openProfileModal', handleOpenProfileModal as EventListener);
-    }, []);
+    }, [openProfileModal]);
 
     // Listen for pet updates
     useEffect(() => {
@@ -485,7 +488,9 @@ const Dashboard: React.FC = () => {
         showToast('Test Friend (TestBot#9999) added to the user registry. You can now add them as a friend!', 'success');
     };
     const handleAvatarClick = () => {
-        setShowProfile(true);
+        if (auth.currentUser) {
+            openProfileModal(auth.currentUser.uid, profile.username, profile.avatar);
+        }
     };
 
     const saveProfile = async (data: ProfileData) => {
@@ -568,7 +573,7 @@ const Dashboard: React.FC = () => {
                 eventsCreated: 0
             });
             setIsLoggedIn(false);
-            setShowProfile(false);
+            setShowProfileFalse();
             setLoginError('');
             setLoginEmail('');
             setLoginPassword('');
@@ -619,7 +624,7 @@ const Dashboard: React.FC = () => {
             setLoginEmail('');
             setLoginPassword('');
             setIsInitialLoginModal(false);
-            setShowProfile(false);
+            setShowProfileFalse();
         } catch (error: any) {
             setLoginError('Guest sign-in failed. Please try again.');
         }
@@ -667,7 +672,7 @@ const Dashboard: React.FC = () => {
             setSignupHashtag('');
             setIsLoggedIn(true);
             setIsInitialLoginModal(false);
-            setShowProfile(false);
+            setShowProfileFalse();
         } catch (error: any) {
             setSignupError(error.message || 'Sign up failed. Try again.');
         }
@@ -1127,7 +1132,7 @@ const Dashboard: React.FC = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     zIndex: 9998
-                }} onClick={() => !isInitialLoginModal && setShowProfile(false)}>
+                }} onClick={() => !isInitialLoginModal && setShowProfileFalse()}>
                     <div className="panel custom-scrollbar" style={{
                         maxWidth: 500,
                         padding: 24,
@@ -1276,7 +1281,7 @@ const Dashboard: React.FC = () => {
                                         <button className="btn" onClick={handleSignUp} style={{width: '100%', marginBottom: 12}}>
                                             Create Account
                                         </button>
-                                        <button className="btn ghost" onClick={() => setShowProfile(false)} style={{width: '100%'}}>
+                                        <button className="btn ghost" onClick={setShowProfileFalse} style={{width: '100%'}}>
                                             Close
                                         </button>
                                     </div>
@@ -1650,7 +1655,7 @@ const Dashboard: React.FC = () => {
 
                         {/* Close and Logout Buttons */}
                         <button className="btn ghost" onClick={handleLogout} style={{width: '100%', marginBottom: 8, backgroundColor: 'rgba(255,68,68,0.2)', color: 'var(--text)'}}>Logout</button>
-                        <button className="btn" onClick={() => setShowProfile(false)} style={{width: '100%'}}>Close</button>
+                        <button className="btn" onClick={setShowProfileFalse} style={{width: '100%'}}>Close</button>
                             </>
                         )}
                     </div>

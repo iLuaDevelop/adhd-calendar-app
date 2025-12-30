@@ -21,10 +21,12 @@ import SocialMenu from './components/UI/SocialMenu';
 import QuestsMenu from './components/UI/QuestsMenu';
 import CurrencyDisplay from './components/UI/CurrencyDisplay';
 import ProfileHeaderCard from './components/UI/ProfileHeaderCard';
+import ProfileModal from './components/UI/ProfileModal';
 import ToastDisplay from './components/UI/ToastDisplay';
 import DevMenuModal from './components/DevMenu/DevMenuModal';
 import { subscribeToConversations, subscribeToPendingRequests } from './services/messaging';
 import { initAudioContext } from './services/sounds';
+import { useProfileModal } from './context/ProfileModalContext';
 
 const App: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -260,11 +262,23 @@ const App: React.FC = () => {
 
         <DevMenuModal />
 
+        <ProfileModalRenderer currentAuthUser={currentAuthUser} />
+
         <ToastDisplay />
       </div>
       </Elements>
     </Router>
   );
+};
+
+const ProfileModalRenderer: React.FC<{ currentAuthUser: any }> = ({ currentAuthUser }) => {
+  const { isOpen, userId, username, avatar, closeProfileModal } = useProfileModal();
+  
+  // Only render if userId matches current auth user (viewing own profile)
+  // Don't render for friend profiles viewed via social menu
+  return isOpen && userId && currentAuthUser && userId === currentAuthUser.uid ? (
+    <ProfileModal open={isOpen} onClose={closeProfileModal} userId={userId} username={username} avatar={avatar} />
+  ) : null;
 };
 
 export default App;
