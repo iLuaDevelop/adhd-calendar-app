@@ -20,6 +20,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
             <Link to="/" onClick={onClose} className="sidebar-link">Dashboard</Link>
             <Link to="/quests" onClick={onClose} className="sidebar-link">Quests</Link>
             <Link to="/insights" onClick={onClose} className="sidebar-link">Personal Insights</Link>
+            <Link to="/character" onClick={onClose} className="sidebar-link">Character</Link>
             <Link to="/skills" onClick={onClose} className="sidebar-link">Skill Tree</Link>
             <Link to="/pet" onClick={onClose} className="sidebar-link">My Pet</Link>
             <Link to="/store" onClick={onClose} className="sidebar-link">Store</Link>

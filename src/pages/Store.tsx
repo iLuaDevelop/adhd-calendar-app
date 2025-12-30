@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext';
 import LootCrate from '../components/UI/LootCrate';
 import PaymentModal from '../components/PaymentModal/PaymentModal';
 import { buyPet, PET_SHOP, hasBoughtPetType, getAllPets } from '../services/pet';
+import { addToInventory } from '../services/inventory';
 
 const PURCHASES_KEY = 'adhd_purchases';
 const PREMIUM_PURCHASES_KEY = 'adhd_premium_purchases';

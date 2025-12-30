@@ -15,6 +15,7 @@ import PersonalInsights from './pages/PersonalInsights';
 import Pet from './pages/Pet';
 import SkillTree from './pages/SkillTree';
 import MiniGames from './pages/MiniGames';
+import Character from './pages/Character';
 import XPBar from './components/UI/XPBar';
 import Sidebar from './components/UI/Sidebar';
 import SocialMenu from './components/UI/SocialMenu';
@@ -200,6 +201,7 @@ const App: React.FC = () => {
             <Route path="/leaderboards" component={Leaderboards} />
             <Route path="/quests" component={Quests} />
             <Route path="/insights" component={PersonalInsights} />
+            <Route path="/character" component={Character} />
             <Route path="/pet" component={Pet} />
             <Route path="/skills" component={SkillTree} />
             <Route path="/settings" component={Settings} />
