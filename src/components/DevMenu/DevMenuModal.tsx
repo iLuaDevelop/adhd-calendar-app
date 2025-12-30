@@ -415,51 +415,40 @@ const DevMenuModal: React.FC = () => {
               try {
                 // Add friend to local list
                 const friends = JSON.parse(localStorage.getItem('adhd_friends') || '[]');
-                const testBot = { id: 'testbot', username: 'Qkfaa', discriminator: '4998', avatar: '👻' };
-                if (!friends.find((f: any) => f.id === 'testbot')) {
+                const testBot = { id: 'testbot', username: 'TestBot', hashtag: '9999', avatar: '🤖', uid: 'testbot' };
+                if (!friends.find((f: any) => f.id === 'testbot' || f.uid === 'testbot')) {
                   friends.push(testBot);
                   localStorage.setItem('adhd_friends', JSON.stringify(friends));
                   window.dispatchEvent(new Event('friendsUpdated'));
                 }
 
-                // Create Firestore user document with gameProgress containing titles and medals
-                const allMedals = [
-                  { id: 'first_task', name: 'First Step', icon: '👣', description: 'Create your first task' },
-                  { id: 'ten_tasks', name: 'Task Starter', icon: '✅', description: 'Complete 10 tasks' },
-                  { id: 'level_5', name: 'Level 5', icon: '⭐', description: 'Reach Level 5' },
-                ];
-
-                const mappedMedals = allMedals.map((m, idx) => {
-                  const medal: any = {
-                    ...m,
-                    earned: idx < 3,
-                  };
-                  if (idx < 3) {
-                    medal.earnedDate = Date.now() - (Math.random() * 30 * 24 * 60 * 60 * 1000);
-                  }
-                  return medal;
-                });
-
+                // Create Firestore user document with profile info and gameProgress
                 const gameProgressData = {
-                  gameProgress: {
-                    xp: 5420,
-                    gems: 320,
-                    tasksCompleted: 47,
-                    currentStreak: 12,
-                    longestStreak: 25,
-                    unlockedTitles: ['Power User', 'Task Crusher'],
-                    selectedTitle: 'Power User',
-                    medals: mappedMedals,
-                  },
-                  username: 'Qkfaa',
-                  hashtag: '4998',
-                  avatar: '👻',
+                  username: 'TestBot',
+                  hashtag: '9999',
+                  avatar: '🤖',
+                  xp: 5420,
+                  gems: 320,
+                  tasksCompleted: 47,
+                  currentStreak: 12,
+                  longestStreak: 25,
+                  unlockedTitles: ['Power User', 'Task Crusher'],
+                  selectedTitle: 'Power User',
+                  medals: [
+                    { id: 'first_task', name: 'First Step', icon: '👣', description: 'Create your first task', earned: true, earnedDate: Date.now() - (10 * 24 * 60 * 60 * 1000) },
+                    { id: 'ten_tasks', name: 'Task Starter', icon: '✅', description: 'Complete 10 tasks', earned: true, earnedDate: Date.now() - (5 * 24 * 60 * 60 * 1000) },
+                    { id: 'level_5', name: 'Level 5', icon: '⭐', description: 'Reach Level 5', earned: true, earnedDate: Date.now() - (2 * 24 * 60 * 60 * 1000) },
+                  ],
                 };
 
-                // Save to Firestore users collection
+                // Save to Firestore users collection with merge
                 await setDoc(doc(db, 'users', 'testbot'), gameProgressData, { merge: true });
-                console.log('[DevMenu] Created test friend in Firestore');
-                showToast('Test friend with titles & medals created!', 'success');
+                
+                // Also create a gameProgress doc if needed
+                await setDoc(doc(db, 'gameProgress', 'testbot'), gameProgressData, { merge: true });
+                
+                console.log('[DevMenu] Created test friend (TestBot#9999) in Firestore');
+                showToast('Test friend TestBot#9999 created! Search for them by username.', 'success');
               } catch (error) {
                 console.error('[DevMenu] Error creating test friend:', error);
                 showToast('Error: ' + (error as any).message, 'error');

@@ -93,11 +93,6 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, userId, user
               <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                 #{profileData?.hashtag || '0000'}
               </p>
-              {profileData?.email && (
-                <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                  {profileData.email}
-                </p>
-              )}
             </div>
 
             {/* Game Progress Stats */}
