@@ -10,9 +10,7 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
-  console.log('[Modal] ===== MODAL COMPONENT CALLED =====', 'isOpen:', isOpen);
   if (!isOpen) {
-    console.log('[Modal] isOpen is false, returning null');
     return null;
   }
 
@@ -33,9 +31,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
     </div>
   );
 
-  console.log('[Modal] Creating portal, target:', document.body);
   const portal = createPortal(modalContent, document.body);
-  console.log('[Modal] Portal created:', portal);
   return portal;
 };
 

@@ -14,11 +14,14 @@ import Quests from './pages/Quests';
 import PersonalInsights from './pages/PersonalInsights';
 import Pet from './pages/Pet';
 import SkillTree from './pages/SkillTree';
+import MiniGames from './pages/MiniGames';
 import XPBar from './components/UI/XPBar';
 import Sidebar from './components/UI/Sidebar';
 import SocialMenu from './components/UI/SocialMenu';
 import QuestsMenu from './components/UI/QuestsMenu';
 import CurrencyDisplay from './components/UI/CurrencyDisplay';
+import ProfileHeaderCard from './components/UI/ProfileHeaderCard';
+import ToastDisplay from './components/UI/ToastDisplay';
 import DevMenuModal from './components/DevMenu/DevMenuModal';
 import { subscribeToConversations, subscribeToPendingRequests } from './services/messaging';
 import { initAudioContext } from './services/sounds';
@@ -42,17 +45,14 @@ const App: React.FC = () => {
   // Initialize AudioContext on first user interaction
   useEffect(() => {
     const handleUserInteraction = async () => {
-      console.log('[App] 🎯 User interaction detected, initializing AudioContext');
       await initAudioContext();
       // Remove listener after first interaction
       document.removeEventListener('click', handleUserInteraction);
       document.removeEventListener('touchstart', handleUserInteraction);
-      console.log('[App] User gesture listeners removed');
     };
 
     document.addEventListener('click', handleUserInteraction);
     document.addEventListener('touchstart', handleUserInteraction);
-    console.log('[App] Waiting for first user gesture to init audio...');
 
     return () => {
       document.removeEventListener('click', handleUserInteraction);
@@ -89,7 +89,6 @@ const App: React.FC = () => {
   useEffect(() => {
     const auth = getAuth();
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      console.log('[App] Auth state changed, user:', user?.uid ? 'logged in' : 'logged out');
       setCurrentAuthUser(user);
     });
     return () => unsubscribeAuth();
@@ -98,29 +97,23 @@ const App: React.FC = () => {
   // Global listener for conversations and friend requests (stays active even when menu is closed)
   useEffect(() => {
     if (!currentAuthUser) {
-      console.log('[App] No authenticated user, skipping conversation setup');
       setNotificationCount(0);
       setConversations([]);
       setFriendRequests([]);
       return;
     }
 
-    console.log('[App] Setting up conversation and friend request listeners for:', currentAuthUser.uid);
-
     // Subscribe to conversations globally
     const unsubscribeConversations = subscribeToConversations(currentAuthUser.uid, (convs) => {
-      console.log('[App] Conversations updated globally:', convs.length, 'conversations, unread:', convs.map(c => ({ friend: c.friendUsername, unread: c.unreadCount })));
       setConversations(convs);
     });
 
     // Subscribe to friend requests globally
     const unsubscribeRequests = subscribeToPendingRequests(currentAuthUser.uid, (requests) => {
-      console.log('[App] Friend requests updated globally:', requests.length, 'requests');
       setFriendRequests(requests);
     });
 
     return () => {
-      console.log('[App] Cleaning up conversation and friend request listeners');
       unsubscribeConversations();
       unsubscribeRequests();
     };
@@ -130,7 +123,6 @@ const App: React.FC = () => {
   useEffect(() => {
     const unreadMessages = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
     const total = unreadMessages + friendRequests.length;
-    console.log('[App] Notification count updated:', { unreadMessages, friendRequests: friendRequests.length, total });
     setNotificationCount(total);
   }, [conversations, friendRequests]);
 
@@ -150,7 +142,10 @@ const App: React.FC = () => {
             )}
           </div>
           <div style={{flex: 1}} />
-          <CurrencyDisplay />
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <CurrencyDisplay />
+            <ProfileHeaderCard onClick={() => window.dispatchEvent(new CustomEvent('openProfileModal'))} />
+          </div>
         </div>
 
         <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
@@ -264,6 +259,8 @@ const App: React.FC = () => {
         )}
 
         <DevMenuModal />
+
+        <ToastDisplay />
       </div>
       </Elements>
     </Router>

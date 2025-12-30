@@ -9,7 +9,6 @@ const syncData = async () => {
         }
         const data = await response.json();
         // Handle the synchronized data
-        console.log('Data synchronized:', data);
     } catch (error) {
         console.error('Error syncing data:', error);
     }

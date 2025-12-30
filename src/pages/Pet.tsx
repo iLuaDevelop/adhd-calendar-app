@@ -22,8 +22,10 @@ import {
 } from '../services/pet';
 import { getGems } from '../services/currency';
 import { getXp } from '../services/xp';
+import { useToast } from '../context/ToastContext';
 
 const PetPage: React.FC = () => {
+  const { showToast } = useToast();
   const [pet, setPet] = useState<Pet | null>(null);
   const [gems, setGems] = useState(0);
   const [xp, setXp] = useState(0);
@@ -41,22 +43,17 @@ const PetPage: React.FC = () => {
   useEffect(() => {
     // Load all pets and get current pet
     const allStorePets = getAllPets();
-    console.log('[Pet] Loaded all pets from storage:', allStorePets.length);
     
     let legacyPet = getPet();
-    console.log('[Pet] getPet() returned:', legacyPet?.name);
     
     // If no legacy pet exists and no store pets exist, create a default one
     if (!legacyPet && allStorePets.length === 0) {
-      console.log('[Pet] No pets found, creating default pet');
       legacyPet = createPet('Your Pet');
     } else if (!legacyPet && allStorePets.length > 0) {
       // If legacy pet doesn't exist but store pets do, use the first one
-      console.log('[Pet] Using first store pet as legacy pet');
       legacyPet = allStorePets[0];
     } else if (legacyPet) {
       // Update stats on page load for legacy pet
-      console.log('[Pet] Updating stats for legacy pet:', legacyPet.name);
       legacyPet = updatePetStats();
       // Ensure pet has mood and customization
       if (!legacyPet.mood) {
@@ -80,11 +77,9 @@ const PetPage: React.FC = () => {
       }
     });
     
-    console.log('[Pet] Total pets to show:', allPetsToShow.length);
     setOwnedPets(allPetsToShow);
     
     const currentId = getCurrentPetId();
-    console.log('[Pet] Current pet ID:', currentId);
     setCurrentPetIdState(currentId);
     
     let currentPet: Pet | null = null;
@@ -106,7 +101,6 @@ const PetPage: React.FC = () => {
   useEffect(() => {
     // Listen for pet restoration on login
     const handlePetsRestored = () => {
-      console.log('[Pet] Pets restored from Firestore, reloading...');
       const allStorePets = getAllPets();
       let legacyPet = getPet();
       
@@ -152,7 +146,6 @@ const PetPage: React.FC = () => {
 
     // Listen for pet clearing on logout
     const handlePetsCleared = () => {
-      console.log('[Pet] Pets cleared on logout');
       setPet(null);
       setOwnedPets([]);
       setCurrentPetIdState(null);
@@ -170,15 +163,10 @@ const PetPage: React.FC = () => {
 
   // Helper to reload current pet from storage to get latest state
   const reloadCurrentPet = (petId: string) => {
-    console.log('[Pet] 🔄 reloadCurrentPet called for:', petId);
     const allPets = getAllPets();
-    console.log('[Pet] getAllPets() returned:', allPets.length, 'pets');
-    allPets.forEach(p => console.log('[Pet]   -', p.id, p.name, 'hunger:', p.hunger));
     
     const petToLoad = allPets.find(p => p.id === petId);
-    console.log('[Pet] Found pet to load?', !!petToLoad);
     if (petToLoad) {
-      console.log('[Pet] ✅ Loading pet:', petToLoad.name, 'hunger:', petToLoad.hunger, 'health:', petToLoad.health);
       setPet(petToLoad);
       setNewName(petToLoad.name);
       setGems(getGems());
@@ -187,10 +175,8 @@ const PetPage: React.FC = () => {
     }
     
     // If not found in allPets, try getPet (legacy)
-    console.log('[Pet] ⚠️ Pet not found in allPets, trying getPet()');
     const legacyPet = getPet();
     if (legacyPet && legacyPet.id === petId) {
-      console.log('[Pet] ✅ Found in legacy pet storage:', legacyPet.name, 'hunger:', legacyPet.hunger);
       setPet(legacyPet);
       setNewName(legacyPet.name);
       setGems(getGems());
@@ -198,17 +184,16 @@ const PetPage: React.FC = () => {
       return legacyPet;
     }
     
-    console.log('[Pet] ❌ Pet not found anywhere!');
     return null;
   };
 
   const handleFeed = (method: 'gems' | 'xp') => {
     if (method === 'gems' && gems < feedCostGems) {
-      alert('Not enough gems! You need 5 gems to feed your pet.');
+      showToast('Not enough gems! You need 5 gems to feed your pet.', 'error');
       return;
     }
     if (method === 'xp' && xp < feedCostXp) {
-      alert('Not enough XP! You need 30 XP to feed your pet.');
+      showToast('Not enough XP! You need 30 XP to feed your pet.', 'error');
       return;
     }
 

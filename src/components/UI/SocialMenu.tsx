@@ -69,14 +69,12 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
   // Sync global data from App props
   useEffect(() => {
     if (initialConversations) {
-      console.log('[SocialMenu] Syncing conversations from props:', initialConversations.length);
       setConversations(initialConversations);
     }
   }, [initialConversations]);
 
   useEffect(() => {
     if (initialFriendRequests) {
-      console.log('[SocialMenu] Syncing friend requests from props:', initialFriendRequests.length);
       setFriendRequests(initialFriendRequests);
     }
   }, [initialFriendRequests]);
@@ -87,15 +85,12 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
     const unreadCount = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
     const prevUnread = prevConversationCountRef.current;
     
-    console.log('[SocialMenu] Sound check: open=', open, 'prev=', prevUnread, 'now=', unreadCount);
-    
     // Play sound if:
     // 1. Menu is closed
     // 2. This isn't the initial mount (prevUnread > 0 or unreadCount > 0)
     // 3. Unread count just increased
     if (!open && unreadCount > prevUnread && (prevUnread > 0 || unreadCount > 0)) {
-      console.log('[SocialMenu] Playing message sound');
-      playMessageNotificationSound().catch(e => console.log('[SocialMenu] Sound error:', e));
+      playMessageNotificationSound().catch(e => console.error('[SocialMenu] Sound error:', e));
     }
     
     prevConversationCountRef.current = unreadCount;
@@ -107,28 +102,16 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
     const prevRequests = prevRequestCountRef.current;
     
     if (!open && friendRequests.length > prevRequests && (prevRequests > 0 || friendRequests.length > 0)) {
-      console.log('[SocialMenu] Playing friend request sound');
-      playFriendRequestSound().catch(e => console.log('[SocialMenu] Sound error:', e));
+      playFriendRequestSound().catch(e => console.error('[SocialMenu] Sound error:', e));
     }
     prevRequestCountRef.current = friendRequests.length;
   }, [friendRequests, open]);
-
-  // Log whenever friends state changes
-  useEffect(() => {
-    console.log('[SocialMenu] RENDER: Friends state changed, now have', friends.length, 'friends:', friends.map(f => ({ uid: f.uid, avatar: f.avatar })));
-  }, [friends]);
 
   // Track notification count and report to parent
   useEffect(() => {
     // Count: friend requests + unread messages
     const unreadMessageCount = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
     const totalNotifications = friendRequests.length + unreadMessageCount;
-    console.log('[SocialMenu] Notification count:', {
-      friendRequests: friendRequests.length,
-      unreadMessages: unreadMessageCount,
-      total: totalNotifications,
-      conversations: conversations.map(c => ({ friend: c.friendUsername, unread: c.unreadCount }))
-    });
     if (onNotificationCountChange) {
       onNotificationCountChange(totalNotifications);
     }
@@ -171,7 +154,6 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
 
     // Subscribe to user's own profile changes
     const unsubscribeOwnProfile = subscribeToUserProfile(currentUser.uid, (updatedProfile) => {
-      console.log('[SocialMenu] Own profile updated:', { avatar: updatedProfile.avatar, customAvatarUrl: !!updatedProfile.customAvatarUrl });
       setUserProfile(prev => prev ? { ...prev, ...updatedProfile } : updatedProfile);
     });
 
@@ -187,24 +169,10 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
     const unsubscribers: Array<() => void> = [];
     const friendUids = friends.map(f => f.uid);
 
-    console.log('[SocialMenu] Setting up profile listeners for', friendUids.length, 'friends:', friendUids);
-
     friendUids.forEach(friendUid => {
       try {
-        console.log('[SocialMenu] Setting up profile listener for friend:', friendUid);
         const unsubscribe = subscribeToUserProfile(friendUid, (updatedProfile) => {
-          console.log('[SocialMenu] 🔔 Friend profile callback FIRED for:', friendUid);
-          console.log('[SocialMenu] Callback received avatar:', updatedProfile.avatar);
-          console.log('[SocialMenu] Callback received full profile:', {
-            avatar: updatedProfile.avatar,
-            username: updatedProfile.username,
-            hashtag: updatedProfile.hashtag,
-            uid: updatedProfile.uid,
-          });
-          
           setFriends(prevFriends => {
-            console.log('[SocialMenu] Before state update - current friends:', prevFriends.map(f => ({ uid: f.uid, avatar: f.avatar })));
-            
             const updated = prevFriends.map(f =>
               f.uid === friendUid
                 ? {
@@ -217,22 +185,11 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
                 : f
             );
             
-            const friend = updated.find(f => f.uid === friendUid);
-            if (friend) {
-              console.log('[SocialMenu] ✅ Updated friend in state:', {
-                uid: friendUid,
-                oldAvatar: prevFriends.find(f => f.uid === friendUid)?.avatar,
-                newAvatar: friend.avatar,
-              });
-            }
-            
-            console.log('[SocialMenu] After state update - new friends:', updated.map(f => ({ uid: f.uid, avatar: f.avatar })));
             return updated;
           });
 
           // Also update selected friend if it's this user
           if (selectedFriend?.uid === friendUid) {
-            console.log('[SocialMenu] Updating selectedFriend avatar from', selectedFriend.avatar, 'to', updatedProfile.avatar);
             setSelectedFriend(prev =>
               prev
                 ? {
@@ -254,7 +211,6 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
     });
 
     return () => {
-      console.log('[SocialMenu] Cleaning up profile listeners for friends:', friendUids);
       unsubscribers.forEach(unsub => unsub());
     };
   }, [friends.map(f => f.uid).join(','), selectedFriend?.uid]);  const addFriend = async () => {
@@ -277,8 +233,6 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
 
     try {
       setLoading(true);
-      
-      console.log('Adding friend - Username:', newFriendUsername.trim(), 'Hashtag:', newFriendHashtag.trim());
       
       // Search for user in Firestore by username and hashtag
       const results = await searchUsers(newFriendUsername.trim(), newFriendHashtag.trim());
@@ -433,11 +387,8 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
       return;
     }
 
-    console.log('[SocialMenu] Opening conversation with:', selectedFriend.username);
-
     try {
       // Mark messages as read when conversation is opened
-      console.log('[SocialMenu] About to mark messages as read for:', selectedFriend.username);
       markMessagesAsRead(currentUser.uid, selectedFriend.uid).catch(err => 
         console.warn('[SocialMenu] Failed to mark messages as read:', err)
       );
@@ -458,7 +409,6 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
             ? { ...conv, unreadCount: 0 }
             : conv
         );
-        console.log('[SocialMenu] Marked conversation as read locally:', { friend: selectedFriend.username, conversations: updated.map(c => ({ friend: c.friendUsername, unread: c.unreadCount })) });
         return updated;
       });
       
@@ -513,7 +463,6 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
             <h4 style={{ margin: 0, flex: 1, fontSize: '1.3rem' }}>👥 Social</h4>
             <button 
               onClick={() => {
-                console.log('Close button clicked, calling onClose');
                 onClose();
               }} 
               className="btn ghost"
@@ -670,7 +619,6 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
                   </div>
                 ) : (
                   friends.map(friend => {
-                    console.log('[SocialMenu] Rendering friend card:', { uid: friend.uid, avatar: friend.avatar, username: friend.username });
                     return (
                     <div
                       key={friend.uid}
@@ -704,10 +652,8 @@ const SocialMenu: React.FC<SocialMenuProps> = ({ open, onClose, currentProfile, 
                       </button>
                       <button
                         onClick={() => {
-                          console.log('[SocialMenu] 👁️ Eye button clicked for friend:', friend.username, friend.uid);
                           setSelectedProfileFriend(friend);
                           setProfileModalOpen(true);
-                          console.log('[SocialMenu] Set profileModalOpen to true, selectedProfileFriend:', friend);
                         }}
                         className="btn ghost"
                         style={{ padding: '4px 8px', fontSize: '0.8rem' }}

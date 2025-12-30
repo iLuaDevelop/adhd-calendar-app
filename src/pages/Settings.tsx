@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { usePreferences } from '../context/PreferencesContext';
 import Button from '../components/UI/Button';
+import { useToast } from '../context/ToastContext';
 import { resetXp } from '../services/xp';
 
 const PURCHASES_KEY = 'adhd_purchases';
 
 const Settings: React.FC = () => {
+    const { showToast } = useToast();
     const { preferences, setPreferences } = usePreferences();
     const [localTheme] = useState(preferences.theme || 'dark');
     const [notificationsEnabled, setNotificationsEnabled] = useState(preferences.notificationsEnabled ?? true);
@@ -62,7 +64,7 @@ const Settings: React.FC = () => {
                         <div className="setting-row">
                             <label>Export data</label>
                             <div>
-                                <Button onClick={() => alert('Exporting...')}>Export JSON</Button>
+                                <Button onClick={() => showToast('Exporting...', 'info')}>Export JSON</Button>
                             </div>
                         </div>
                         <div style={{marginTop:12}} className="setting-row">
@@ -71,7 +73,7 @@ const Settings: React.FC = () => {
                                 <Button variant="ghost" onClick={() => {
                                     if (confirm('Reset your XP to zero? This cannot be undone.')) {
                                         resetXp();
-                                        alert('XP reset to 0');
+                                        showToast('XP reset to 0', 'success');
                                     }
                                 }}>Reset XP</Button>
                             </div>

@@ -5,10 +5,14 @@ import { getPet, updatePetStats, feedPet, getAllPets, deletePet, createPet } fro
 import { unlockSkill, getAllSkills, getUnlockedSkills } from '../../services/skillTree';
 import { unlockTitle, setSelectedTitle, getUnlockedTitles, getSelectedTitle, getTitles, ALL_TITLES } from '../../services/titles';
 import { enableCriticalTestMode, disableCriticalTestMode, isCriticalTestModeEnabled, getCriticalChances, enableCrateTestMode, disableCrateTestMode, isCrateTestModeEnabled } from '../../services/critical';
+import { useToast } from '../../context/ToastContext';
+import { db } from '../../services/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 const QUESTS_KEY = 'adhd_quests';
 
 const DevMenuModal: React.FC = () => {
+  const { showToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [passwordPrompt, setPasswordPrompt] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -201,7 +205,7 @@ const DevMenuModal: React.FC = () => {
             <div style={{marginBottom: 12}}>
               <button className="btn ghost" onClick={() => {
                 createPet('Your Pet');
-                alert('Default pet created and synced to Firestore!');
+                showToast('Default pet created and synced to Firestore!', 'success');
               }} style={{fontSize: '0.8rem', width: '100%', marginBottom: 8}}>
                 ✨ Create Default Pet
               </button>
@@ -216,7 +220,7 @@ const DevMenuModal: React.FC = () => {
                     onClick={() => {
                       if (window.confirm(`Delete ${p.name}?`)) {
                         deletePet(p.id);
-                        alert(`${p.name} deleted!`);
+                        showToast(`${p.name} deleted!`, 'success');
                       }
                     }}
                     style={{fontSize: '0.7rem', padding: '4px 8px'}}
@@ -234,13 +238,13 @@ const DevMenuModal: React.FC = () => {
             <div style={{marginBottom: 12}}>
               <button className="btn ghost" onClick={() => {
                 unlockTitle('developer');
-                alert('Developer title unlocked!');
+                showToast('Developer title unlocked!', 'success');
               }} style={{fontSize: '0.8rem', width: '100%', marginBottom: 8}}>
                 Unlock Developer Title
               </button>
               <button className="btn ghost" onClick={() => {
                 setSelectedTitle('developer');
-                alert('Developer title equipped!');
+                showToast('Developer title equipped!', 'success');
               }} style={{fontSize: '0.8rem', width: '100%'}}>
                 Equip Developer Title
               </button>
@@ -253,13 +257,13 @@ const DevMenuModal: React.FC = () => {
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8}}>
               <button className="btn ghost" onClick={() => {
                 localStorage.setItem(BRONZE_CRATE_KEY, '0');
-                alert('Bronze crate timer reset!');
+                showToast('Bronze crate timer reset!', 'success');
               }} style={{fontSize: '0.8rem'}}>
                 Reset Bronze Timer
               </button>
               <button className="btn ghost" onClick={() => {
                 localStorage.setItem(BRONZE_CRATE_KEY, String(Date.now() - (12 * 60 * 60 * 1000)));
-                alert('Bronze crate ready!');
+                showToast('Bronze crate ready!', 'success');
               }} style={{fontSize: '0.8rem'}}>
                 Bronze Ready Now
               </button>
@@ -280,7 +284,7 @@ const DevMenuModal: React.FC = () => {
                   enableCriticalTestMode();
                   setCriticalTestMode(true);
                   setCriticalChances(getCriticalChances());
-                  alert('Critical test mode enabled (100% chance)!');
+                  showToast('Critical test mode enabled (100% chance)!', 'success');
                 }} 
                 style={{fontSize: '0.8rem'}}
               >
@@ -292,7 +296,7 @@ const DevMenuModal: React.FC = () => {
                   disableCriticalTestMode();
                   setCriticalTestMode(false);
                   setCriticalChances(getCriticalChances());
-                  alert('Critical test mode disabled (normal chances)!');
+                  showToast('Critical test mode disabled (normal chances)!', 'success');
                 }} 
                 style={{fontSize: '0.8rem'}}
               >
@@ -306,7 +310,7 @@ const DevMenuModal: React.FC = () => {
                   enableCrateTestMode();
                   setCrateTestMode(true);
                   setCriticalChances(getCriticalChances());
-                  alert('Crate test mode enabled (100% chance)!');
+                  showToast('Crate test mode enabled (100% chance)!', 'success');
                 }} 
                 style={{fontSize: '0.8rem'}}
               >
@@ -318,7 +322,7 @@ const DevMenuModal: React.FC = () => {
                   disableCrateTestMode();
                   setCrateTestMode(false);
                   setCriticalChances(getCriticalChances());
-                  alert('Crate test mode disabled (normal chances)!');
+                  showToast('Crate test mode disabled (normal chances)!', 'success');
                 }} 
                 style={{fontSize: '0.8rem'}}
               >
@@ -329,7 +333,7 @@ const DevMenuModal: React.FC = () => {
               className="btn ghost"
               onClick={() => {
                 grantXp(10);
-                alert('Granted 10 XP - check for critical!');
+                showToast('Granted 10 XP - check for critical!', 'info');
               }} 
               style={{fontSize: '0.8rem', width: '100%'}}
             >
@@ -407,19 +411,61 @@ const DevMenuModal: React.FC = () => {
           {/* Social Testing */}
           <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12}}>
             <h3 style={{margin: '0 0 8px 0'}}>Social Testing</h3>
-            <button className="btn ghost" onClick={() => {
-              const friends = JSON.parse(localStorage.getItem('adhd_friends') || '[]');
-              const testBot = { id: 'bot-9999', username: 'TestBot', discriminator: '9999', avatar: '🤖' };
-              if (!friends.find((f: any) => f.id === testBot.id)) {
-                friends.push(testBot);
-                localStorage.setItem('adhd_friends', JSON.stringify(friends));
-                window.dispatchEvent(new Event('friendsUpdated'));
-                alert('Test friend added!');
-              } else {
-                alert('Test friend already exists!');
+            <button className="btn ghost" onClick={async () => {
+              try {
+                // Add friend to local list
+                const friends = JSON.parse(localStorage.getItem('adhd_friends') || '[]');
+                const testBot = { id: 'testbot', username: 'Qkfaa', discriminator: '4998', avatar: '👻' };
+                if (!friends.find((f: any) => f.id === 'testbot')) {
+                  friends.push(testBot);
+                  localStorage.setItem('adhd_friends', JSON.stringify(friends));
+                  window.dispatchEvent(new Event('friendsUpdated'));
+                }
+
+                // Create Firestore user document with gameProgress containing titles and medals
+                const allMedals = [
+                  { id: 'first_task', name: 'First Step', icon: '👣', description: 'Create your first task' },
+                  { id: 'ten_tasks', name: 'Task Starter', icon: '✅', description: 'Complete 10 tasks' },
+                  { id: 'level_5', name: 'Level 5', icon: '⭐', description: 'Reach Level 5' },
+                ];
+
+                const mappedMedals = allMedals.map((m, idx) => {
+                  const medal: any = {
+                    ...m,
+                    earned: idx < 3,
+                  };
+                  if (idx < 3) {
+                    medal.earnedDate = Date.now() - (Math.random() * 30 * 24 * 60 * 60 * 1000);
+                  }
+                  return medal;
+                });
+
+                const gameProgressData = {
+                  gameProgress: {
+                    xp: 5420,
+                    gems: 320,
+                    tasksCompleted: 47,
+                    currentStreak: 12,
+                    longestStreak: 25,
+                    unlockedTitles: ['Power User', 'Task Crusher'],
+                    selectedTitle: 'Power User',
+                    medals: mappedMedals,
+                  },
+                  username: 'Qkfaa',
+                  hashtag: '4998',
+                  avatar: '👻',
+                };
+
+                // Save to Firestore users collection
+                await setDoc(doc(db, 'users', 'testbot'), gameProgressData, { merge: true });
+                console.log('[DevMenu] Created test friend in Firestore');
+                showToast('Test friend with titles & medals created!', 'success');
+              } catch (error) {
+                console.error('[DevMenu] Error creating test friend:', error);
+                showToast('Error: ' + (error as any).message, 'error');
               }
             }} style={{width: '100%', fontSize: '0.8rem'}}>
-              Add Test Friend (TestBot#9999)
+              Add Test Friend with Titles & Medals
             </button>
           </div>
 
@@ -428,7 +474,7 @@ const DevMenuModal: React.FC = () => {
             <h3 style={{margin: '0 0 8px 0'}}>Pet Controls</h3>
             <button className="btn ghost" onClick={() => {
               createPet('Your Pet');
-              alert('Default pet created and synced to Firestore!');
+              showToast('Default pet created and synced to Firestore!', 'success');
             }} style={{fontSize: '0.8rem', width: '100%', marginBottom: 8}}>
               ✨ Create Default Pet
             </button>
@@ -440,7 +486,7 @@ const DevMenuModal: React.FC = () => {
                   const updatedPet = feedPet('gems');
                   if (updatedPet) {
                     window.dispatchEvent(new CustomEvent('petUpdated', { detail: { pet: updatedPet } }));
-                    alert('Pet fed!');
+                    showToast('Pet fed!', 'success');
                   }
                 }
               }} style={{fontSize: '0.8rem'}}>
@@ -453,7 +499,7 @@ const DevMenuModal: React.FC = () => {
                   const updatedPet = updatePetStats();
                   if (updatedPet) {
                     window.dispatchEvent(new CustomEvent('petUpdated', { detail: { pet: updatedPet } }));
-                    alert('Happiness maxed!');
+                    showToast('Happiness maxed!', 'success');
                   }
                 }
               }} style={{fontSize: '0.8rem'}}>
@@ -466,7 +512,7 @@ const DevMenuModal: React.FC = () => {
                   const updatedPet = updatePetStats();
                   if (updatedPet) {
                     window.dispatchEvent(new CustomEvent('petUpdated', { detail: { pet: updatedPet } }));
-                    alert('Health maxed!');
+                    showToast('Health maxed!', 'success');
                   }
                 }
               }} style={{fontSize: '0.8rem'}}>
@@ -479,7 +525,7 @@ const DevMenuModal: React.FC = () => {
                   const updatedPet = updatePetStats();
                   if (updatedPet) {
                     window.dispatchEvent(new CustomEvent('petUpdated', { detail: { pet: updatedPet } }));
-                    alert('Level increased!');
+                    showToast('Level increased!', 'success');
                   }
                 }
               }} style={{fontSize: '0.8rem'}}>
@@ -490,7 +536,7 @@ const DevMenuModal: React.FC = () => {
               const pet = getPet();
               if (pet) {
                 deletePet(pet.id);
-                alert('Pet deleted!');
+                showToast('Pet deleted!', 'success');
               }
             }} style={{fontSize: '0.8rem', width: '100%'}}>
               Delete Current Pet
@@ -506,7 +552,7 @@ const DevMenuModal: React.FC = () => {
                 quests.forEach((q: any) => q.completed = false);
                 localStorage.setItem(QUESTS_KEY, JSON.stringify(quests));
                 window.dispatchEvent(new CustomEvent('questsReset'));
-                alert('All quests reset!');
+                showToast('All quests reset!', 'success');
               }} style={{fontSize: '0.8rem'}}>
                 Reset All Quests
               </button>
@@ -515,7 +561,7 @@ const DevMenuModal: React.FC = () => {
                 quests.forEach((q: any) => q.completed = true);
                 localStorage.setItem(QUESTS_KEY, JSON.stringify(quests));
                 window.dispatchEvent(new CustomEvent('questsReset'));
-                alert('All quests completed!');
+                showToast('All quests completed!', 'success');
               }} style={{fontSize: '0.8rem'}}>
                 Complete All Quests
               </button>

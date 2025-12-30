@@ -1,13 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-console.log('[Preload] Preload script loading...');
-
 contextBridge.exposeInMainWorld('electron', {
   ipcRenderer: {
-    invoke: (channel: string, args: any[]) => {
-      console.log('[Preload] IPC invoke called:', channel, args);
-      return ipcRenderer.invoke(channel, ...args);
-    },
+    invoke: (channel: string, args: any[]) => ipcRenderer.invoke(channel, ...args),
     on: (channel: string, func: Function) =>
       ipcRenderer.on(channel, (event, ...args) => func(...args)),
     once: (channel: string, func: Function) =>
@@ -17,5 +12,11 @@ contextBridge.exposeInMainWorld('electron', {
   },
 });
 
-console.log('[Preload] Preload script loaded successfully. window.electron:', typeof window.electron);
+contextBridge.exposeInMainWorld('electronAPI', {
+  minimize: () => ipcRenderer.invoke('window-minimize'),
+  maximize: () => ipcRenderer.invoke('window-maximize'),
+  close: () => ipcRenderer.invoke('window-close'),
+});
+
+
 

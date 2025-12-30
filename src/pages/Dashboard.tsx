@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useCalendar } from '../hooks/useCalendar';
+import { useToast } from '../context/ToastContext';
 import TaskCard from '../components/Task/TaskCard';
 import Calendar from '../components/Calendar/Calendar';
 import Button from '../components/UI/Button';
@@ -55,6 +56,7 @@ const getStreakData = () => {
 
 const Dashboard: React.FC = () => {
     const { tasks, events, addTask, updateTask, removeTask } = useCalendar();
+    const { showToast } = useToast();
     const history = useHistory();
     const [adding, setAdding] = useState(false);
     const [showTemplates, setShowTemplates] = useState(false);
@@ -152,9 +154,8 @@ const Dashboard: React.FC = () => {
     };
 
     const handleAdd = (title: string, due?: string) => {
-        console.log('[Dashboard.handleAdd] Called with title:', title, 'due:', due);
         if (tasks.length >= taskLimit) {
-            alert(`Task limit reached (${taskLimit}). Unlock more in the Store!`);
+            showToast(`Task limit reached (${taskLimit}). Unlock more in the Store!`, 'warning');
             return;
         }
         
@@ -162,12 +163,11 @@ const Dashboard: React.FC = () => {
         const dailyCreations = getDailyCreationCount();
         
         if (dailyCreations >= dailyLimit) {
-            alert(`Daily task creation limit reached (${dailyLimit}). Try again tomorrow or unlock more in the Store!`);
+            showToast(`Daily task creation limit reached (${dailyLimit}). Try again tomorrow or unlock more in the Store!`, 'warning');
             return;
         }
         
         const task = { id: Date.now(), title, description: '', dueDate: due || '', completed: false } as any;
-        console.log('[Dashboard.handleAdd] Adding task:', task);
         addTask(task);
         incrementDailyCreation();
         setAdding(false);
@@ -210,27 +210,19 @@ const Dashboard: React.FC = () => {
                 try {
                     const userProfile = await getCurrentUserProfile(firebaseUser.uid);
                     if (userProfile) {
-                        console.log('[Auth] Loaded profile from Firestore:', userProfile);
                         setProfile(userProfile);
                         localStorage.setItem(PROFILE_KEY, JSON.stringify(userProfile));
                     }
 
                     // Load game progress
                     const gameProgress = await loadGameProgress();
-                    console.log('[Auth] gameProgress object:', gameProgress);
                     if (gameProgress) {
-                        console.log('[Auth] Loaded game progress from Firestore:', gameProgress);
                         // Restore XP
-                        console.log('[Auth] gameProgress.xp =', gameProgress.xp);
                         if (gameProgress.xp !== undefined && gameProgress.xp !== null) {
-                            console.log('[Auth] ✅ Restoring XP:', gameProgress.xp);
                             setXp(gameProgress.xp, false); // Don't sync - data is already from Firestore
-                        } else {
-                            console.log('[Auth] ⚠️ No XP to restore (xp is', gameProgress.xp, ')');
                         }
                         // Restore gems
                         if (gameProgress.gems !== undefined) {
-                            console.log('[Auth] Restoring gems:', gameProgress.gems);
                             setGems(gameProgress.gems);
                             setCurrentGems(gameProgress.gems);
                         }
@@ -252,14 +244,9 @@ const Dashboard: React.FC = () => {
                             localStorage.setItem(skillsKey, JSON.stringify(gameProgress.unlockedSkills));
                         }
                         // Restore titles
-                        console.log('[Auth] ⏭️ Restoring titles...');
-                        console.log('[Auth] gameProgress:', gameProgress);
-                        console.log('[Auth] gameProgress.unlockedTitles:', gameProgress?.unlockedTitles);
-                        console.log('[Auth] gameProgress.selectedTitle:', gameProgress?.selectedTitle);
                         if (gameProgress?.unlockedTitles?.length || gameProgress?.selectedTitle) {
                             const titlesKey = 'adhd_titles';
                             if (gameProgress.unlockedTitles && gameProgress.unlockedTitles.length > 0) {
-                                console.log('[Auth] ✅ Restoring unlocked titles:', gameProgress.unlockedTitles.length);
                                 // Store as the full titles object to match what titles.ts expects
                                 const titlesObj = {
                                     unlockedIds: gameProgress.unlockedTitles,
@@ -268,17 +255,10 @@ const Dashboard: React.FC = () => {
                                 localStorage.setItem(titlesKey, JSON.stringify(titlesObj));
                             }
                             // Fire event to notify UI to reload titles
-                            console.log('[Auth] 🎯 Firing titles:restored event');
                             window.dispatchEvent(new CustomEvent('titles:restored'));
-                        } else {
-                            console.log('[Auth] ⚠️ No titles to restore (unlockedTitles or selectedTitle missing)');
                         }
                         // Restore pets
-                        console.log('[Auth] ⏭️ Restoring pets...');
-                        console.log('[Auth] gameProgress.pets:', gameProgress?.pets);
-                        console.log('[Auth] gameProgress.currentPetId:', gameProgress?.currentPetId);
                         if (gameProgress?.pets && Array.isArray(gameProgress.pets)) {
-                            console.log('[Auth] ✅ Restoring pets:', gameProgress.pets.length);
                             // Save all pets (default + shop pets) to adhd_pets
                             localStorage.setItem('adhd_pets', JSON.stringify(gameProgress.pets));
                             
@@ -286,28 +266,20 @@ const Dashboard: React.FC = () => {
                             if (gameProgress.pets.length > 0) {
                                 // Find the first pet that looks like a default pet (created before any shop purchases)
                                 const firstPet = gameProgress.pets[0];
-                                console.log('[Auth] ✅ Setting default pet in localStorage:', firstPet.name);
                                 localStorage.setItem('adhd_pet', JSON.stringify(firstPet));
                             }
                             
                             if (gameProgress.currentPetId) {
-                                console.log('[Auth] ✅ Restoring current pet:', gameProgress.currentPetId);
                                 localStorage.setItem('adhd_current_pet_id', gameProgress.currentPetId);
                             }
                             // Fire event to notify Pet page to reload
-                            console.log('[Auth] 🎯 Firing pets:restored event');
                             window.dispatchEvent(new CustomEvent('pets:restored'));
-                        } else {
-                            console.log('[Auth] ⚠️ No pets to restore');
                         }
                         // Restore tasks
                         if (gameProgress.tasks && Array.isArray(gameProgress.tasks)) {
-                            console.log('[Auth] Restoring tasks from Firestore:', gameProgress.tasks.length, 'tasks', gameProgress.tasks);
                             localStorage.setItem('adhd_tasks', JSON.stringify(gameProgress.tasks));
                             // Fire event to notify useCalendar to reload from localStorage
                             window.dispatchEvent(new CustomEvent('tasks:restored'));
-                        } else {
-                            console.log('[Auth] ⚠️ No tasks to restore (tasks is', gameProgress.tasks, ')');
                         }
                     }
                 } catch (error) {
@@ -384,6 +356,16 @@ const Dashboard: React.FC = () => {
         }
     }, [showProfile]);
 
+    // Listen for profile modal open event
+    useEffect(() => {
+        const handleOpenProfileModal = () => {
+            setShowProfile(true);
+        };
+
+        window.addEventListener('openProfileModal', handleOpenProfileModal as EventListener);
+        return () => window.removeEventListener('openProfileModal', handleOpenProfileModal as EventListener);
+    }, []);
+
     // Listen for pet updates
     useEffect(() => {
         const handlePetUpdate = () => {
@@ -401,13 +383,11 @@ const Dashboard: React.FC = () => {
         };
         
         const handleTitlesRestored = () => {
-            console.log('[Dashboard] Titles restored, updating UI');
             setUnlockedTitles(getUnlockedTitles());
             setSelectedTitleState(getSelectedTitle());
         };
         
         const handleTitlesCleared = () => {
-            console.log('[Dashboard] Titles cleared, clearing UI');
             setUnlockedTitles([]);
             setSelectedTitleState(null);
         };
@@ -500,14 +480,13 @@ const Dashboard: React.FC = () => {
         filteredUsers.push(testFriend);
         
         localStorage.setItem(USERS_KEY, JSON.stringify(filteredUsers));
-        alert('Test Friend (TestBot#9999) added to the user registry. You can now add them as a friend!');
+        showToast('Test Friend (TestBot#9999) added to the user registry. You can now add them as a friend!', 'success');
     };
     const handleAvatarClick = () => {
         setShowProfile(true);
     };
 
     const saveProfile = async (data: ProfileData) => {
-        console.log('[saveProfile] Saving profile with:', data);
         // Update local state immediately for UI responsiveness
         setProfile(data);
         localStorage.setItem(PROFILE_KEY, JSON.stringify(data));
@@ -515,7 +494,6 @@ const Dashboard: React.FC = () => {
         // Sync to Firestore if logged in
         if (auth.currentUser) {
             try {
-                console.log('[saveProfile] Syncing to Firestore...');
                 const updatePayload = {
                     username: data.username,
                     hashtag: data.hashtag || '1000',
@@ -523,9 +501,7 @@ const Dashboard: React.FC = () => {
                     customAvatarUrl: data.customAvatarUrl || null,
                     updatedAt: new Date().toISOString()
                 };
-                console.log('[saveProfile] Update payload:', updatePayload);
                 await updateDoc(doc(db, 'users', auth.currentUser.uid), updatePayload);
-                console.log('[saveProfile] ✅ Firestore sync successful with avatar:', data.avatar);
                 // After successful save, update state again to ensure it's persisted
                 setProfile(data);
             } catch (error) {
@@ -790,7 +766,7 @@ const Dashboard: React.FC = () => {
         if (!selectedTemplate) return;
         
         if (tasks.length >= taskLimit) {
-            alert(`Task limit reached (${taskLimit}). Unlock more in the Store!`);
+            showToast(`Task limit reached (${taskLimit}). Unlock more in the Store!`, 'warning');
             return;
         }
         
@@ -798,7 +774,7 @@ const Dashboard: React.FC = () => {
         const dailyCreations = getDailyCreationCount();
         
         if (dailyCreations >= dailyLimit) {
-            alert(`Daily task creation limit reached (${dailyLimit}). Try again tomorrow or unlock more in the Store!`);
+            showToast(`Daily task creation limit reached (${dailyLimit}). Try again tomorrow or unlock more in the Store!`, 'warning');
             return;
         }
         
@@ -825,49 +801,9 @@ const Dashboard: React.FC = () => {
 
     return (
         <div className="container">
-            <div className="header" style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
-                <div>
-                    <h1 style={{cursor:'pointer', userSelect:'none'}}>Dashboard</h1>
-                    <div className="subtle">Plan your day — quick add tasks or jump to views</div>
-                </div>
-                <div style={{display:'flex', alignItems:'center', gap:0, justifyContent:'space-between'}}>
-                    <div style={{display:'flex', flexDirection:'column', gap:4}}>
-                        <div>
-                            <div style={{fontWeight:600, fontSize:'1.1rem', marginLeft:100}}>{profile.username}</div>
-                            {selectedTitle && (
-                                <div style={{fontSize:'0.8rem', color:'var(--accent)', fontWeight:500, marginLeft:75}}>
-                                    {selectedTitle.name}
-                                </div>
-                            )}
-                        </div>
-                        <div style={{fontSize:'0.9rem', display:'flex', flexDirection:'column', gap:1}}>
-                            <div style={{fontWeight:500, marginLeft:75}}>Level {Math.floor(getXp() / 100) + 1}</div>
-                            <div className="subtle" style={{fontSize:'0.8rem', marginLeft:100}}>{getXp()} XP</div>
-                        </div>
-                    </div>
-                    <div style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: '50%',
-                        backgroundColor: 'var(--accent)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 24,
-                        fontWeight: 'bold',
-                        color: 'var(--bg)',
-                        cursor: 'pointer',
-                        border: purchases.has(3) ? '3px solid var(--accent-2)' : 'none',
-                        backgroundImage: profile.customAvatarUrl ? `url(${profile.customAvatarUrl})` : 'none',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        overflow: 'hidden',
-                        flexShrink: 0,
-                        marginLeft: -4
-                    }} onClick={handleAvatarClick}>
-                        {!profile.customAvatarUrl && profile.avatar}
-                    </div>
-                </div>
+            <div className="header">
+                <h1>Dashboard</h1>
+                <div className="subtle">Plan your day — quick add tasks or jump to views</div>
             </div>
 
             {/* Recommended Tasks Section */}
@@ -884,9 +820,9 @@ const Dashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="tasks-list" style={{maxHeight: '400px', overflowY: 'auto'}}>
-                        {adding && <QuickAdd onAdd={handleAdd} />}
+                    {adding && <QuickAdd onAdd={handleAdd} />}
 
+                    <div className="tasks-list" style={{maxHeight: '400px', overflowY: 'auto'}}>
                         {tasks.length === 0 && <div className="subtle">No tasks yet — hit + Add to create one</div>}
                         {displayedTasks.map((task:any) => {
                             // Anti-spam: Check if task is at least 5 minutes old before granting XP

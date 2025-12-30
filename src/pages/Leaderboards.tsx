@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { getAuth } from 'firebase/auth';
 import Button from '../components/UI/Button';
-
-const PROFILE_KEY = 'adhd_profile';
-const XP_KEY = 'adhd_xp';
-const LEADERBOARD_KEY = 'adhd_leaderboard_monthly';
-const FRIENDS_KEY = 'adhd_friends';
-const LEADERBOARD_RESET_KEY = 'adhd_leaderboard_reset_date';
+import { getGlobalLeaderboard, getFriendsLeaderboard, getPlayerRank, syncPlayerToLeaderboard } from '../services/leaderboard';
+import { getLevelFromXp } from '../services/xp';
 
 interface LeaderboardEntry {
     id: string;
+    userId: string;
     username: string;
     avatar: string;
     xp: number;
     level: number;
+    currentStreak?: number;
+    tasksCompleted?: number;
 }
 
 interface MonthlyResetInfo {
@@ -26,13 +26,14 @@ const Leaderboards: React.FC = () => {
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
     const [userRank, setUserRank] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState<'global' | 'friends'>('global');
-    const [friends, setFriends] = useState<Set<string>>(new Set());
+    const [loading, setLoading] = useState(true);
     const [resetInfo, setResetInfo] = useState<MonthlyResetInfo>({
         daysLeft: 0,
         hoursLeft: 0,
         minutesLeft: 0,
         totalDaysLeft: 0,
     });
+    const auth = getAuth();
 
     // Calculate time until next month reset
     const calculateResetTime = (): MonthlyResetInfo => {
@@ -52,114 +53,60 @@ const Leaderboards: React.FC = () => {
         };
     };
 
-    // Check if leaderboard needs to reset
-    const checkAndResetLeaderboard = () => {
-        const now = new Date();
-        const currentMonth = `${now.getFullYear()}-${now.getMonth()}`;
-        
-        const storedResetDate = localStorage.getItem(LEADERBOARD_RESET_KEY);
-        
-        if (storedResetDate !== currentMonth) {
-            // Month has changed, reset the leaderboard
-            localStorage.setItem(LEADERBOARD_RESET_KEY, currentMonth);
-            localStorage.removeItem(LEADERBOARD_KEY);
-            return true;
-        }
-        return false;
-    };
-
     useEffect(() => {
-        try {
-            // Check if leaderboard needs to reset
-            checkAndResetLeaderboard();
-            
-            // Calculate reset time
-            const info = calculateResetTime();
-            setResetInfo(info);
+        const loadLeaderboard = async () => {
+            try {
+                setLoading(true);
+                
+                // Calculate reset time
+                const info = calculateResetTime();
+                setResetInfo(info);
 
-            // Set up interval to update timer every minute
-            const interval = setInterval(() => {
-                const newInfo = calculateResetTime();
-                setResetInfo(newInfo);
-            }, 60000);
-
-            // Get user's current profile and XP
-            const profileStr = localStorage.getItem(PROFILE_KEY);
-            const profile = profileStr ? JSON.parse(profileStr) : { username: 'Player', avatar: '👤' };
-            
-            const xpStr = localStorage.getItem(XP_KEY);
-            const userXp = xpStr ? JSON.parse(xpStr) : { current: 0, total: 0 };
-            
-            const userLevel = Math.floor(userXp.total / 100) + 1;
-            
-            // Get friends list
-            const friendsStr = localStorage.getItem(FRIENDS_KEY);
-            const friendsList = friendsStr ? new Set(JSON.parse(friendsStr)) : new Set();
-            setFriends(friendsList);
-            
-            // Get or create leaderboard data
-            let storedLeaderboard = localStorage.getItem(LEADERBOARD_KEY);
-            let leaderboardData: LeaderboardEntry[] = [];
-            
-            if (storedLeaderboard) {
-                try {
-                    const parsed = JSON.parse(storedLeaderboard);
-                    // Validate entries have required properties
-                    leaderboardData = Array.isArray(parsed) 
-                        ? parsed.filter(entry => entry && typeof entry.xp === 'number')
-                        : [];
-                } catch (e) {
-                    leaderboardData = [];
+                // Sync current player to leaderboard first
+                if (auth.currentUser) {
+                    await syncPlayerToLeaderboard();
                 }
+
+                // Get leaderboard data
+                const globalData = await getGlobalLeaderboard();
+                
+                // Convert to LeaderboardEntry format
+                const entries: LeaderboardEntry[] = globalData.map(player => ({
+                    id: player.userId,
+                    userId: player.userId,
+                    username: player.username,
+                    avatar: player.avatar,
+                    xp: player.xp,
+                    level: player.level,
+                    currentStreak: player.currentStreak,
+                    tasksCompleted: player.tasksCompleted,
+                }));
+
+                setLeaderboard(entries);
+
+                // Get user rank
+                if (auth.currentUser) {
+                    const rank = await getPlayerRank();
+                    setUserRank(rank);
+                }
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+                setLeaderboard([]);
+            } finally {
+                setLoading(false);
             }
-            
-            // Create user entry
-            const userEntry: LeaderboardEntry = {
-                id: 'player',
-                username: profile.username,
-                avatar: profile.avatar || '👤',
-                xp: userXp.total || 0,
-                level: userLevel,
-            };
-            
-            // Filter out old user entry and add updated one
-            leaderboardData = leaderboardData.filter(entry => entry && entry.id !== 'player');
-            leaderboardData.push(userEntry);
-            
-            // Sort by XP descending
-            leaderboardData.sort((a, b) => (b.xp || 0) - (a.xp || 0));
-            
-            // Find user rank
-            const rank = leaderboardData.findIndex(entry => entry.id === 'player') + 1;
-            setUserRank(rank);
-            setLeaderboard(leaderboardData);
-            
-            // Save updated leaderboard
-            localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboardData));
+        };
 
-            return () => clearInterval(interval);
-        } catch (error) {
-            console.error('Error loading leaderboard:', error);
-            setLeaderboard([]);
-        }
-    }, []);
+        loadLeaderboard();
 
-    // Add some mock data if leaderboard is mostly empty
-    const displayLeaderboard = leaderboard.length > 0 ? leaderboard : [
-        { id: '1', username: 'You', avatar: '🌟', xp: 500, level: 6 },
-        { id: '2', username: 'TaskMaster', avatar: '🚀', xp: 1200, level: 13 },
-        { id: '3', username: 'FocusNinja', avatar: '🧘', xp: 950, level: 10 },
-        { id: '4', username: 'ProductivityKing', avatar: '👑', xp: 850, level: 9 },
-        { id: '5', username: 'HabitBuilder', avatar: '🏗️', xp: 750, level: 8 },
-    ];
+        // Set up interval to update timer every minute
+        const interval = setInterval(() => {
+            const newInfo = calculateResetTime();
+            setResetInfo(newInfo);
+        }, 60000);
 
-    // Filter leaderboard based on active tab
-    const filteredLeaderboard = activeTab === 'friends' 
-        ? displayLeaderboard.filter(entry => entry.id === 'player' || friends.has(entry.id))
-        : displayLeaderboard;
-
-    // Calculate user rank for current tab
-    const currentUserRank = filteredLeaderboard.findIndex(entry => entry.id === 'player') + 1;
+        return () => clearInterval(interval);
+    }, [auth.currentUser]);
 
     return (
         <div className="container">
@@ -180,48 +127,7 @@ const Leaderboards: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Tab Switcher */}
-                <div style={{
-                    display: 'flex',
-                    gap: 12,
-                    marginBottom: 24,
-                    borderBottom: '1px solid var(--border)',
-                    paddingBottom: 12,
-                    justifyContent: 'center',
-                }}>
-                    <button
-                        onClick={() => setActiveTab('global')}
-                        style={{
-                            padding: '8px 16px',
-                            border: 'none',
-                            background: activeTab === 'global' ? 'var(--primary)' : 'transparent',
-                            color: activeTab === 'global' ? 'white' : 'var(--text)',
-                            borderRadius: 6,
-                            cursor: 'pointer',
-                            fontWeight: activeTab === 'global' ? 'bold' : 'normal',
-                            fontSize: '0.95rem',
-                        }}
-                    >
-                        🌍 Global
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('friends')}
-                        style={{
-                            padding: '8px 16px',
-                            border: 'none',
-                            background: activeTab === 'friends' ? 'var(--primary)' : 'transparent',
-                            color: activeTab === 'friends' ? 'white' : 'var(--text)',
-                            borderRadius: 6,
-                            cursor: 'pointer',
-                            fontWeight: activeTab === 'friends' ? 'bold' : 'normal',
-                            fontSize: '0.95rem',
-                        }}
-                    >
-                        👥 Friends
-                    </button>
-                </div>
-
-                {currentUserRank > 0 && (
+                {userRank && userRank > 0 && (
                     <div style={{
                         background: 'var(--panel)',
                         border: '2px solid var(--primary)',
@@ -231,24 +137,32 @@ const Leaderboards: React.FC = () => {
                         textAlign: 'center'
                     }}>
                         <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: 4 }}>YOUR RANK</div>
-                        <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)' }}>#{currentUserRank}</div>
+                        <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)' }}>#{userRank}</div>
                     </div>
                 )}
 
-                {filteredLeaderboard.length === 0 ? (
+                {loading ? (
+                    <div style={{
+                        textAlign: 'center',
+                        padding: 32,
+                        color: 'var(--text-secondary)',
+                    }}>
+                        <div>Loading leaderboard...</div>
+                    </div>
+                ) : leaderboard.length === 0 ? (
                     <div style={{
                         textAlign: 'center',
                         padding: 32,
                         color: 'var(--text-secondary)',
                     }}>
                         <div style={{ fontSize: '2rem', marginBottom: 12 }}>👥</div>
-                        <div>No friends on the leaderboard yet!</div>
+                        <div>No one on the leaderboard yet. Start completing tasks!</div>
                     </div>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        {filteredLeaderboard.map((entry, index) => (
+                        {leaderboard.map((entry, index) => (
                             <div
-                                key={entry.id}
+                                key={entry.userId}
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
@@ -256,7 +170,7 @@ const Leaderboards: React.FC = () => {
                                     padding: 12,
                                     background: 'var(--panel)',
                                     borderRadius: 8,
-                                    border: entry.id === 'player' ? '2px solid var(--primary)' : '1px solid var(--border)',
+                                    border: auth.currentUser?.uid === entry.userId ? '2px solid var(--primary)' : '1px solid var(--border)',
                                 }}
                             >
                                 <div style={{
@@ -281,10 +195,10 @@ const Leaderboards: React.FC = () => {
                                 <div style={{ flex: 1 }}>
                                     <div style={{ fontWeight: 'bold', marginBottom: 4 }}>
                                         {entry.username}
-                                        {entry.id === 'player' && <span style={{ color: 'var(--primary)', marginLeft: 8 }}>(You)</span>}
+                                        {auth.currentUser?.uid === entry.userId && <span style={{ color: 'var(--primary)', marginLeft: 8 }}>(You)</span>}
                                     </div>
                                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                        Level {entry.level}
+                                        Level {entry.level} • {entry.tasksCompleted || 0} tasks • 🔥 {entry.currentStreak || 0}
                                     </div>
                                 </div>
 

@@ -15,21 +15,17 @@ const useCalendar = () => {
     // Listen for custom events from Dashboard when tasks are restored or cleared
     useEffect(() => {
         const handleTasksRestored = () => {
-            console.log('[useCalendar] Tasks restored event received, reloading from localStorage');
             isRestoringRef.current = true; // Prevent syncing while we reload
             const restoredTasks = getFromLocalStorage(TASKS_KEY) || [];
-            console.log('[useCalendar] Reloaded', restoredTasks.length, 'tasks from localStorage');
             setTasks(restoredTasks);
             
             // Re-enable syncing after a short delay
             setTimeout(() => {
                 isRestoringRef.current = false;
-                console.log('[useCalendar] Restoration complete, syncing re-enabled');
             }, 500);
         };
         
         const handleTasksCleared = () => {
-            console.log('[useCalendar] Tasks cleared event received, clearing tasks');
             setTasks([]);
         };
         
@@ -44,17 +40,11 @@ const useCalendar = () => {
     useEffect(() => {
         // persist tasks when they change
         try {
-            console.log('[useCalendar] Tasks changed, saving to localStorage:', tasks.length, 'tasks', tasks);
             saveToLocalStorage(TASKS_KEY, tasks);
             // Also sync to Firestore if user is logged in AND we're not in restoration phase
             const auth = getAuth();
             if (auth.currentUser && !isRestoringRef.current) {
-                console.log('[useCalendar] Syncing', tasks.length, 'tasks to Firestore...');
                 syncTasksToFirestore(tasks).catch(err => console.warn('[useCalendar] Failed to sync tasks:', err));
-            } else if (!isRestoringRef.current) {
-                console.log('[useCalendar] Not syncing - user not logged in');
-            } else {
-                console.log('[useCalendar] Skipping sync - still in restoration period');
             }
         } catch {}
     }, [tasks]);
@@ -85,12 +75,8 @@ const useCalendar = () => {
     };
 
     const addTask = (task: any) => {
-        console.log('[useCalendar.addTask] Adding task:', task);
         const taskWithTimestamp = { ...task, createdAt: Date.now() };
-        setTasks((prev) => {
-            console.log('[useCalendar.addTask] Updating tasks state from', prev.length, 'to', prev.length + 1);
-            return [...prev, taskWithTimestamp];
-        });
+        setTasks((prev) => [...prev, taskWithTimestamp]);
     };
 
     const removeTask = (taskId: number) => {

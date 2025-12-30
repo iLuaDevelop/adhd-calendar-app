@@ -8176,7 +8176,6 @@ var envPaths = [
 var envLoaded = false;
 for (const envPath of envPaths) {
   if (fs.existsSync(envPath)) {
-    console.log("[Main] Loading .env.local from:", envPath);
     dotenv.config({ path: envPath });
     envLoaded = true;
     break;
@@ -8185,7 +8184,6 @@ for (const envPath of envPaths) {
 if (!envLoaded) {
   console.warn("[Main] \u26A0\uFE0F .env.local not found in any location");
 }
-console.log("[Main] STRIPE_SECRET_KEY loaded:", process.env.STRIPE_SECRET_KEY ? "\u2705 YES" : "\u274C NO");
 var stripeKey = process.env.STRIPE_SECRET_KEY;
 if (!stripeKey) {
   console.error("[Main] \u274C STRIPE_SECRET_KEY not found in environment");
@@ -8196,7 +8194,6 @@ if (stripeKey) {
     stripe = new stripe_esm_node_default(stripeKey, {
       apiVersion: "2023-10-16"
     });
-    console.log("[Main] \u2705 Stripe initialized successfully");
   } catch (err) {
     console.error("[Main] \u274C Failed to initialize Stripe:", err.message);
   }
@@ -8207,15 +8204,10 @@ console.error("[Main] \u{1F680} MAIN PROCESS STARTED");
 console.error("[Main] __dirname:", __dirname);
 var mainWindow;
 var isDev = process.env.NODE_ENV === "development";
-console.log("[Main] __dirname:", __dirname);
-console.log("[Main] isDev:", isDev);
-console.log("[Main] process.cwd():", process.cwd());
 function createWindow() {
   const preloadPath = import_path.default.join(__dirname, "preload.js");
-  console.log("[Main] Preload path:", preloadPath);
   const fs2 = require("fs");
   const preloadExists = fs2.existsSync(preloadPath);
-  console.log("[Main] Preload exists:", preloadExists);
   if (!preloadExists) {
     console.error("[Main] \u274C Preload file not found at:", preloadPath);
   }
@@ -8226,14 +8218,15 @@ function createWindow() {
       enableRemoteModule: false,
       preload: preloadPath,
       sandbox: true
-    }
+    },
+    titleBarStyle: "hidden",
+    trafficLightPosition: { x: 12, y: 10 }
   });
   mainWindow.maximize();
   mainWindow.webContents.on("preload-error", (event, preloadPath2, error) => {
     console.error("[Main] Preload error:", preloadPath2, error);
   });
   const startUrl = isDev ? "http://localhost:3000" : `file://${import_path.default.join(__dirname, "dist/index.html")}`;
-  console.log("Loading URL:", startUrl);
   mainWindow.loadURL(startUrl);
   mainWindow.once("ready-to-show", () => {
     mainWindow?.focus();
@@ -8241,13 +8234,17 @@ function createWindow() {
   if (isDev) {
     mainWindow.webContents.openDevTools();
   }
+  mainWindow.webContents.on("before-input-event", (event, input) => {
+    if (input.control && input.shift && input.key.toLowerCase() === "i") {
+      mainWindow?.webContents.openDevTools();
+      event.preventDefault();
+    }
+  });
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
 }
-console.log("[Main] Registering IPC handler for create-payment-intent");
 import_electron.ipcMain.handle("create-payment-intent", async (event, amount, currency, description) => {
-  console.log("[Main] IPC handler called:", { amount, currency, description });
   try {
     if (!stripe) {
       console.error("[Main] Stripe not initialized - missing STRIPE_SECRET_KEY");
@@ -8259,11 +8256,29 @@ import_electron.ipcMain.handle("create-payment-intent", async (event, amount, cu
       currency,
       description
     });
-    console.log("[Main] Payment intent created:", paymentIntent.id);
     return { clientSecret: paymentIntent.client_secret };
   } catch (error) {
     console.error("[Main] Payment intent error:", error.message);
     return { error: error.message };
+  }
+});
+import_electron.ipcMain.handle("window-minimize", () => {
+  if (mainWindow) {
+    mainWindow.minimize();
+  }
+});
+import_electron.ipcMain.handle("window-maximize", () => {
+  if (mainWindow) {
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow.maximize();
+    }
+  }
+});
+import_electron.ipcMain.handle("window-close", () => {
+  if (mainWindow) {
+    mainWindow.close();
   }
 });
 import_electron.app.on("ready", createWindow);

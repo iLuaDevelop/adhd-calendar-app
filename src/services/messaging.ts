@@ -146,7 +146,6 @@ export const subscribeToConversations = (
   callback: (conversations: Conversation[]) => void
 ) => {
   try {
-    console.log('[subscribeToConversations] Setting up listener for user:', userUid);
     const messagesRef = collection(db, 'messages');
     
     // Get all received messages (the important ones for unread count)
@@ -156,7 +155,6 @@ export const subscribeToConversations = (
     );
 
     const unsubscribe = onSnapshot(q, (receivedSnapshot) => {
-      console.log('[subscribeToConversations] Received update - received messages count:', receivedSnapshot.docs.length);
       const conversationMap = new Map<string, Conversation>();
       
       // Process received messages
@@ -194,7 +192,6 @@ export const subscribeToConversations = (
       const conversations = Array.from(conversationMap.values())
         .sort((a, b) => b.lastMessageTime.toMillis() - a.lastMessageTime.toMillis());
       
-      console.log('[subscribeToConversations] Calling callback with conversations:', conversations.length, 'unread summary:', conversations.map(c => ({ friend: c.friendUsername, unread: c.unreadCount })));
       callback(conversations);
     });
 
@@ -210,7 +207,6 @@ export const subscribeToConversations = (
  */
 export const markMessagesAsRead = async (userUid: string, friendUid: string) => {
   try {
-    console.log('[markMessagesAsRead] Called with userUid:', userUid, 'friendUid:', friendUid);
     const messagesRef = collection(db, 'messages');
     
     // Get all unread messages from this friend
@@ -222,14 +218,12 @@ export const markMessagesAsRead = async (userUid: string, friendUid: string) => 
     );
 
     const snapshot = await getDocs(q);
-    console.log('[markMessagesAsRead] Found', snapshot.docs.length, 'unread messages to mark as read');
     
     const updatePromises = snapshot.docs.map(doc =>
       updateDoc(doc.ref, { read: true })
     );
 
     await Promise.all(updatePromises);
-    console.log('[markMessagesAsRead] Successfully marked all messages as read');
   } catch (error) {
     console.error('[markMessagesAsRead] Error:', error);
   }
@@ -300,10 +294,6 @@ export const searchUsers = async (username: string, hashtag: string): Promise<an
       hashtag.startsWith('#') ? hashtag.substring(1) : hashtag,
     ];
     
-    console.log('Searching for username:', username);
-    console.log('Hashtag variants to try:', hashtagVariants);
-    console.log('Found users with this username:', snapshot.docs.length);
-    
     const results = snapshot.docs
       .map(doc => ({
         uid: doc.id,
@@ -311,11 +301,9 @@ export const searchUsers = async (username: string, hashtag: string): Promise<an
       }))
       .filter(user => {
         if (user.uid === currentUser.uid) return false; // Skip self
-        console.log('Checking user:', user.username, 'with hashtag:', user.hashtag);
         return hashtagVariants.includes(user.hashtag);
       });
 
-    console.log('Final matching results:', results);
     return results;
   } catch (error) {
     console.error('Error searching users:', error);
@@ -550,17 +538,7 @@ export const subscribeToUserProfile = (
       if (snapshot.exists()) {
         const fullData = snapshot.data();
         const profileData = { uid: snapshot.id, ...fullData };
-        console.log('[Profile Listener] Firestore snapshot received for', userUid);
-        console.log('[Profile Listener] Full document data:', fullData);
-        console.log('[Profile Listener] Profile data to callback:', {
-          avatar: profileData.avatar,
-          username: profileData.username,
-          hashtag: profileData.hashtag,
-          timestamp: new Date().toISOString(),
-        });
         callback(profileData);
-      } else {
-        console.log('[Profile Listener] ⚠️ User document does not exist:', userUid);
       }
     });
 

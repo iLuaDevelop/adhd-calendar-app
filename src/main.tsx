@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import './styles/index.css';
 import { PreferencesProvider } from './context/PreferencesContext';
+import { ToastProvider } from './context/ToastContext';
+import { CalendarProvider } from './context/CalendarContext';
+import { LanguageProvider } from './context/LanguageContext';
 
 // Suppress AudioContext device errors from console - these are harmless system-level issues
 const originalError = console.error;
@@ -43,7 +46,13 @@ window.addEventListener('unhandledrejection', (event) => {
 ReactDOM.render(
   <React.StrictMode>
     <PreferencesProvider>
-      <App />
+      <ToastProvider>
+        <CalendarProvider>
+          <LanguageProvider>
+            <App />
+          </LanguageProvider>
+        </CalendarProvider>
+      </ToastProvider>
     </PreferencesProvider>
   </React.StrictMode>,
   document.getElementById('root')

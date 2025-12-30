@@ -42,23 +42,9 @@ export const saveGameProgress = async (progress: Partial<GameProgress>) => {
       ...progress,
       lastUpdated: new Date().toISOString(),
     };
-
-    console.log('[gameProgress] Merging:', { 
-      existing: existingGameProgress, 
-      new: progress, 
-      merged: mergedProgress,
-      newTasks: progress?.tasks,
-      mergedTasks: mergedProgress.tasks,
-      newPets: progress?.pets,
-      mergedPets: mergedProgress.pets,
-      newCurrentPetId: progress?.currentPetId,
-      mergedCurrentPetId: mergedProgress.currentPetId
-    });
     
     // Use setDoc with merge to handle both new and existing docs
     await setDoc(userDocRef, { gameProgress: mergedProgress }, { merge: true });
-
-    console.log('[gameProgress] ✅ Saved to Firestore:', mergedProgress);
   } catch (error) {
     console.error('[gameProgress] ❌ Error saving to Firestore:', error);
     // Don't throw - allow game to continue even if save fails
@@ -87,16 +73,9 @@ export const loadGameProgress = async (): Promise<Partial<GameProgress> | null> 
     }
 
     const userData = userDoc.data();
-    console.log('[gameProgress] Full user doc data:', userData);
     const gameProgress = userData?.gameProgress;
-    console.log('[gameProgress] gameProgress field:', gameProgress);
-    console.log('[gameProgress] gameProgress.xp =', gameProgress?.xp);
-    console.log('[gameProgress] gameProgress.tasks =', gameProgress?.tasks, '| type:', typeof gameProgress?.tasks);
-    console.log('[gameProgress] gameProgress.pets =', gameProgress?.pets, '| length:', gameProgress?.pets?.length);
-    console.log('[gameProgress] gameProgress.currentPetId =', gameProgress?.currentPetId);
 
     if (gameProgress) {
-      console.log('[gameProgress] ✅ Loaded from Firestore:', gameProgress);
       return gameProgress;
     }
 
@@ -112,10 +91,8 @@ export const loadGameProgress = async (): Promise<Partial<GameProgress> | null> 
  * Sync specific data to Firestore (for frequent updates like XP)
  */
 export const syncXpToFirestore = async (xp: number) => {
-  console.log('[syncXpToFirestore] Syncing XP:', xp, 'to Firestore...');
   try {
     await saveGameProgress({ xp });
-    console.log('[syncXpToFirestore] ✅ XP sync complete');
   } catch (error) {
     console.error('[syncXpToFirestore] ❌ XP sync failed:', error);
     throw error;
@@ -139,10 +116,8 @@ export const syncTitlesToFirestore = async (unlockedTitles: string[], selectedTi
 };
 
 export const syncTasksToFirestore = async (tasks: any[]) => {
-  console.log('[syncTasksToFirestore] 📤 Syncing tasks to Firestore...', { taskCount: tasks?.length, taskIds: tasks?.map(t => t.id) });
   try {
     await saveGameProgress({ tasks });
-    console.log('[syncTasksToFirestore] ✅ Tasks sync complete');
   } catch (error) {
     console.error('[syncTasksToFirestore] ❌ Tasks sync failed:', error);
     throw error;
@@ -150,10 +125,8 @@ export const syncTasksToFirestore = async (tasks: any[]) => {
 };
 
 export const syncPetsToFirestore = async (pets: any[], currentPetId: string | null) => {
-  console.log('[syncPetsToFirestore] 📤 Syncing pets to Firestore...', { petsCount: pets?.length, currentPetId, petIds: pets?.map(p => p.id) });
   try {
     const result = await saveGameProgress({ pets, currentPetId });
-    console.log('[syncPetsToFirestore] ✅ Pets sync complete');
     return result;
   } catch (error) {
     console.error('[syncPetsToFirestore] ❌ Pets sync failed:', error);

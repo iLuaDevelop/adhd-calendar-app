@@ -31,44 +31,35 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, userId, user
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('[ProfileModal] useEffect triggered, open:', open, 'userId:', userId);
     if (!open || !userId) {
-      console.log('[ProfileModal] Skipping load - open:', open, 'userId:', userId);
       return;
     }
 
-    console.log('[ProfileModal] Starting to load profile for user:', userId);
     setLoading(true);
 
     let isMounted = true;
     let unsubscribe: (() => void) | null = null;
 
     // Subscribe to messaging profile (real-time updates)
-    console.log('[ProfileModal] Subscribing to user profile...');
     try {
       unsubscribe = subscribeToUserProfile(userId, (data: UserProfile) => {
         if (isMounted) {
-          console.log('[ProfileModal] Profile data received:', data);
           setProfileData(data);
         }
       });
     } catch (error) {
-      console.log('[ProfileModal] Error subscribing to profile:', error);
+      console.error('[ProfileModal] Error subscribing to profile:', error);
     }
 
     // Load game progress separately
     const loadGameProgress = async () => {
       try {
-        console.log('[ProfileModal] Fetching game progress for user:', userId);
         const gameProgressDoc = await getDoc(doc(db, 'gameProgress', userId));
         if (gameProgressDoc.exists() && isMounted) {
-          console.log('[ProfileModal] Game progress loaded:', gameProgressDoc.data());
           setGameProgress(gameProgressDoc.data());
-        } else if (isMounted) {
-          console.log('[ProfileModal] No game progress document found for user:', userId);
         }
       } catch (e) {
-        console.log('[ProfileModal] Error fetching game progress:', e);
+        console.error('[ProfileModal] Error fetching game progress:', e);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -77,15 +68,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, userId, user
     loadGameProgress();
 
     return () => {
-      console.log('[ProfileModal] Cleaning up - unsubscribing from profile');
       isMounted = false;
       if (unsubscribe) {
         unsubscribe();
       }
     };
   }, [open, userId]);
-
-  console.log('[ProfileModal] RENDERING, open:', open, 'loading:', loading, 'profileData exists:', !!profileData);
 
   return (
     <Modal isOpen={open} onClose={onClose} title={`${username}'s Profile`}>

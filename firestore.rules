@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Allow users to read their own profile
+    match /playerProfiles/{userId} {
+      allow read: if request.auth.uid == userId;
+      allow write: if request.auth.uid == userId && 
+                      request.resource.data.keys().hasAll(['username', 'avatar']) &&
+                      !('xp' in request.resource.data) &&
+                      !('level' in request.resource.data) &&
+                      !('tasksCompleted' in request.resource.data);
+    }
+
+    // Leaderboard collection
+    // TEMPORARY: Allow client writes until Cloud Function deployed
+    // TODO: Change back to read-only when Cloud Functions are deployed
+    match /leaderboard/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;  // Allow authenticated users to write temporarily
+    }
+
+    // gameProgress collection - clients write their game state here
+    // Cloud Function reads this and updates leaderboard
+    match /gameProgress/{userId} {
+      allow read: if request.auth != null;  // Allow authenticated users to read (for migration)
+      allow delete: if request.auth != null;  // Allow any authenticated user to delete (for dev/testing)
+      allow write: if (request.auth.uid == userId ||  // User can write their own
+                       request.auth != null) &&  // Or any authenticated user (for dev/testing)
+                      request.resource.data.keys().hasAll(['xp', 'gems', 'tasksCompleted']) &&
+                      // Prevent obvious manipulation attempts
+                      request.resource.data.xp >= 0 &&
+                      request.resource.data.xp <= 100000 &&  // Max 100k XP (sanity check)
+                      request.resource.data.gems >= 0 &&
+                      request.resource.data.gems <= 100000;
+    }
+
+    // Users collection - allows authenticated read and owner-only write
+    match /users/{userId} {
+      allow read: if request.auth != null;  // Allow authenticated users to read all users (for leaderboard)
+      allow delete: if request.auth != null;  // Allow any authenticated user to delete (for dev/testing)
+      allow write: if request.auth.uid == userId || request.auth != null;  // Allow owner or any authenticated user (for dev/testing)
+    }
+
+    match /tasks/{taskId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /petData/{petId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Messaging and friend requests
+    match /messages/{messageId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    match /friendRequests/{requestId} {
+      allow read: if request.auth != null;
+      allow write, delete: if request.auth != null;
+    }
+  }
+}

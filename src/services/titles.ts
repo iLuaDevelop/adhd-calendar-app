@@ -131,7 +131,6 @@ export const unlockTitle = (titleId: string): void => {
             localStorage.setItem(TITLES_KEY, JSON.stringify(titles));
             
             // Sync to Firestore
-            console.log('[titles] Syncing unlocked title to Firestore:', titleId);
             syncTitlesToFirestore(titles.unlockedIds, titles.selectedTitleId).catch(err => console.warn('[titles] Failed to sync:', err));
             
             // Dispatch custom event for UI updates
@@ -150,7 +149,6 @@ export const setSelectedTitle = (titleId: string | null): void => {
         
         // Sync to Firestore
         const unlockedTitles = titles.unlockedIds;
-        console.log('[titles] Syncing selected title to Firestore:', titleId);
         syncTitlesToFirestore(unlockedTitles, titleId).catch(err => console.warn('[titles] Failed to sync:', err));
         
         window.dispatchEvent(new CustomEvent('selectedTitleChanged', { detail: { titleId } }));

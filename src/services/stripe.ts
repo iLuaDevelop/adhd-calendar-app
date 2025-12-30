@@ -30,23 +30,15 @@ export const createPaymentIntent = async (
   try {
     // For desktop (Electron with file:// protocol), use IPC to main process
     if (window.location.protocol === 'file:') {
-      console.log('[Stripe] Desktop mode detected (file:// protocol)');
-      console.log('[Stripe] window.electron available:', typeof (window as any).electron);
-      console.log('[Stripe] window.electron value:', (window as any).electron);
-      
       const electron = (window as any).electron;
       if (electron && electron.ipcRenderer) {
-        console.log('[Stripe] IPC renderer available, calling create-payment-intent');
         try {
           const result = await electron.ipcRenderer.invoke('create-payment-intent', [amount, currency, description]);
-          console.log('[Stripe] Real payment intent from Electron:', result);
           return result;
         } catch (error: any) {
-          console.error('[Stripe] IPC error:', error);
           return { clientSecret: '', error: error.message };
         }
       } else {
-        console.error('[Stripe] Electron IPC not available. electron:', electron, 'ipcRenderer:', electron?.ipcRenderer);
         return { clientSecret: '', error: 'Stripe not initialized' };
       }
     }

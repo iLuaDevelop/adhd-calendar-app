@@ -99,10 +99,8 @@ export const getCurrentUserProfile = async (uid: string): Promise<UserProfile | 
 export const signInAsGuest = async (): Promise<User> => {
   try {
     const result = await signInAnonymously(auth);
-    console.log('[Auth] Guest sign-in successful:', result.user.uid);
     return result.user;
   } catch (error: any) {
-    console.error('[Auth] Guest sign-in failed:', error.code, error.message);
     throw error;
   }
 };

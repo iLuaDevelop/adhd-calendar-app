@@ -17,10 +17,8 @@ const XPBar: React.FC = () => {
     // Mark initial load as done on component mount after a longer delay
     // This ensures all XP data is loaded before we start checking for level ups
     const initialLevel = getLevelFromXp(getXp());
-    console.log('[XPBar] Mount - initial level:', initialLevel);
     const timer = setTimeout(() => {
       const afterDelay = getLevelFromXp(getXp());
-      console.log('[XPBar] Initial load timer done - level:', afterDelay);
       prevLevelRef.current = afterDelay;
       setIsInitialLoad(false);
     }, 1000);
@@ -77,10 +75,8 @@ const XPBar: React.FC = () => {
 
   useEffect(() => {
     const prev = prevLevelRef.current;
-    console.log('[XPBar] Level check:', { level, prev, isInitialLoad, willTrigger: level > prev && !isInitialLoad });
     // Only check for level up if NOT initial load AND level actually increased
     if (level > prev && !isInitialLoad) {
-      console.log('[XPBar] LEVEL UP TRIGGERED - playing sound');
       // level up! (but only if not initial load)
       playLevelUpSound();
       setShowCongrats(true);

@@ -77,7 +77,6 @@ export const createPet = (name: string = 'My Pet'): Pet => {
     favoriteFood: 'treats',
     mood: 'happy',
   };
-  console.log('[pet] 🐣 Creating default pet:', pet.name, 'id:', pet.id);
   localStorage.setItem(PET_KEY, JSON.stringify(pet));
   
   // Add to multi-pet system
@@ -85,16 +84,13 @@ export const createPet = (name: string = 'My Pet'): Pet => {
   // Only add if not already there
   if (!allPets.find(p => p.id === pet.id)) {
     allPets.push(pet);
-    console.log('[pet] Adding default pet to allPets array, total now:', allPets.length);
     localStorage.setItem(PETS_KEY, JSON.stringify(allPets));
   }
   
   // Set as current pet
-  console.log('[pet] Setting as current pet');
   localStorage.setItem(CURRENT_PET_KEY, pet.id);
   
   // Also sync default pet to Firestore so it persists across logout/login
-  console.log('[pet] Syncing default pet to Firestore...');
   syncPetsToFirestore(allPets, pet.id).catch(err => {
     console.error('[pet] ❌ Failed to sync default pet:', err);
   });
@@ -280,7 +276,6 @@ export const getXpToNextLevel = (level: number): number => {
 
 // Save pet to localStorage (uses forward references to functions defined below)
 const savePet = (pet: Pet) => {
-  console.log('[pet] 💾 savePet called for:', pet.name, 'hunger:', pet.hunger);
   // Save to legacy system
   localStorage.setItem(PET_KEY, JSON.stringify(pet));
   
@@ -289,11 +284,9 @@ const savePet = (pet: Pet) => {
   const allPets: Pet[] = petsStr ? JSON.parse(petsStr) : [];
   const index = allPets.findIndex(p => p.id === pet.id);
   if (index >= 0) {
-    console.log('[pet] Updating pet in allPets array at index:', index);
     allPets[index] = pet;
     localStorage.setItem(PETS_KEY, JSON.stringify(allPets));
   } else {
-    console.log('[pet] ⚠️ Pet not found in allPets array, might need to add it');
   }
 };
 
@@ -378,7 +371,6 @@ export const setCurrentPet = (petId: string): void => {
   
   // Sync to Firestore
   const allPets = getAllPets();
-  console.log('[pet] Syncing current pet selection to Firestore:', petId);
   syncPetsToFirestore(allPets, petId).catch(err => console.warn('[pet] Failed to sync current pet:', err));
   
   window.dispatchEvent(new CustomEvent('petSwitched', { detail: { petId } }));

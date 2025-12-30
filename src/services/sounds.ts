@@ -13,57 +13,28 @@ let audioContextInitialized = false;
 // Initialize AudioContext on first user gesture to satisfy browser autoplay policy
 export const initAudioContext = async () => {
   if (audioContextInitialized) {
-    console.log('[SOUND] AudioContext already initialized');
     return;
   }
   
   try {
     if (!audioContext) {
-      console.log('[SOUND] Creating AudioContext...');
       audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      console.log('[SOUND] ✅ AudioContext created, state:', audioContext.state);
-      
-      // Log detailed audio system info
-      console.log('[SOUND] === Audio System Diagnostics ===');
-      console.log('[SOUND] Sample Rate:', audioContext.sampleRate);
-      console.log('[SOUND] Channel Count:', audioContext.destination.maxChannelCount);
-      console.log('[SOUND] State:', audioContext.state);
-      console.log('[SOUND] Running Time:', audioContext.currentTime);
-      
-      // Listen for state changes
-      audioContext.addEventListener('statechange', () => {
-        console.log('[SOUND] AudioContext state changed to:', audioContext.state);
-      });
-      
-      // Try to enumerate audio devices
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const audioDevices = devices.filter(d => d.kind.includes('audio'));
-        console.log('[SOUND] Available audio devices:', audioDevices.length);
-        audioDevices.forEach((device, idx) => {
-          console.log(`[SOUND]   ${idx}: ${device.kind} - ${device.label || '(unnamed)'}`);
-        });
-      } catch (e) {
-        console.log('[SOUND] Could not enumerate devices:', e);
-      }
     }
     audioContextInitialized = true;
   } catch (e) {
-    console.log('[SOUND] ❌ Failed to initialize AudioContext:', e);
+    console.error('[SOUND] ❌ Failed to initialize AudioContext:', e);
     audioContextInitialized = true;
   }
 };
 
 const getAudioContext = async (): Promise<AudioContext | null> => {
   if (!isAudioSupported()) {
-    console.log('[SOUND] Web Audio API not supported');
     return null;
   }
 
   // Only return existing context - never create new one here
   // AudioContext must be created during user gesture only
   if (!audioContext) {
-    console.log('[SOUND] AudioContext not initialized yet. Was user gesture captured?');
     return null;
   }
   
@@ -71,9 +42,8 @@ const getAudioContext = async (): Promise<AudioContext | null> => {
   if (audioContext.state === 'suspended') {
     try {
       await audioContext.resume();
-      console.log('[SOUND] AudioContext resumed, state:', audioContext.state);
     } catch (e) {
-      console.log('[SOUND] Failed to resume AudioContext:', e);
+      console.error('[SOUND] Failed to resume AudioContext:', e);
     }
   }
   
@@ -178,23 +148,18 @@ export const playCriticalSound = async () => {
 
 export const playMessageNotificationSound = async () => {
   try {
-    console.log('[SOUND] === Playing message notification sound ===');
     const ctx = await getAudioContext();
     if (!ctx) {
-      console.log('[SOUND] ❌ No AudioContext available - cannot play sound');
       return;
     }
     
     try {
       const audioContext = ctx;
-      console.log('[SOUND] AudioContext ready, state:', audioContext.state);
       
       if (audioContext.state !== 'running') {
-        console.log('[SOUND] ⚠️  AudioContext not running, attempting to resume...');
         await audioContext.resume();
       }
       
-      console.log('[SOUND] Creating oscillators...');
       // Create a pleasant "message received" sound - ascending notes
       const now = audioContext.currentTime;
       const notes = [
@@ -218,23 +183,20 @@ export const playMessageNotificationSound = async () => {
 
           osc.start(now + note.time);
           osc.stop(now + note.time + note.duration);
-          console.log('[SOUND] ✅ Note', idx, 'freq:', note.freq, 'scheduled');
         } catch (noteError) {
-          console.log('[SOUND] ❌ Error creating note', idx, ':', noteError);
+      console.error('[SOUND] Error creating note', idx, ':', noteError);
         }
       });
-      console.log('[SOUND] ✅ Message sound setup complete');
     } catch (audioError) {
-      console.log('[SOUND] ❌ Audio system error:', audioError);
+      console.error('[SOUND] ❌ Audio system error:', audioError);
     }
   } catch (e) {
-    console.log('[SOUND] ❌ Error in playMessageNotificationSound:', e);
+    console.error('[SOUND] ❌ Error in playMessageNotificationSound:', e);
   }
 };
 
 export const playFriendRequestSound = async () => {
   try {
-    console.log('[SOUND] playFriendRequestSound called - PLAYING FRIEND REQUEST SOUND NOW');
     const ctx = await getAudioContext();
     if (!ctx) return;
     
@@ -269,11 +231,11 @@ export const playFriendRequestSound = async () => {
           osc.start(now + note.time);
           osc.stop(now + note.time + note.duration);
         } catch (e) {
-          console.log('[SOUND] Error in friend request sound:', e);
+          console.error('[SOUND] Error in friend request sound:', e);
         }
       });
     } catch (audioError) {
-      console.log('[SOUND] Audio device error (this is safe to ignore)');
+      console.error('[SOUND] Audio device error (this is safe to ignore)');
     }
   } catch (e) {
     console.log('Audio context not available');

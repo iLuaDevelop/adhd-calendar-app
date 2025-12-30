@@ -11,8 +11,10 @@ import {
 } from '../services/skillTree';
 import { getXp } from '../services/xp';
 import { getGems } from '../services/currency';
+import { useToast } from '../context/ToastContext';
 
 export default function SkillTreePage() {
+  const { showToast } = useToast();
   const [activeTree, setActiveTree] = useState<SkillTree>('forgiveness');
   const [allSkills, setAllSkills] = useState<Skill[]>([]);
   const [currentXp, setCurrentXp] = useState(0);
@@ -35,14 +37,14 @@ export default function SkillTreePage() {
 
     // Check if already purchased
     if (isSkillPurchased(skillId)) {
-      alert('Skill already purchased!');
+      showToast('Skill already purchased!', 'warning');
       return;
     }
 
     // Check prerequisites
     if (!canUnlockSkill(skillId)) {
       const skill = SKILLS[skillId];
-      alert(`Prerequisites not met! You need to purchase prerequisite skills first.`);
+      showToast(`Prerequisites not met! You need to purchase prerequisite skills first.`, 'warning');
       return;
     }
 
@@ -52,7 +54,7 @@ export default function SkillTreePage() {
       (skill.costType === 'gems' && currentGems >= skill.cost);
 
     if (!hasEnoughCost) {
-      alert(`Not enough ${skill.costType.toUpperCase()} to purchase this skill!`);
+      showToast(`Not enough ${skill.costType.toUpperCase()} to purchase this skill!`, 'error');
       return;
     }
 

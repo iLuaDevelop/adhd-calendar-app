@@ -58,15 +58,10 @@ export function setXp(xp: number, shouldSync: boolean = true) {
   try {
     const xpStr = String(xp);
     localStorage.setItem(XP_KEY, xpStr);
-    const verifyStored = localStorage.getItem(XP_KEY);
-    console.log('[XP] Setting XP to:', xp, '| Verified in localStorage:', verifyStored);
     
     // Sync to Firestore if user is logged in and shouldSync is true
     if (shouldSync) {
-      console.log('[XP] ⬆️ Syncing XP', xp, 'to Firestore...');
       syncXpToFirestore(xp).catch(err => console.warn('[XP] ❌ Failed to sync:', err));
-    } else {
-      console.log('[XP] ⏭️ Skipping sync (logout in progress)');
     }
   } catch (err) {
     console.error('[XP] ❌ Error in setXp:', err);

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getXp, setXp } from '../services/xp';
 import { getGems, setGems } from '../services/currency';
 import Button from '../components/UI/Button';
+import { useToast } from '../context/ToastContext';
 import LootCrate from '../components/UI/LootCrate';
 import PaymentModal from '../components/PaymentModal/PaymentModal';
 import { buyPet, PET_SHOP, hasBoughtPetType, getAllPets } from '../services/pet';
@@ -26,6 +27,7 @@ interface Subscription {
 }
 
 const Store: React.FC = () => {
+    const { showToast } = useToast();
     const [currentXp, setCurrentXp] = useState(getXp());
     const [currentGems, setCurrentGems] = useState(getGems());
     const [purchases, setPurchases] = useState<Set<number>>(() => {
@@ -82,7 +84,7 @@ const Store: React.FC = () => {
         const purchaseSet = type === 'xp' ? purchases : premiumPurchases;
         
         if (purchaseSet.has(itemId)) {
-            alert('You already own this item!');
+            showToast('You already own this item!', 'warning');
             return;
         }
 
@@ -95,10 +97,10 @@ const Store: React.FC = () => {
                 newPurchases.add(itemId);
                 setPurchases(newPurchases);
                 localStorage.setItem(PURCHASES_KEY, JSON.stringify(Array.from(newPurchases)));
-                alert(`Purchased: ${itemName}!`);
+                showToast(`Purchased: ${itemName}!`, 'success');
                 window.dispatchEvent(new Event('profileUpdated'));
             } else {
-                alert('Not enough XP to purchase this item.');
+                showToast('Not enough XP to purchase this item.', 'error');
             }
         } else {
             if (currentGems >= cost) {
@@ -109,10 +111,10 @@ const Store: React.FC = () => {
                 newPurchases.add(itemId);
                 setPremiumPurchases(newPurchases);
                 localStorage.setItem(PREMIUM_PURCHASES_KEY, JSON.stringify(Array.from(newPurchases)));
-                alert(`Purchased: ${itemName}!`);
+                showToast(`Purchased: ${itemName}!`, 'success');
                 window.dispatchEvent(new Event('currencyUpdated'));
             } else {
-                alert('Not enough Gems to purchase this item.');
+                showToast('Not enough Gems to purchase this item.', 'error');
             }
         }
     };
@@ -150,7 +152,7 @@ const Store: React.FC = () => {
 
     const claimMonthlyGems = () => {
         if (!canClaimMonthlyGems) {
-            alert('You can only claim daily gems once per day!');
+            showToast('You can only claim daily gems once per day!', 'warning');
             return;
         }
 
@@ -165,7 +167,7 @@ const Store: React.FC = () => {
         setSubscription(updatedSubscription);
         localStorage.setItem(SUBSCRIPTION_KEY, JSON.stringify(updatedSubscription));
 
-        alert('Claimed 10 daily gems! 💎');
+        showToast('Claimed 10 daily gems! 💎', 'success');
         window.dispatchEvent(new Event('currencyUpdated'));
     };
 
@@ -176,7 +178,7 @@ const Store: React.FC = () => {
 
     const handleBuyPet = async (petShopId: string, petName: string, cost: number) => {
         if (currentXp < cost) {
-            alert('Not enough XP to buy this pet!');
+            showToast('Not enough XP to buy this pet!', 'error');
             return;
         }
 
@@ -185,7 +187,7 @@ const Store: React.FC = () => {
             const updatedXp = getXp();
             setCurrentXp(updatedXp);
             setOwnedPets(getAllPets());
-            alert(`Welcome ${petName}! Your new companion has arrived! 🎉`);
+            showToast(`Welcome ${petName}! Your new companion has arrived! 🎉`, 'success');
             window.dispatchEvent(new Event('currencyUpdated'));
         }
     };
