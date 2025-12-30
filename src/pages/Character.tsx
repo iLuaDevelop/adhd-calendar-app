@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
-import { getXp, getLevelFromXp } from '../services/xp';
-import { getGems } from '../services/currency';
+import { getXp, getLevelFromXp, grantXp, setXp } from '../services/xp';
+import { getGems, addGems } from '../services/currency';
 import { getPet, getAllPets, getCurrentPetId, setCurrentPet, getPetEmoji, feedPet, updatePetStats } from '../services/pet';
 import { getMedals } from '../services/medals';
 import { getSelectedTitle } from '../services/titles';
 import { getInventory, getCratesByTier, removeFromInventory } from '../services/inventory';
 import Button from '../components/UI/Button';
 import { useToast } from '../context/ToastContext';
+import InventoryCrateModal from '../components/InventoryCrateModal/InventoryCrateModal';
 
 const Character: React.FC = () => {
   const auth = getAuth();
@@ -23,6 +24,8 @@ const Character: React.FC = () => {
   const [streak, setStreak] = useState({ current: 0, longest: 0 });
   const [medals, setMedals] = useState<any[]>([]);
   const [selectedTitle, setSelectedTitle] = useState<any>(null);
+  const [crateModalOpen, setCrateModalOpen] = useState(false);
+  const [selectedCrate, setSelectedCrate] = useState<any>(null);
 
   useEffect(() => {
     // Load profile
@@ -89,10 +92,41 @@ const Character: React.FC = () => {
   };
 
   const handleOpenCrate = async (itemId: string) => {
-    // This will trigger the crate modal from the main loot crate system
-    removeFromInventory(itemId, 1);
-    setInventory(getInventory());
-    showToast('Opening crate...', 'info');
+    // Find the crate in inventory
+    const allCrates = Object.values(cratesByTier).flat();
+    const crate = allCrates.find(c => c.id === itemId);
+    
+    if (!crate) return;
+    
+    // Set selected crate and open modal
+    setSelectedCrate(crate);
+    setCrateModalOpen(true);
+  };
+
+  const handleCrateRewardReceived = (reward: { type: 'xp' | 'gems'; amount: number }) => {
+    // Award the reward to the player
+    if (reward.type === 'xp') {
+      const newXp = (getXp()) + reward.amount;
+      setXp(newXp);
+      setXp(newXp);
+    } else {
+      addGems(reward.amount);
+      setGems(getGems());
+    }
+    
+    // Show toast
+    const rewardDisplay = reward.type === 'xp' ? `${reward.amount} XP` : `${reward.amount} 💎`;
+    showToast(`You won ${rewardDisplay}!`, 'success');
+    
+    // Remove crate from inventory after a short delay
+    setTimeout(() => {
+      if (selectedCrate) {
+        removeFromInventory(selectedCrate.id, 1);
+        setInventory(getInventory());
+        setCrateModalOpen(false);
+        setSelectedCrate(null);
+      }
+    }, 500);
   };
 
   return (
@@ -440,6 +474,23 @@ const Character: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Inventory Crate Modal */}
+      {selectedCrate && (
+        <InventoryCrateModal
+          isOpen={crateModalOpen}
+          tier={selectedCrate.tier}
+          rewards={selectedCrate.rewards || [
+            { type: 'xp', amount: Math.floor(Math.random() * 50) + 25 },
+            { type: 'gems', amount: Math.floor(Math.random() * 10) + 5 },
+          ]}
+          onClose={() => {
+            setCrateModalOpen(false);
+            setSelectedCrate(null);
+          }}
+          onRewardReceived={handleCrateRewardReceived}
+        />
+      )}
     </div>
   );
 };

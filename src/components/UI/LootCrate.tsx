@@ -78,14 +78,13 @@ const LootCrate: React.FC<LootCrateProps> = ({
     };
   }, [triggerAnimation, rewards, onOpen, tier]);
 
-  // Reset ref and state when animation is no longer triggered
+  // Reset ref when animation is no longer triggered - but DON'T reset the selected reward
+  // Let the user click Close to reset it manually
   React.useEffect(() => {
     if (!triggerAnimation && animationTriggeredRef.current) {
-      console.log(`[${tier}] Resetting animation state`);
+      console.log(`[${tier}] Animation trigger cleared, but keeping selectedReward visible for user to close`);
       animationTriggeredRef.current = false;
       setIsOpening(false);
-      setSelectedReward(null);
-      setScrollIndex(0);
     }
   }, [triggerAnimation, tier]);
 
