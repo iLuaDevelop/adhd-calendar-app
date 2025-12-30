@@ -7,7 +7,8 @@ import { unlockTitle, setSelectedTitle, getUnlockedTitles, getSelectedTitle, get
 import { enableCriticalTestMode, disableCriticalTestMode, isCriticalTestModeEnabled, getCriticalChances, enableCrateTestMode, disableCrateTestMode, isCrateTestModeEnabled } from '../../services/critical';
 import { useToast } from '../../context/ToastContext';
 import { db } from '../../services/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp, getDoc, arrayUnion, updateDoc } from 'firebase/firestore';
 
 const QUESTS_KEY = 'adhd_quests';
 
@@ -413,17 +414,16 @@ const DevMenuModal: React.FC = () => {
             <h3 style={{margin: '0 0 8px 0'}}>Social Testing</h3>
             <button className="btn ghost" onClick={async () => {
               try {
-                // Add friend to local list
-                const friends = JSON.parse(localStorage.getItem('adhd_friends') || '[]');
-                const testBot = { id: 'testbot', username: 'TestBot', hashtag: '9999', avatar: '🤖', uid: 'testbot' };
-                if (!friends.find((f: any) => f.id === 'testbot' || f.uid === 'testbot')) {
-                  friends.push(testBot);
-                  localStorage.setItem('adhd_friends', JSON.stringify(friends));
-                  window.dispatchEvent(new Event('friendsUpdated'));
+                const auth = getAuth();
+                const currentUser = auth.currentUser;
+                
+                if (!currentUser) {
+                  showToast('Error: Not logged in', 'error');
+                  return;
                 }
 
-                // Create Firestore user document with profile info and gameProgress
-                const gameProgressData = {
+                // Create test friend in Firestore
+                const testBotData = {
                   username: 'TestBot',
                   hashtag: '9999',
                   avatar: '🤖',
@@ -441,14 +441,50 @@ const DevMenuModal: React.FC = () => {
                   ],
                 };
 
-                // Save to Firestore users collection with merge
-                await setDoc(doc(db, 'users', 'testbot'), gameProgressData, { merge: true });
+                // Save test friend to Firestore
+                await setDoc(doc(db, 'users', 'testbot'), testBotData, { merge: true });
+                await setDoc(doc(db, 'gameProgress', 'testbot'), testBotData, { merge: true });
+
+                // Add test friend to current user's friends list
+                const testBotFriend = {
+                  uid: 'testbot',
+                  username: 'TestBot',
+                  hashtag: '9999',
+                  avatar: '🤖',
+                  addedAt: Date.now(),
+                };
+
+                // Get current user's profile
+                const userDocRef = doc(db, 'users', currentUser.uid);
+                const userDoc = await getDoc(userDocRef);
+                const currentFriends = userDoc.exists() ? (userDoc.data().friends || []) : [];
+
+                // Check if already friends
+                if (!currentFriends.find((f: any) => f.uid === 'testbot')) {
+                  // Add to friends list
+                  await updateDoc(userDocRef, {
+                    friends: arrayUnion(testBotFriend),
+                  });
+                }
+
+                // Add current user to test friend's friends list (mutual)
+                const currentUserData = userDoc.exists() ? userDoc.data() : {};
+                const testBotFriends = (await getDoc(doc(db, 'users', 'testbot'))).data()?.friends || [];
                 
-                // Also create a gameProgress doc if needed
-                await setDoc(doc(db, 'gameProgress', 'testbot'), gameProgressData, { merge: true });
-                
-                console.log('[DevMenu] Created test friend (TestBot#9999) in Firestore');
-                showToast('Test friend TestBot#9999 created! Search for them by username.', 'success');
+                if (!testBotFriends.find((f: any) => f.uid === currentUser.uid)) {
+                  await updateDoc(doc(db, 'users', 'testbot'), {
+                    friends: arrayUnion({
+                      uid: currentUser.uid,
+                      username: currentUserData.username || 'User',
+                      hashtag: currentUserData.hashtag || '0000',
+                      avatar: currentUserData.avatar || '👤',
+                      addedAt: Date.now(),
+                    }),
+                  });
+                }
+
+                console.log('[DevMenu] Created and added test friend (TestBot#9999) to friends list');
+                showToast('Test friend TestBot#9999 added to your friends list!', 'success');
               } catch (error) {
                 console.error('[DevMenu] Error creating test friend:', error);
                 showToast('Error: ' + (error as any).message, 'error');
