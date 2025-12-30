@@ -19,6 +19,7 @@ import XPBar from './components/UI/XPBar';
 import Sidebar from './components/UI/Sidebar';
 import SocialMenu from './components/UI/SocialMenu';
 import QuestsMenu from './components/UI/QuestsMenu';
+import TitleBar from './components/UI/TitleBar';
 import CurrencyDisplay from './components/UI/CurrencyDisplay';
 import ProfileHeaderCard from './components/UI/ProfileHeaderCard';
 import AppProfileModal from './components/UI/AppProfileModal';
@@ -154,6 +155,7 @@ const App: React.FC = () => {
     <Router>
       <Elements stripe={getStripe()}>
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <TitleBar />
         {/* top-left triple-dash hamburger and top-right currency display */}
         <div className="topbar" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', paddingRight: 24, paddingLeft: 16, paddingTop: 16, paddingBottom: 0, overflow: 'hidden' }}>
           <div style={{width: 40, height: 40}}>
