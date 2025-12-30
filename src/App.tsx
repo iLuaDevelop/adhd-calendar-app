@@ -12,7 +12,6 @@ import Store from './pages/Store';
 import Leaderboards from './pages/Leaderboards';
 import Quests from './pages/Quests';
 import PersonalInsights from './pages/PersonalInsights';
-import Pet from './pages/Pet';
 import SkillTree from './pages/SkillTree';
 import MiniGames from './pages/MiniGames';
 import Character from './pages/Character';
@@ -202,7 +201,6 @@ const App: React.FC = () => {
             <Route path="/quests" component={Quests} />
             <Route path="/insights" component={PersonalInsights} />
             <Route path="/character" component={Character} />
-            <Route path="/pet" component={Pet} />
             <Route path="/skills" component={SkillTree} />
             <Route path="/settings" component={Settings} />
           </Switch>
