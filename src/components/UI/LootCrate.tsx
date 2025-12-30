@@ -37,10 +37,19 @@ const LootCrate: React.FC<LootCrateProps> = ({
   const [selectedReward, setSelectedReward] = useState<LootReward | null>(null);
   const [scrollIndex, setScrollIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const animationTriggeredRef = React.useRef(false);
 
   // Handle external trigger for animation
   React.useEffect(() => {
-    if (!triggerAnimation) return;
+    console.log(`[${tier}] triggerAnimation:`, triggerAnimation, 'animationTriggeredRef:', animationTriggeredRef.current);
+    
+    if (!triggerAnimation || animationTriggeredRef.current) {
+      console.log(`[${tier}] Skipping animation - triggerAnimation: ${triggerAnimation}, ref: ${animationTriggeredRef.current}`);
+      return;
+    }
+
+    console.log(`[${tier}] Starting animation`);
+    animationTriggeredRef.current = true;
 
     setIsOpening(true);
     setScrollIndex(0);
@@ -54,13 +63,31 @@ const LootCrate: React.FC<LootCrateProps> = ({
     }, 100);
 
     // After 2 seconds of scrolling, pick a random reward
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       clearInterval(scrollInterval);
       const randomReward = rewards[Math.floor(Math.random() * rewards.length)];
+      console.log(`[${tier}] Animation complete, picked reward:`, randomReward);
       setSelectedReward(randomReward);
       onOpen(randomReward);
     }, 2000);
-  }, [triggerAnimation, rewards, onOpen]);
+
+    return () => {
+      clearInterval(scrollInterval);
+      clearTimeout(timeoutId);
+      console.log(`[${tier}] useEffect cleanup`);
+    };
+  }, [triggerAnimation, rewards, onOpen, tier]);
+
+  // Reset ref and state when animation is no longer triggered
+  React.useEffect(() => {
+    if (!triggerAnimation && animationTriggeredRef.current) {
+      console.log(`[${tier}] Resetting animation state`);
+      animationTriggeredRef.current = false;
+      setIsOpening(false);
+      setSelectedReward(null);
+      setScrollIndex(0);
+    }
+  }, [triggerAnimation, tier]);
 
   // Calculate if free crate is available
   React.useEffect(() => {
