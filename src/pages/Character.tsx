@@ -150,7 +150,20 @@ const Character: React.FC = () => {
             <div>
               <h1 style={{ margin: '0 0 8px 0', fontSize: '2.5rem' }}>
                 {profile.username}
-                {selectedTitle && <span style={{ color: 'var(--accent)', marginLeft: 12, fontSize: '1.5rem' }}>✨ {selectedTitle.name}</span>}
+                {selectedTitle && (
+                  <span
+                    style={{
+                      marginLeft: 12,
+                      fontSize: '1.5rem',
+                      background: 'linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    ✨ {selectedTitle.name}
+                  </span>
+                )}
               </h1>
               <div style={{ fontSize: '1.1rem', color: 'var(--muted)', marginBottom: 12 }}>
                 Level {level} Character
