@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Route, Switch } from 'react-router-dom';
+import { HashRouter as Router, Route, Switch, useLocation } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { Elements } from '@stripe/react-stripe-js';
 import { getStripe } from './services/stripe';
@@ -31,6 +31,12 @@ import { useProfileModal } from './context/ProfileModalContext';
 
 const ProfileHeaderCardWrapper: React.FC<{ currentAuthUser: any }> = ({ currentAuthUser }) => {
   const { openProfileModal } = useProfileModal();
+  const location = useLocation();
+  
+  // Hide profile card on Character page since full profile is already displayed
+  if (location.pathname === '#/character') {
+    return null;
+  }
   
   return (
     <ProfileHeaderCard 
