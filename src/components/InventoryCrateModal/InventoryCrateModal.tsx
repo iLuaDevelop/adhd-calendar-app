@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import LootCrate from '../UI/LootCrate';
 import Button from '../UI/Button';
 
@@ -17,20 +17,7 @@ const InventoryCrateModal: React.FC<InventoryCrateModalProps> = ({
   onClose,
   onRewardReceived,
 }) => {
-  const [triggerAnimation, setTriggerAnimation] = useState(false);
-
   if (!isOpen) return null;
-
-  const tierEmojis = {
-    bronze: '📦',
-    silver: '🎁',
-    gold: '💎',
-    platinum: '🌟',
-  };
-
-  const handleOpenCrate = () => {
-    setTriggerAnimation(true);
-  };
 
   return (
     <div
@@ -40,7 +27,7 @@ const InventoryCrateModal: React.FC<InventoryCrateModalProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'rgba(0, 0, 0, 0.7)',
+        background: 'rgba(0, 0, 0, 0.95)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -57,17 +44,13 @@ const InventoryCrateModal: React.FC<InventoryCrateModalProps> = ({
         className="panel"
         style={{
           padding: 32,
-          maxWidth: 300,
+          maxWidth: 320,
           textAlign: 'center',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)',
         }}
       >
-        <h2 style={{ margin: '0 0 24px 0', fontSize: '1.5rem' }}>
-          {tierEmojis[tier]} {tier.charAt(0).toUpperCase() + tier.slice(1)} Crate
-        </h2>
-
         {/* LootCrate Component for animation */}
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 16 }}>
           <LootCrate
             tier={tier}
             cost={0}
@@ -75,30 +58,17 @@ const InventoryCrateModal: React.FC<InventoryCrateModalProps> = ({
             rewards={rewards}
             onOpen={(reward) => {
               onRewardReceived(reward);
-              setTriggerAnimation(false);
             }}
             isDisabled={false}
             isFree={true}
-            triggerAnimation={triggerAnimation}
           />
         </div>
-
-        {/* Button to start animation */}
-        {!triggerAnimation && (
-          <Button
-            variant="primary"
-            onClick={handleOpenCrate}
-            style={{ width: '100%', marginBottom: 12 }}
-          >
-            🎉 Open Crate
-          </Button>
-        )}
 
         {/* Close button */}
         <Button
           variant="ghost"
           onClick={onClose}
-          style={{ width: '100%' }}
+          style={{ width: '100%', fontSize: '0.9rem' }}
         >
           Close
         </Button>
