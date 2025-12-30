@@ -24,6 +24,7 @@ src/
 │   ├── CalendarContext.tsx    # Tasks and events state
 │   ├── LanguageContext.tsx    # i18n system (EN, ES, FR)
 │   ├── PreferencesContext.tsx # User settings
+│   ├── ProfileModalContext.tsx # Global profile modal state
 │   └── ToastContext.tsx       # Toast notifications
 ├── hooks/                 # Custom React hooks
 ├── services/              # Business logic and API integrations
@@ -234,6 +235,29 @@ All external integrations abstracted in `src/services/`:
   - Profile data inspection
 - **Location**: `src/components/DevMenu/DevMenuModal.tsx`
 
+### Global Profile Modal (NEW - v1.0.4+)
+- **Context**: `ProfileModalContext.tsx` manages global state for profile modal across all pages
+- **Component**: `AppProfileModal.tsx` renders complete user profile UI
+- **How it works**:
+  - `ProfileModalContext` provides `openProfileModal(userId, username, avatar)` and `closeProfileModal()` methods
+  - `ProfileHeaderCard` in top-right corner is wrapped by `ProfileHeaderCardWrapper` in `App.tsx`
+  - When clicked, calls `openProfileModal()` with current user's data
+  - `AppProfileModal` only renders if `userId === currentAuthUser.uid` (prevents showing friend profiles globally)
+- **Features**:
+  - Avatar selector (16 emoji options)
+  - Editable name/hashtag display
+  - Level and XP display with real-time sync (listens to `'xp:update'` event)
+  - Selected title display
+  - Streak tracking
+  - Stats grid (Tasks Completed, Events Created)
+  - **Titles Section**: 2-column scrollable grid (max 200px height) showing 13 titles with lock/unlock status
+  - **Medals Section**: 2-column scrollable grid (max 200px height) showing 10 medals with earned/locked status
+  - Logout button with localStorage.clear()
+  - Close button
+- **XP Sync**: Subscribes to `'xp:update'` event to update level/XP in real-time as tasks are completed
+- **Separation**: Friend profile modal in `SocialMenu.tsx` uses separate `profileModalOpen` local state (no conflict)
+- **Files Modified**: `src/context/ProfileModalContext.tsx` (new), `src/components/UI/AppProfileModal.tsx` (new), `src/App.tsx`, `src/main.tsx`, `src/pages/Dashboard.tsx`
+
 ## Integration Points
 
 ### Firebase Configuration
@@ -305,6 +329,13 @@ All external integrations abstracted in `src/services/`:
 2. Review `src/components/Games/PatternMemory.tsx` - one game implementation
 3. Check `src/services/games.ts` - game logic and daily cap system
 4. Look at `src/pages/Dashboard.tsx` - quick games card integration
+
+### To use the global profile modal:
+1. Import `useProfileModal` from `src/context/ProfileModalContext.tsx`
+2. Call `openProfileModal(userId, username, avatar)` to open the modal
+3. The modal automatically renders at App level via `AppProfileModal` component
+4. For friend profiles in `SocialMenu`, use local `profileModalOpen` state (keep separate)
+5. Profile data is persisted via Firebase; XP/level sync via `'xp:update'` event
 
 ### To add a new translation:
 1. Open `src/services/languages.ts`
