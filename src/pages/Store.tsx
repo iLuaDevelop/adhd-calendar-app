@@ -5,6 +5,7 @@ import Button from '../components/UI/Button';
 import { useToast } from '../context/ToastContext';
 import LootCrate from '../components/UI/LootCrate';
 import PaymentModal from '../components/PaymentModal/PaymentModal';
+import CrateActionModal from '../components/CrateActionModal/CrateActionModal';
 import { buyPet, PET_SHOP, hasBoughtPetType, getAllPets } from '../services/pet';
 import { addToInventory } from '../services/inventory';
 
@@ -55,6 +56,13 @@ const Store: React.FC = () => {
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [selectedGemPackage, setSelectedGemPackage] = useState<{ amount: number; price: string } | null>(null);
     const [subscriptionPaymentOpen, setSubscriptionPaymentOpen] = useState(false);
+    const [crateActionModalOpen, setCrateActionModalOpen] = useState(false);
+    const [pendingCrateTier, setPendingCrateTier] = useState<'bronze' | 'silver' | 'gold'>('bronze');
+    const [pendingCrateCost, setPendingCrateCost] = useState(0);
+    const [pendingCrateCostType, setPendingCrateCostType] = useState<'xp' | 'gems'>('gems');
+    const [pendingCrateRewards, setPendingCrateRewards] = useState<Array<{ type: 'xp' | 'gems'; amount: number }>>([]);
+    const [crateToOpenRef, setCrateToOpenRef] = useState<(() => void) | null>(null);
+    const [triggerCrateAnimation, setTriggerCrateAnimation] = useState(false);
 
     const isSubscriptionActive = subscription.isActive && subscription.expiresAt > Date.now();
     const getDaysRemaining = () => {
@@ -191,6 +199,109 @@ const Store: React.FC = () => {
             showToast(`Welcome ${petName}! Your new companion has arrived! 🎉`, 'success');
             window.dispatchEvent(new Event('currencyUpdated'));
         }
+    };
+
+    // NEW: Show modal BEFORE crate opens for paid crates
+    const handlePaidCratePurchase = (tier: 'bronze' | 'silver' | 'gold', cost: number, costType: 'xp' | 'gems', rewards: Array<{ type: 'xp' | 'gems'; amount: number }>) => {
+        // Check if user has enough currency first
+        if (costType === 'xp' && currentXp < cost) {
+            showToast(`Not enough XP! Need ${cost}, have ${currentXp}`, 'error');
+            return;
+        }
+        if (costType === 'gems' && currentGems < cost) {
+            showToast(`Not enough Gems! Need ${cost}, have ${currentGems}`, 'error');
+            return;
+        }
+
+        // Deduct cost immediately
+        if (costType === 'xp') {
+            const newXp = currentXp - cost;
+            setXp(newXp);
+            setCurrentXp(newXp);
+        } else {
+            const newGems = currentGems - cost;
+            setGems(newGems);
+            setCurrentGems(newGems);
+        }
+
+        // Show modal to choose action
+        setPendingCrateTier(tier);
+        setPendingCrateCost(cost);
+        setPendingCrateCostType(costType);
+        setPendingCrateRewards(rewards);
+        setCrateActionModalOpen(true);
+    };
+
+    const handleModalOpenNow = () => {
+        // Check if user has enough currency
+        if (pendingCrateCostType === 'xp' && currentXp < pendingCrateCost) {
+            showToast(`Not enough XP! Need ${pendingCrateCost}, have ${currentXp}`, 'error');
+            setCrateActionModalOpen(false);
+            return;
+        }
+        if (pendingCrateCostType === 'gems' && currentGems < pendingCrateCost) {
+            showToast(`Not enough Gems! Need ${pendingCrateCost}, have ${currentGems}`, 'error');
+            setCrateActionModalOpen(false);
+            return;
+        }
+
+        // Deduct cost
+        if (pendingCrateCostType === 'xp') {
+            const newXp = currentXp - pendingCrateCost;
+            setXp(newXp);
+            setCurrentXp(newXp);
+        } else {
+            const newGems = currentGems - pendingCrateCost;
+            setGems(newGems);
+            setCurrentGems(newGems);
+        }
+
+        // Close modal and trigger animation
+        setCrateActionModalOpen(false);
+        setTriggerCrateAnimation(true);
+        
+        // Reset trigger after animation completes
+        setTimeout(() => {
+            setTriggerCrateAnimation(false);
+        }, 2100); // 2 seconds for animation + 100ms buffer
+    };
+
+    const handleModalStoreInventory = () => {
+        // Check if user has enough currency
+        if (pendingCrateCostType === 'xp' && currentXp < pendingCrateCost) {
+            showToast(`Not enough XP! Need ${pendingCrateCost}, have ${currentXp}`, 'error');
+            setCrateActionModalOpen(false);
+            return;
+        }
+        if (pendingCrateCostType === 'gems' && currentGems < pendingCrateCost) {
+            showToast(`Not enough Gems! Need ${pendingCrateCost}, have ${currentGems}`, 'error');
+            setCrateActionModalOpen(false);
+            return;
+        }
+
+        // Deduct cost
+        if (pendingCrateCostType === 'xp') {
+            const newXp = currentXp - pendingCrateCost;
+            setXp(newXp);
+            setCurrentXp(newXp);
+        } else {
+            const newGems = currentGems - pendingCrateCost;
+            setGems(newGems);
+            setCurrentGems(newGems);
+        }
+
+        // Add to inventory
+        addToInventory(
+            'crate',
+            `${pendingCrateTier.charAt(0).toUpperCase() + pendingCrateTier.slice(1)} Crate`,
+            pendingCrateTier === 'bronze' ? '📦' : pendingCrateTier === 'silver' ? '🎁' : '💎',
+            pendingCrateTier,
+            1
+        );
+        showToast(`${pendingCrateTier.charAt(0).toUpperCase() + pendingCrateTier.slice(1)} Crate purchased and stored in inventory!`, 'success');
+        window.dispatchEvent(new Event('inventory:update'));
+        window.dispatchEvent(new Event('currencyUpdated'));
+        setCrateActionModalOpen(false);
     };
 
     return (
@@ -333,6 +444,9 @@ const Store: React.FC = () => {
                             { type: 'xp', amount: 100 },
                         ]}
                         onOpen={(reward) => {
+                            setBronzeCrateLastOpened(Date.now());
+                            localStorage.setItem(BRONZE_CRATE_KEY, String(Date.now()));
+                            // For free bronze crate, open immediately with reward
                             if (reward.type === 'xp') {
                                 const newXp = currentXp + reward.amount;
                                 setXp(newXp);
@@ -342,8 +456,7 @@ const Store: React.FC = () => {
                                 setGems(newGems);
                                 setCurrentGems(newGems);
                             }
-                            setBronzeCrateLastOpened(Date.now());
-                            localStorage.setItem(BRONZE_CRATE_KEY, String(Date.now()));
+                            showToast(`Free crate opened! You won ${reward.amount} ${reward.type === 'xp' ? 'XP' : '💎'}!`, 'success');
                             window.dispatchEvent(new Event('currencyUpdated'));
                         }}
                         isDisabled={false}
@@ -361,7 +474,25 @@ const Store: React.FC = () => {
                             { type: 'xp', amount: 250 },
                             { type: 'gems', amount: 100 },
                         ]}
+                        triggerAnimation={triggerCrateAnimation && pendingCrateTier === 'silver'}
+                        onBeforePurchase={() => {
+                            // Show modal to choose action BEFORE deducting currency
+                            setPendingCrateTier('silver');
+                            setPendingCrateCost(60);
+                            setPendingCrateCostType('gems');
+                            setPendingCrateRewards([
+                                { type: 'gems', amount: 30 },
+                                { type: 'gems', amount: 50 },
+                                { type: 'xp', amount: 150 },
+                                { type: 'xp', amount: 200 },
+                                { type: 'gems', amount: 75 },
+                                { type: 'xp', amount: 250 },
+                                { type: 'gems', amount: 100 },
+                            ]);
+                            setCrateActionModalOpen(true);
+                        }}
                         onOpen={(reward) => {
+                            // This is called after animation completes
                             if (reward.type === 'xp') {
                                 const newXp = currentXp + reward.amount;
                                 setXp(newXp);
@@ -371,6 +502,7 @@ const Store: React.FC = () => {
                                 setGems(newGems);
                                 setCurrentGems(newGems);
                             }
+                            showToast(`🎉 Crate opened! You won ${reward.amount} ${reward.type === 'xp' ? 'XP' : '💎'}!`, 'success');
                             window.dispatchEvent(new Event('currencyUpdated'));
                         }}
                         isDisabled={currentGems < 60}
@@ -389,7 +521,26 @@ const Store: React.FC = () => {
                             { type: 'gems', amount: 250 },
                             { type: 'xp', amount: 750 },
                         ]}
+                        triggerAnimation={triggerCrateAnimation && pendingCrateTier === 'gold'}
+                        onBeforePurchase={() => {
+                            // Show modal to choose action BEFORE deducting currency
+                            setPendingCrateTier('gold');
+                            setPendingCrateCost(150);
+                            setPendingCrateCostType('gems');
+                            setPendingCrateRewards([
+                                { type: 'gems', amount: 100 },
+                                { type: 'gems', amount: 150 },
+                                { type: 'xp', amount: 400 },
+                                { type: 'xp', amount: 500 },
+                                { type: 'gems', amount: 200 },
+                                { type: 'xp', amount: 600 },
+                                { type: 'gems', amount: 250 },
+                                { type: 'xp', amount: 750 },
+                            ]);
+                            setCrateActionModalOpen(true);
+                        }}
                         onOpen={(reward) => {
+                            // This is called after animation completes
                             if (reward.type === 'xp') {
                                 const newXp = currentXp + reward.amount;
                                 setXp(newXp);
@@ -399,6 +550,7 @@ const Store: React.FC = () => {
                                 setGems(newGems);
                                 setCurrentGems(newGems);
                             }
+                            showToast(`🎉 Crate opened! You won ${reward.amount} ${reward.type === 'xp' ? 'XP' : '💎'}!`, 'success');
                             window.dispatchEvent(new Event('currencyUpdated'));
                         }}
                         isDisabled={currentGems < 150}
@@ -499,6 +651,21 @@ const Store: React.FC = () => {
               onClose={() => setSubscriptionPaymentOpen(false)}
               onConfirm={handleConfirmSubscription}
             />
+
+            {pendingCrateTier && (
+              <CrateActionModal
+                isOpen={crateActionModalOpen}
+                tierEmoji={pendingCrateTier === 'bronze' ? '📦' : pendingCrateTier === 'silver' ? '🎁' : '💎'}
+                tierName={pendingCrateTier.charAt(0).toUpperCase() + pendingCrateTier.slice(1)}
+                cost={pendingCrateCost}
+                costType={pendingCrateCostType}
+                onOpenNow={handleModalOpenNow}
+                onStoreInventory={handleModalStoreInventory}
+                onClose={() => {
+                  setCrateActionModalOpen(false);
+                }}
+              />
+            )}
         </div>
     );
 };

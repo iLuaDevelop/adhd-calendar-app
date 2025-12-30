@@ -12,10 +12,12 @@ interface LootCrateProps {
   costType: 'xp' | 'gems';
   rewards: LootReward[];
   onOpen: (reward: LootReward) => void;
+  onBeforePurchase?: () => void;
   isDisabled: boolean;
   isFree?: boolean;
   cooldownMs?: number;
   lastOpenedTime?: number;
+  triggerAnimation?: boolean;
 }
 
 const LootCrate: React.FC<LootCrateProps> = ({
@@ -24,15 +26,41 @@ const LootCrate: React.FC<LootCrateProps> = ({
   costType,
   rewards,
   onOpen,
+  onBeforePurchase,
   isDisabled,
   isFree = false,
   cooldownMs = 0,
   lastOpenedTime = 0,
+  triggerAnimation = false,
 }) => {
   const [isOpening, setIsOpening] = useState(false);
   const [selectedReward, setSelectedReward] = useState<LootReward | null>(null);
   const [scrollIndex, setScrollIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
+
+  // Handle external trigger for animation
+  React.useEffect(() => {
+    if (!triggerAnimation) return;
+
+    setIsOpening(true);
+    setScrollIndex(0);
+    setSelectedReward(null);
+
+    // Simulate scrolling through rewards
+    let currentIndex = 0;
+    const scrollInterval = setInterval(() => {
+      currentIndex += 1;
+      setScrollIndex(currentIndex % rewards.length);
+    }, 100);
+
+    // After 2 seconds of scrolling, pick a random reward
+    setTimeout(() => {
+      clearInterval(scrollInterval);
+      const randomReward = rewards[Math.floor(Math.random() * rewards.length)];
+      setSelectedReward(randomReward);
+      onOpen(randomReward);
+    }, 2000);
+  }, [triggerAnimation, rewards, onOpen]);
 
   // Calculate if free crate is available
   React.useEffect(() => {
@@ -65,6 +93,12 @@ const LootCrate: React.FC<LootCrateProps> = ({
   const handleOpen = () => {
     if (isDisabled || isOpening) return;
     if (isFree && timeRemaining > 0) return;
+
+    // For paid crates, show purchase modal first
+    if (!isFree && onBeforePurchase) {
+      onBeforePurchase();
+      return;
+    }
 
     setIsOpening(true);
     setScrollIndex(0);
@@ -163,7 +197,7 @@ const LootCrate: React.FC<LootCrateProps> = ({
                   cursor: isDisabled ? 'not-allowed' : 'pointer',
                 }}
               >
-                {isOpening ? '...' : 'Open'}
+                {isOpening ? '...' : 'Purchase'}
               </button>
               <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: costType === 'xp' ? '#6366f1' : '#ec4899' }}>
                 {costType === 'xp' ? `${cost} XP` : `${cost} 💎`}
