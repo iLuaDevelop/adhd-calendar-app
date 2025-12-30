@@ -151,7 +151,9 @@ export const setSelectedTitle = (titleId: string | null): void => {
         const unlockedTitles = titles.unlockedIds;
         syncTitlesToFirestore(unlockedTitles, titleId).catch(err => console.warn('[titles] Failed to sync:', err));
         
+        // Dispatch events for UI updates
         window.dispatchEvent(new CustomEvent('selectedTitleChanged', { detail: { titleId } }));
+        window.dispatchEvent(new CustomEvent('titleUpdated', { detail: { titleId } }));
     } catch (error) {
         console.error('Error setting selected title:', error);
     }
