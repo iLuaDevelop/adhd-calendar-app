@@ -226,12 +226,45 @@ const Character: React.FC = () => {
                 <h3 style={{ margin: '0 0 16px 0' }}>🐾 Your Companion</h3>
                 <div style={{ fontSize: '4rem', marginBottom: 16 }}>{getPetEmoji(currentPet.name)}</div>
                 <div style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: 8 }}>{currentPet.name}</div>
-                <div style={{ color: 'var(--muted)', marginBottom: 16 }}>Level {Math.floor(currentPet.xp / 100)}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.9rem' }}>
-                  <div>Hunger: {currentPet.hunger}%</div>
-                  <div>Happiness: {currentPet.happiness}%</div>
-                  <div>Health: {currentPet.health}%</div>
+                <div style={{ color: 'var(--muted)', marginBottom: 16 }}>Level {Math.floor((currentPet.xp || 0) / 100) || 1}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.9rem', marginBottom: 16 }}>
+                  <div>Hunger: {currentPet.hunger || 0}%</div>
+                  <div>Happiness: {currentPet.happiness || 0}%</div>
+                  <div>Health: {currentPet.health || 0}%</div>
                 </div>
+                {pets.length > 1 && (
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                    <Button 
+                      variant="ghost"
+                      onClick={() => {
+                        const currentIndex = pets.findIndex(p => p.id === currentPetId);
+                        const nextPet = pets[(currentIndex - 1 + pets.length) % pets.length];
+                        handleSwitchPet(nextPet.id);
+                      }}
+                      style={{ fontSize: '0.85rem' }}
+                    >
+                      ← Prev
+                    </Button>
+                    <Button 
+                      variant="ghost"
+                      onClick={() => setSelectedTab('pets')}
+                      style={{ fontSize: '0.85rem' }}
+                    >
+                      View All Pets
+                    </Button>
+                    <Button 
+                      variant="ghost"
+                      onClick={() => {
+                        const currentIndex = pets.findIndex(p => p.id === currentPetId);
+                        const nextPet = pets[(currentIndex + 1) % pets.length];
+                        handleSwitchPet(nextPet.id);
+                      }}
+                      style={{ fontSize: '0.85rem' }}
+                    >
+                      Next →
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -257,7 +290,7 @@ const Character: React.FC = () => {
                 >
                   <div style={{ fontSize: '3rem', marginBottom: 12 }}>{getPetEmoji(pet.name)}</div>
                   <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: 4 }}>{pet.name}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 12 }}>Level {Math.floor(pet.xp / 100)}</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 12 }}>Level {Math.floor((pet.xp || 0) / 100) || 1}</div>
                   {currentPetId === pet.id && (
                     <div style={{ color: 'var(--accent)', fontSize: '0.85rem', fontWeight: 'bold' }}>✓ Active</div>
                   )}
