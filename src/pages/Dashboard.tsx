@@ -3,6 +3,7 @@ import { useHistory } from 'react-router-dom';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useCalendar } from '../hooks/useCalendar';
 import { useToast } from '../context/ToastContext';
+import { useLanguage } from '../context/LanguageContext';
 import TaskCard from '../components/Task/TaskCard';
 import Calendar from '../components/Calendar/Calendar';
 import Button from '../components/UI/Button';
@@ -57,6 +58,7 @@ const getStreakData = () => {
 const Dashboard: React.FC = () => {
     const { tasks, events, addTask, updateTask, removeTask } = useCalendar();
     const { showToast } = useToast();
+    const { t } = useLanguage();
     const history = useHistory();
     const [adding, setAdding] = useState(false);
     const [showTemplates, setShowTemplates] = useState(false);
@@ -811,7 +813,7 @@ const Dashboard: React.FC = () => {
                 <aside className="panel">
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12, gap: 24, flexWrap: 'nowrap'}}>
                         <div style={{display:'flex',alignItems:'center',gap:8, whiteSpace: 'nowrap', minWidth: 0}}>
-                            <h3 style={{margin:0}}>Your Tasks</h3>
+                            <h3 style={{margin:0}}>{t('dashboard.yourTasks')}</h3>
                             <span className="subtle" style={{fontSize:'0.875rem'}}>{getDailyCreationCount()}/{purchases.has(4) ? 6 : 3}</span>
                         </div>
                         <div style={{display:'flex', gap:8}}>
@@ -823,7 +825,7 @@ const Dashboard: React.FC = () => {
                     {adding && <QuickAdd onAdd={handleAdd} />}
 
                     <div className="tasks-list" style={{maxHeight: '400px', overflowY: 'auto'}}>
-                        {tasks.length === 0 && <div className="subtle">No tasks yet — hit + Add to create one</div>}
+                        {tasks.length === 0 && <div className="subtle">{t('dashboard.noTasks')}</div>}
                         {displayedTasks.map((task:any) => {
                             // Anti-spam: Check if task is at least 5 minutes old before granting XP
                             // Existing tasks without createdAt are allowed to grant XP immediately
