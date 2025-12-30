@@ -120,6 +120,53 @@ const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
     localStorage.setItem('adhd_profile', JSON.stringify(newProfile));
   };
 
+  const handleCustomAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('File size must be less than 5MB');
+      return;
+    }
+
+    // Create data URL
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      const newProfile = { ...profile, customAvatarUrl: dataUrl };
+      setProfile(newProfile);
+      localStorage.setItem('adhd_profile', JSON.stringify(newProfile));
+      setUploadError('');
+      showToast('Custom avatar uploaded!', 'success');
+    };
+    reader.onerror = () => {
+      setUploadError('Failed to read file');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleTitleSelect = (titleId: string) => {
+    const title = ALL_TITLES.find(t => t.id === titleId);
+    if (!title) return;
+    
+    const isSelected = selectedTitle?.id === titleId;
+    if (isSelected) {
+      // Deselect
+      setSelectedTitleService(null);
+      setSelectedTitle(null);
+    } else {
+      // Select
+      setSelectedTitleService(titleId);
+      setSelectedTitle(title);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -193,6 +240,41 @@ const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
                     </button>
                   ))}
                 </div>
+                {(() => {
+                  const purchases = new Set(JSON.parse(localStorage.getItem('adhd_purchases') || '[]'));
+                  if (purchases.has(5)) {
+                    return (
+                      <div style={{ marginBottom: 12 }}>
+                        <label
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            padding: '8px 12px',
+                            background: 'var(--accent)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            marginBottom: 8,
+                            fontSize: '0.9rem',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          📤 Upload Custom Avatar
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleCustomAvatarUpload}
+                            style={{ display: 'none' }}
+                          />
+                        </label>
+                        {uploadError && <div style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: 8 }}>{uploadError}</div>}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
                 <button className="btn ghost" onClick={() => setEditingAvatar(false)} style={{ width: '100%', marginTop: 12 }}>
                   Done
                 </button>
@@ -354,7 +436,7 @@ const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
               return (
                 <div
                   key={title.id}
-                  onClick={() => isUnlocked && setSelectedTitleService(isSelected ? null : title.id)}
+                  onClick={() => isUnlocked && handleTitleSelect(title.id)}
                   style={{
                     display: 'flex',
                     gap: 8,
