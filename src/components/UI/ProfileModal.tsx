@@ -77,20 +77,20 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, userId, user
 
   return (
     <Modal isOpen={open} onClose={onClose} title={`${username}'s Profile`}>
-      <div style={{ padding: 16, maxHeight: '70vh', overflowY: 'auto' }}>
+      <div style={{ padding: '24px 16px', maxHeight: '70vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {loading ? (
           <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Loading profile...</div>
         ) : (
           <>
             {/* Avatar and Basic Info */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-              <div style={{ fontSize: '3rem', marginBottom: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+              <div style={{ fontSize: '4rem', marginBottom: 12 }}>
                 {profileData?.avatar || avatar}
               </div>
-              <h3 style={{ margin: '0 0 4px 0', fontSize: '1.1rem' }}>
+              <h2 style={{ margin: '0 0 8px 0', fontSize: '1.3rem', fontWeight: 'bold' }}>
                 {profileData?.username || username}
-              </h3>
-              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+              </h2>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
                 #{profileData?.hashtag || '0000'}
               </p>
             </div>
@@ -98,18 +98,18 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, userId, user
             {/* Game Progress Stats */}
             {gameProgress && (
               <>
-                <div style={{ marginBottom: 20 }}>
-                  <h4 style={{ margin: '0 0 12px 0', color: 'var(--accent)' }}>📊 Stats</h4>
+                <div>
+                  <h4 style={{ margin: '0 0 12px 0', color: 'var(--accent)', textAlign: 'center', fontSize: '0.95rem', fontWeight: 'bold' }}>📊 Stats</h4>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div style={{ padding: 12, background: 'var(--panel)', borderRadius: 6, border: '1px solid var(--border)' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 4 }}>XP</div>
-                      <div style={{ fontSize: '1.3rem', fontWeight: 'bold' }}>
+                    <div style={{ padding: 12, background: 'var(--panel)', borderRadius: 8, border: '1px solid var(--border)', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 6, fontWeight: '500' }}>XP</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--accent)' }}>
                         {gameProgress.xp?.toLocaleString() || 0}
                       </div>
                     </div>
-                    <div style={{ padding: 12, background: 'var(--panel)', borderRadius: 6, border: '1px solid var(--border)' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 4 }}>Completed Tasks</div>
-                      <div style={{ fontSize: '1.3rem', fontWeight: 'bold' }}>
+                    <div style={{ padding: 12, background: 'var(--panel)', borderRadius: 8, border: '1px solid var(--border)', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 6, fontWeight: '500' }}>Completed Tasks</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--accent)' }}>
                         {gameProgress.completedTasks || 0}
                       </div>
                     </div>
@@ -118,18 +118,19 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, userId, user
 
                 {/* Titles */}
                 {gameProgress.unlockedTitles && gameProgress.unlockedTitles.length > 0 && (
-                  <div style={{ marginBottom: 20 }}>
-                    <h4 style={{ margin: '0 0 12px 0', color: 'var(--accent)' }}>👑 Titles</h4>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  <div>
+                    <h4 style={{ margin: '0 0 12px 0', color: 'var(--accent)', textAlign: 'center', fontSize: '0.95rem', fontWeight: 'bold' }}>👑 Titles</h4>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
                       {gameProgress.unlockedTitles.map((title: string, idx: number) => (
                         <div
                           key={idx}
                           style={{
-                            padding: '4px 12px',
+                            padding: '6px 14px',
                             background: 'linear-gradient(135deg, var(--accent), #7c4dff)',
-                            borderRadius: 12,
+                            borderRadius: 16,
                             fontSize: '0.8rem',
                             fontWeight: 'bold',
+                            color: 'white',
                           }}
                         >
                           {title}
@@ -141,9 +142,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, userId, user
 
                 {/* Medals */}
                 {gameProgress.medals && gameProgress.medals.length > 0 && (
-                  <div style={{ marginBottom: 20 }}>
-                    <h4 style={{ margin: '0 0 12px 0', color: 'var(--accent)' }}>🏅 Medals</h4>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  <div>
+                    <h4 style={{ margin: '0 0 12px 0', color: 'var(--accent)', textAlign: 'center', fontSize: '0.95rem', fontWeight: 'bold' }}>🏅 Medals</h4>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
                       {gameProgress.medals.map((medal: any, idx: number) => (
                         <div
                           key={idx}
@@ -151,17 +152,18 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, userId, user
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
-                            gap: 4,
-                            padding: 8,
+                            gap: 6,
+                            padding: 10,
                             background: 'var(--panel)',
-                            borderRadius: 6,
+                            borderRadius: 8,
                             border: '1px solid var(--border)',
-                            fontSize: '0.75rem',
+                            fontSize: '0.7rem',
                             textAlign: 'center',
+                            minWidth: 70,
                           }}
                         >
-                          <div style={{ fontSize: '1.2rem' }}>{medal.icon || '🏅'}</div>
-                          <div style={{ fontWeight: 'bold', maxWidth: 60, wordBreak: 'break-word' }}>
+                          <div style={{ fontSize: '1.4rem' }}>{medal.icon || '🏅'}</div>
+                          <div style={{ fontWeight: '600', wordBreak: 'break-word', lineHeight: 1.2 }}>
                             {medal.name}
                           </div>
                         </div>
@@ -172,7 +174,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, userId, user
 
                 {/* Member Since */}
                 {gameProgress.lastUpdated && (
-                  <div style={{ padding: 12, background: 'var(--panel)', borderRadius: 6, border: '1px solid var(--border)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  <div style={{ padding: 12, background: 'var(--panel)', borderRadius: 8, border: '1px solid var(--border)', fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
                     Last active: {new Date(gameProgress.lastUpdated).toLocaleDateString()}
                   </div>
                 )}
@@ -180,7 +182,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose, userId, user
             )}
 
             {!gameProgress && (
-              <div style={{ padding: 12, background: 'var(--panel)', borderRadius: 6, color: 'var(--text-secondary)', textAlign: 'center' }}>
+              <div style={{ padding: 12, background: 'var(--panel)', borderRadius: 8, color: 'var(--text-secondary)', textAlign: 'center' }}>
                 No game progress data available
               </div>
             )}
