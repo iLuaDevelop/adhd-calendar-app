@@ -21,12 +21,34 @@ import SocialMenu from './components/UI/SocialMenu';
 import QuestsMenu from './components/UI/QuestsMenu';
 import CurrencyDisplay from './components/UI/CurrencyDisplay';
 import ProfileHeaderCard from './components/UI/ProfileHeaderCard';
-import ProfileModal from './components/UI/ProfileModal';
+import AppProfileModal from './components/UI/AppProfileModal';
 import ToastDisplay from './components/UI/ToastDisplay';
 import DevMenuModal from './components/DevMenu/DevMenuModal';
 import { subscribeToConversations, subscribeToPendingRequests } from './services/messaging';
 import { initAudioContext } from './services/sounds';
 import { useProfileModal } from './context/ProfileModalContext';
+
+const ProfileHeaderCardWrapper: React.FC<{ currentAuthUser: any }> = ({ currentAuthUser }) => {
+  const { openProfileModal } = useProfileModal();
+  
+  return (
+    <ProfileHeaderCard 
+      onClick={() => {
+        if (currentAuthUser) {
+          // Get profile data from localStorage to pass to modal
+          const profileKey = 'adhd_profile';
+          const stored = localStorage.getItem(profileKey);
+          if (stored) {
+            const profile = JSON.parse(stored);
+            openProfileModal(currentAuthUser.uid, profile.username, profile.avatar);
+          } else {
+            openProfileModal(currentAuthUser.uid, 'Player', '👤');
+          }
+        }
+      }} 
+    />
+  );
+};
 
 const App: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -146,7 +168,7 @@ const App: React.FC = () => {
           <div style={{flex: 1}} />
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             <CurrencyDisplay />
-            <ProfileHeaderCard onClick={() => window.dispatchEvent(new CustomEvent('openProfileModal'))} />
+            <ProfileHeaderCardWrapper currentAuthUser={currentAuthUser} />
           </div>
         </div>
 
@@ -262,7 +284,7 @@ const App: React.FC = () => {
 
         <DevMenuModal />
 
-        <ProfileModalRenderer currentAuthUser={currentAuthUser} />
+        <AppProfileModalRenderer />
 
         <ToastDisplay />
       </div>
@@ -271,13 +293,13 @@ const App: React.FC = () => {
   );
 };
 
-const ProfileModalRenderer: React.FC<{ currentAuthUser: any }> = ({ currentAuthUser }) => {
-  const { isOpen, userId, username, avatar, closeProfileModal } = useProfileModal();
+const AppProfileModalRenderer: React.FC = () => {
+  const { isOpen, userId, closeProfileModal } = useProfileModal();
+  const auth = getAuth();
   
-  // Only render if userId matches current auth user (viewing own profile)
-  // Don't render for friend profiles viewed via social menu
-  return isOpen && userId && currentAuthUser && userId === currentAuthUser.uid ? (
-    <ProfileModal open={isOpen} onClose={closeProfileModal} userId={userId} username={username} avatar={avatar} />
+  // Only show if it's the current user's profile (not a friend profile from social menu)
+  return isOpen && userId && auth.currentUser && userId === auth.currentUser.uid ? (
+    <AppProfileModal open={isOpen} onClose={closeProfileModal} />
   ) : null;
 };
 
