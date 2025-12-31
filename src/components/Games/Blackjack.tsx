@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Button from '../UI/Button';
 import { useToast } from '../../context/ToastContext';
 import { getGems, addGems } from '../../services/currency';
+import { recordCasinoGameResult } from '../../services/casinoStats';
 
 type CardSuit = '♠' | '♥' | '♦' | '♣';
 type CardRank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K';
@@ -427,6 +428,10 @@ export const Blackjack: React.FC<BlackjackProps> = ({ onCancel, onGameEnd }) => 
         <Button variant="secondary" onClick={() => {
           const gemsWon = result === 'win' ? bet * 2 : 0;
           const gemsLost = result === 'lose' ? bet : 0;
+          
+          // Record to casino stats
+          recordCasinoGameResult(gemsWon, gemsLost, 'blackjack');
+          
           onGameEnd(gemsWon, gemsLost);
         }} style={{ flex: 1 }}>
           Back
