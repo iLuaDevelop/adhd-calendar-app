@@ -353,12 +353,13 @@ const DailySpinWheel: React.FC = () => {
               <Button
                 onClick={() => setShowPayModal(false)}
                 style={{
-                  background: '#1f2937',
+                  background: 'white',
                   padding: '10px 28px',
-                  border: '2px solid #4b5563',
-                  color: 'white',
+                  border: 'none',
+                  color: '#6366f1',
                   fontWeight: 'bold',
                   fontSize: '0.95rem',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
                 }}
               >
                 Cancel
@@ -367,13 +368,13 @@ const DailySpinWheel: React.FC = () => {
                 onClick={() => executeSpin(true)}
                 disabled={currentGems < PAID_SPIN_COST}
                 style={{
-                  background: currentGems >= PAID_SPIN_COST ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'rgba(100,100,100,0.6)',
+                  background: currentGems >= PAID_SPIN_COST ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' : 'rgba(100,100,100,0.6)',
                   padding: '10px 28px',
                   border: 'none',
-                  color: 'white',
+                  color: currentGems >= PAID_SPIN_COST ? '#000' : 'white',
                   fontWeight: 'bold',
                   fontSize: '0.95rem',
-                  boxShadow: currentGems >= PAID_SPIN_COST ? '0 6px 20px rgba(16, 185, 129, 0.5)' : 'none',
+                  boxShadow: currentGems >= PAID_SPIN_COST ? '0 6px 20px rgba(251, 191, 36, 0.6)' : 'none',
                 }}
               >
                 Spin Now 💎
