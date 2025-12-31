@@ -90,14 +90,21 @@ const Character: React.FC = () => {
       setGems(getGems());
     };
 
+    const handlePetUpdate = () => {
+      setPets(getAllPets());
+      setCurrentPetId(getCurrentPetId());
+    };
+
     window.addEventListener('xp:update', handleXpUpdate as EventListener);
     window.addEventListener('inventory:update', handleInventoryUpdate as EventListener);
     window.addEventListener('currencyUpdated', handleCurrencyUpdate as EventListener);
+    window.addEventListener('pet:update', handlePetUpdate as EventListener);
 
     return () => {
       window.removeEventListener('xp:update', handleXpUpdate as EventListener);
       window.removeEventListener('inventory:update', handleInventoryUpdate as EventListener);
       window.removeEventListener('currencyUpdated', handleCurrencyUpdate as EventListener);
+      window.removeEventListener('pet:update', handlePetUpdate as EventListener);
     };
   }, []);
 

@@ -6,6 +6,11 @@ const PET_KEY = 'adhd_pet';
 const PETS_KEY = 'adhd_pets'; // For multiple pets
 const CURRENT_PET_KEY = 'adhd_current_pet_id'; // Track which pet is active
 
+// Helper to dispatch pet update event
+const dispatchPetUpdate = () => {
+  window.dispatchEvent(new CustomEvent('pet:update'));
+};
+
 export type PetColor = 'default' | 'golden' | 'cosmic' | 'forest' | 'sunset' | 'ocean' | 'rose';
 export type PetSkin = 'default' | 'fluffy' | 'shiny' | 'mystical';
 
@@ -149,6 +154,7 @@ export const createPet = (name: string = 'My Pet'): Pet => {
     console.error('[pet] ❌ Failed to sync default pet:', err);
   });
   
+  dispatchPetUpdate();
   return pet;
 };
 
@@ -358,6 +364,7 @@ const savePet = (pet: Pet) => {
   if (index >= 0) {
     allPets[index] = pet;
     localStorage.setItem(PETS_KEY, JSON.stringify(allPets));
+    dispatchPetUpdate();
   } else {
   }
 };
@@ -466,6 +473,7 @@ export const setCurrentPet = (petId: string): void => {
   syncPetsToFirestore(allPets, petId).catch(err => console.warn('[pet] Failed to sync current pet:', err));
   
   window.dispatchEvent(new CustomEvent('petSwitched', { detail: { petId } }));
+  dispatchPetUpdate();
 };
 
 // Buy a new pet from the shop

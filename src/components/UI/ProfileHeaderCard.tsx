@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { getXp, getLevelFromXp } from '../../services/xp';
 import { getSelectedTitle } from '../../services/titles';
-import { subscribeToUserProfile } from '../../services/messaging';
+import { db } from '../../services/firebase';
 
 const ProfileHeaderCard: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
   const [username, setUsername] = useState('Player');
@@ -33,10 +34,12 @@ const ProfileHeaderCard: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
     window.addEventListener('xp:update', handleXpUpdate as EventListener);
     window.addEventListener('titleUpdated', handleTitleUpdate as EventListener);
 
-    // Get user profile
+    // Get user profile from Firebase playerProfiles collection
     if (auth.currentUser) {
-      const unsubscribe = subscribeToUserProfile(auth.currentUser.uid, (profile) => {
-        if (profile) {
+      const profileDoc = doc(db, 'playerProfiles', auth.currentUser.uid);
+      const unsubscribe = onSnapshot(profileDoc, (snapshot) => {
+        if (snapshot.exists()) {
+          const profile = snapshot.data();
           setUsername(profile.username || 'Player');
           setAvatar(profile.avatar || '👤');
           setCustomAvatarUrl(profile.customAvatarUrl || '');
