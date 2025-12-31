@@ -27,20 +27,23 @@ jobs:
           
           # Parse emoji and title from commit message
           # Format: "emoji label: title - description"
-          # Example: "✨ feat: Pet display improvements - Added level badges to compact views"
+          # Example: "🔧 fix: Rewrite commit parsing - Extract emoji separately from label"
           
-          # Extract emoji (first word)
-          EMOJI=$(echo "$COMMIT_MSG" | awk '{print $1}')
+          # Step 1: Extract the emoji (everything before the first space)
+          EMOJI=$(echo "$COMMIT_MSG" | grep -o '^[^ ]*')
           
-          # Remove emoji and label (everything up to and including the colon and space)
-          # Then split on dash to get title and description
-          TEMP=$(echo "$COMMIT_MSG" | sed 's/^[^ ]* [^:]*:[[:space:]]*//')
+          # Step 2: Extract title and description (remove emoji and label)
+          # Remove: emoji + space + label + colon + space
+          AFTER_LABEL=$(echo "$COMMIT_MSG" | sed 's/^[^ ]* [^:]*:[[:space:]]*//')
           
-          # Extract title (everything before the dash)
-          TITLE=$(echo "$TEMP" | sed 's/[[:space:]]*-[[:space:]]*/\n/g' | head -1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-          
-          # Extract description (everything after the dash)
-          DESC=$(echo "$TEMP" | sed 's/^[^-]*-[[:space:]]*//' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          # Step 3: Split on dash - title is before dash, description is after
+          if [[ "$AFTER_LABEL" == *"-"* ]]; then
+            TITLE=$(echo "$AFTER_LABEL" | cut -d'-' -f1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            DESC=$(echo "$AFTER_LABEL" | cut -d'-' -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          else
+            TITLE="$AFTER_LABEL"
+            DESC=""
+          fi
           
           # Fallback if something went wrong
           if [ -z "$EMOJI" ] || [ -z "$TITLE" ]; then
