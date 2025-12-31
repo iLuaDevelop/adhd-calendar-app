@@ -349,17 +349,16 @@ const DailySpinWheel: React.FC = () => {
             <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)', marginBottom: 24 }}>
               Your gems: <span style={{ fontWeight: 'bold', color: '#ec4899' }}>{currentGems}</span>
             </div>
-            <div style={{ display: 'flex', gap: 12, flexDirection: 'column', width: '100%' }}>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Button
                 onClick={() => setShowPayModal(false)}
                 style={{
-                  width: '100%',
-                  background: 'rgba(255,255,255,0.25)',
-                  padding: '12px 24px',
-                  border: '2px solid rgba(255,255,255,0.6)',
+                  background: '#1f2937',
+                  padding: '10px 28px',
+                  border: '2px solid #4b5563',
                   color: 'white',
                   fontWeight: 'bold',
-                  fontSize: '1rem',
+                  fontSize: '0.95rem',
                 }}
               >
                 Cancel
@@ -368,14 +367,13 @@ const DailySpinWheel: React.FC = () => {
                 onClick={() => executeSpin(true)}
                 disabled={currentGems < PAID_SPIN_COST}
                 style={{
-                  width: '100%',
-                  background: currentGems >= PAID_SPIN_COST ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'rgba(100,100,100,0.6)',
-                  padding: '14px 24px',
+                  background: currentGems >= PAID_SPIN_COST ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'rgba(100,100,100,0.6)',
+                  padding: '10px 28px',
                   border: 'none',
                   color: 'white',
                   fontWeight: 'bold',
-                  fontSize: '1rem',
-                  boxShadow: currentGems >= PAID_SPIN_COST ? '0 4px 15px rgba(245, 158, 11, 0.4)' : 'none',
+                  fontSize: '0.95rem',
+                  boxShadow: currentGems >= PAID_SPIN_COST ? '0 6px 20px rgba(16, 185, 129, 0.5)' : 'none',
                 }}
               >
                 Spin Now 💎
