@@ -27,7 +27,7 @@ jobs:
           
           # Parse emoji and title from commit message
           # Format: "emoji: title - description"
-          # Example: "🐾 feat: Pet display improvements - Added level badges to compact views"
+          # Example: "✨ feat: Pet display improvements - Added level badges to compact views"
           
           if [[ $COMMIT_MSG =~ ^([^:]+):[[:space:]]*([^-]+)-[[:space:]]*(.+)$ ]]; then
             EMOJI="${BASH_REMATCH[1]}"
@@ -46,21 +46,21 @@ jobs:
             exit 0
           fi
           
-          # Install Node and Firebase tools
-          npm install -g firebase-tools
-          
-          # Create Firebase credentials file
-          echo '{
-            "type": "service_account",
-            "project_id": "'$FIREBASE_PROJECT_ID'",
-            "private_key": "'$(echo "$FIREBASE_PRIVATE_KEY" | sed 's/\\n/\\n/g')'",
-            "client_email": "'$FIREBASE_CLIENT_EMAIL'"
-          }' > /tmp/firebase-key.json
+          # Install firebase-admin locally in temp directory
+          mkdir -p /tmp/firebase-app
+          cd /tmp/firebase-app
+          npm init -y > /dev/null 2>&1
+          npm install firebase-admin > /dev/null 2>&1
           
           # Create Node script to add update
-          cat > /tmp/add-update.js << 'EOF'
+          cat > add-update.js << 'EOF'
           const admin = require('firebase-admin');
-          const serviceAccount = require('/tmp/firebase-key.json');
+          const serviceAccount = {
+            type: 'service_account',
+            project_id: process.env.FIREBASE_PROJECT_ID,
+            private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+            client_email: process.env.FIREBASE_CLIENT_EMAIL
+          };
           
           admin.initializeApp({
             credential: admin.credential.cert(serviceAccount)
@@ -80,16 +80,13 @@ jobs:
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
             commitHash: hash
           }).then(() => {
-            console.log('Update added to Firebase!');
+            console.log('✅ Update added to Firebase!');
             process.exit(0);
           }).catch(err => {
-            console.error('Error:', err);
+            console.error('❌ Error:', err.message);
             process.exit(1);
           });
           EOF
           
-          # Install Firebase Admin SDK
-          npm install -g firebase-admin
-          
           # Add update to Firebase
-          node /tmp/add-update.js "$EMOJI" "$TITLE" "$DESC" "$COMMIT_HASH"
+          node add-update.js "$EMOJI" "$TITLE" "$DESC" "$COMMIT_HASH"
