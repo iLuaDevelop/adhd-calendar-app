@@ -644,7 +644,7 @@ const PetOverview: React.FC<PetOverviewProps> = ({ pet, onUpdate, allPets, curre
               >
                 <div style={{ fontSize: '1.8rem', marginBottom: 4 }}>{getPetEmoji(p.stage, p.color, p.emoji)}</div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#fff', marginBottom: 2 }}>{p.name}</div>
-                <div style={{ fontSize: '0.7rem', color: '#9ca3af' }}>Lv {Math.floor((p.xp || 0) / 100) || 1}</div>
+                <div style={{ fontSize: '0.7rem', color: '#9ca3af' }}>Lv {p.level}</div>
               </div>
             ))}
           </div>
