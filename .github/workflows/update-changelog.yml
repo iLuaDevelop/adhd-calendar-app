@@ -50,15 +50,14 @@ jobs:
             DESC=""
           fi
           
+          # Debug output
+          echo "TITLE: '$TITLE'"
+          echo "DESC: '$DESC'"
+          
           # Skip if empty
           if [ -z "$TITLE" ]; then
             echo "Skipping: No title found"
             exit 0
-          fi
-          if [ -z "$EMOJI" ] || [ -z "$TITLE" ]; then
-            EMOJI="📝"
-            TITLE=$(echo "$COMMIT_MSG" | head -1)
-            DESC=$(echo "$COMMIT_MSG" | tail -n +2 | head -1)
           fi
           
           # Skip if commit message starts with "chore:" or "docs:"
@@ -96,15 +95,25 @@ jobs:
           const emojis = ['🔧', '✨', '🎯', '🚀', '🐛', '📝', '⚡', '🎨', '💡', '🔨'];
           const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
           
-          db.collection('updates').add({
+          console.log('DEBUG: Adding to Firebase:');
+          console.log('  emoji:', randomEmoji);
+          console.log('  title:', title);
+          console.log('  desc:', desc);
+          console.log('  hash:', hash);
+          
+          const updateData = {
             icon: randomEmoji,
             title: title,
-            desc: desc,
+            desc: desc || '',
             active: true,
             type: 'commit',
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
             commitHash: hash
-          }).then(() => {
+          };
+          
+          console.log('DEBUG: Data object:', JSON.stringify(updateData, null, 2));
+          
+          db.collection('updates').add(updateData).then(() => {
             console.log('✅ Update added to Firebase!');
             process.exit(0);
           }).catch(err => {
