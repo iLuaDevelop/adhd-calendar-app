@@ -9,20 +9,33 @@ export interface Update {
   timestamp: any;
   active: boolean;
   commitHash?: string;
+  type?: 'commit' | 'release'; // 'commit' = auto-posted from GitHub, 'release' = manual
 }
 
 /**
- * Real-time listener for active updates
- * Returns up to 5 most recent active updates
+ * Real-time listener for active updates of a specific type
+ * Returns up to 5 most recent active updates of that type
  */
-export const subscribeToUpdates = (callback: (updates: Update[]) => void) => {
+export const subscribeToUpdates = (callback: (updates: Update[]) => void, type?: 'commit' | 'release') => {
   const updatesRef = collection(db, 'updates');
-  const q = query(
-    updatesRef,
-    where('active', '==', true),
-    orderBy('timestamp', 'desc'),
-    limit(5)
-  );
+  
+  let q;
+  if (type) {
+    q = query(
+      updatesRef,
+      where('active', '==', true),
+      where('type', '==', type),
+      orderBy('timestamp', 'desc'),
+      limit(5)
+    );
+  } else {
+    q = query(
+      updatesRef,
+      where('active', '==', true),
+      orderBy('timestamp', 'desc'),
+      limit(5)
+    );
+  }
 
   const unsubscribe = onSnapshot(q, (snapshot) => {
     const updates: Update[] = [];

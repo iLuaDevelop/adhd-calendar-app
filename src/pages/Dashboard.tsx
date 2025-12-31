@@ -88,6 +88,8 @@ const Dashboard: React.FC = () => {
         const stored = localStorage.getItem(PURCHASES_KEY);
         return stored ? new Set(JSON.parse(stored)) : new Set();
     });
+    const [commits, setCommits] = useState<Update[]>([]);
+    const [releases, setReleases] = useState<Update[]>([]);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [authTab, setAuthTab] = useState<'login' | 'signup'>('login');
     const [loginEmail, setLoginEmail] = useState('');
@@ -111,7 +113,6 @@ const Dashboard: React.FC = () => {
     const [criticalTestMode, setCriticalTestMode] = useState(isCriticalTestModeEnabled());
     const [crateTestMode, setCrateTestMode] = useState(isCrateTestModeEnabled());
     const [criticalChances, setCriticalChances] = useState(getCriticalChances());
-    const [updates, setUpdates] = useState<Update[]>([]);
 
     const taskLimit = purchases.has(4) ? 6 : 3;
     const displayedTasks = tasks.slice(0, taskLimit);
@@ -134,11 +135,19 @@ const Dashboard: React.FC = () => {
         return () => unsubscribe();
     }, []);
 
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates (commits)
     useEffect(() => {
         const unsubscribe = subscribeToUpdates((updates) => {
-            setUpdates(updates);
-        });
+            setCommits(updates);
+        }, 'commit');
+        return () => unsubscribe();
+    }, []);
+
+    // Subscribe to real-time updates (releases)
+    useEffect(() => {
+        const unsubscribe = subscribeToUpdates((updates) => {
+            setReleases(updates);
+        }, 'release');
         return () => unsubscribe();
     }, []);
 
@@ -943,6 +952,7 @@ const Dashboard: React.FC = () => {
             <div className="panel" style={{
                 marginTop: 24,
                 padding: 20,
+                paddingBottom: 40,
                 background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(147, 51, 234, 0.05) 100%)',
                 border: '1px solid rgba(147, 51, 234, 0.2)',
                 borderRadius: 8
@@ -950,36 +960,84 @@ const Dashboard: React.FC = () => {
                 <h3 style={{margin: '0 0 16px 0', fontSize: '1rem', fontWeight: '600', color: '#d1d5db'}}>
                     ✨ What's New
                 </h3>
-                <div style={{display: 'flex', flexDirection: 'column', gap: 12}}>
-                    {updates.length > 0 ? (
-                        updates.map((item) => (
-                            <div key={item.id} style={{
-                                display: 'flex',
-                                gap: 12,
-                                padding: 10,
-                                background: 'rgba(31, 41, 55, 0.3)',
-                                borderRadius: 6,
-                                borderLeft: '3px solid rgba(168, 85, 247, 0.4)'
-                            }}>
-                                <span style={{fontSize: '1.2rem', minWidth: '24px'}}>{item.icon}</span>
-                                <div style={{flex: 1, minWidth: 0}}>
-                                    <div style={{fontWeight: '600', color: '#e5e7eb', fontSize: '0.95rem', marginBottom: 2}}>
-                                        {item.title}
+                
+                {/* Two-column layout for Commits and Releases */}
+                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
+                    {/* Commits Section */}
+                    <div>
+                        <h4 style={{margin: '0 0 12px 0', fontSize: '0.9rem', fontWeight: '600', color: '#a1a1a1'}}>
+                            📝 Latest Commits
+                        </h4>
+                        <div style={{display: 'flex', flexDirection: 'column', gap: 12}}>
+                            {commits.length > 0 ? (
+                                commits.map((item) => (
+                                    <div key={item.id} style={{
+                                        display: 'flex',
+                                        gap: 12,
+                                        padding: 10,
+                                        background: 'rgba(31, 41, 55, 0.3)',
+                                        borderRadius: 6,
+                                        borderLeft: '3px solid rgba(168, 85, 247, 0.4)'
+                                    }}>
+                                        <span style={{fontSize: '1.2rem', minWidth: '24px'}}>{item.icon}</span>
+                                        <div style={{flex: 1, minWidth: 0}}>
+                                            <div style={{fontWeight: '600', color: '#e5e7eb', fontSize: '0.95rem', marginBottom: 2}}>
+                                                {item.title}
+                                            </div>
+                                            <div style={{fontSize: '0.85rem', color: '#9ca3af', marginBottom: 4}}>
+                                                {item.desc}
+                                            </div>
+                                            <div style={{fontSize: '0.75rem', color: '#6b7280'}}>
+                                                {formatUpdateTime(item.timestamp)}
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div style={{fontSize: '0.85rem', color: '#9ca3af', marginBottom: 4}}>
-                                        {item.desc}
-                                    </div>
-                                    <div style={{fontSize: '0.75rem', color: '#6b7280'}}>
-                                        {formatUpdateTime(item.timestamp)}
-                                    </div>
+                                ))
+                            ) : (
+                                <div style={{fontSize: '0.85rem', color: '#6b7280', textAlign: 'center', padding: '20px 0'}}>
+                                    No commits yet...
                                 </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div style={{fontSize: '0.85rem', color: '#6b7280', textAlign: 'center', padding: '20px 0'}}>
-                            No updates yet...
+                            )}
                         </div>
-                    )}
+                    </div>
+
+                    {/* Releases Section */}
+                    <div>
+                        <h4 style={{margin: '0 0 12px 0', fontSize: '0.9rem', fontWeight: '600', color: '#a1a1a1'}}>
+                            🚀 Latest Releases
+                        </h4>
+                        <div style={{display: 'flex', flexDirection: 'column', gap: 12}}>
+                            {releases.length > 0 ? (
+                                releases.map((item) => (
+                                    <div key={item.id} style={{
+                                        display: 'flex',
+                                        gap: 12,
+                                        padding: 10,
+                                        background: 'rgba(31, 41, 55, 0.3)',
+                                        borderRadius: 6,
+                                        borderLeft: '3px solid rgba(34, 197, 94, 0.4)'
+                                    }}>
+                                        <span style={{fontSize: '1.2rem', minWidth: '24px'}}>{item.icon}</span>
+                                        <div style={{flex: 1, minWidth: 0}}>
+                                            <div style={{fontWeight: '600', color: '#e5e7eb', fontSize: '0.95rem', marginBottom: 2}}>
+                                                {item.title}
+                                            </div>
+                                            <div style={{fontSize: '0.85rem', color: '#9ca3af', marginBottom: 4}}>
+                                                {item.desc}
+                                            </div>
+                                            <div style={{fontSize: '0.75rem', color: '#6b7280'}}>
+                                                {formatUpdateTime(item.timestamp)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div style={{fontSize: '0.85rem', color: '#6b7280', textAlign: 'center', padding: '20px 0'}}>
+                                    No releases yet...
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 

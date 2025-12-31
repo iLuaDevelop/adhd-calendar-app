@@ -77,6 +77,7 @@ jobs:
             title: title,
             desc: desc,
             active: true,
+            type: 'commit',
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
             commitHash: hash
           }).then(() => {
