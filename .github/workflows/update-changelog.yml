@@ -26,19 +26,19 @@ jobs:
           COMMIT_HASH=$(git log -1 --pretty=%h)
           
           # Parse emoji and title from commit message
-          # New format: "emoji title - description"
-          # Example: "🔧 Rewrite commit parsing - Now uses simple emoji format"
+          # New format: "emoji Title | Description"
+          # Example: "🔧 Fixed commit parsing | Now extracts emoji, title, and description correctly"
           
-          # Extract emoji (first word)
+          # Extract emoji (first word before space)
           EMOJI=$(echo "$COMMIT_MSG" | cut -d' ' -f1)
           
           # Extract everything after emoji
           AFTER_EMOJI=$(echo "$COMMIT_MSG" | cut -d' ' -f2-)
           
-          # Split on dash - title is before dash, description is after
-          if [[ "$AFTER_EMOJI" == *"-"* ]]; then
-            TITLE=$(echo "$AFTER_EMOJI" | cut -d'-' -f1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-            DESC=$(echo "$AFTER_EMOJI" | cut -d'-' -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          # Split on pipe | - title before pipe, description after
+          if [[ "$AFTER_EMOJI" == *"|"* ]]; then
+            TITLE=$(echo "$AFTER_EMOJI" | cut -d'|' -f1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            DESC=$(echo "$AFTER_EMOJI" | cut -d'|' -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
           else
             TITLE="$AFTER_EMOJI"
             DESC=""
