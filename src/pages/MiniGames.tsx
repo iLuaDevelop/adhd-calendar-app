@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { PatternMemory } from '../components/Games/PatternMemory';
 import { ReactionTest } from '../components/Games/ReactionTest';
 import { Blackjack } from '../components/Games/Blackjack';
+import { Slots } from '../components/Games/Slots';
+import { Roulette } from '../components/Games/Roulette';
 import { useLanguage } from '../context/LanguageContext';
 import {
   canPlayGame,
@@ -13,7 +15,7 @@ import {
 import { grantXp } from '../services/xp';
 import { auth } from '../services/firebase';
 
-type GameType = 'pattern-memory' | 'reaction-test' | 'blackjack' | null;
+type GameType = 'pattern-memory' | 'reaction-test' | 'blackjack' | 'slots' | 'roulette' | null;
 
 export const MiniGames: React.FC = () => {
   const { t } = useLanguage();
@@ -147,7 +149,35 @@ export const MiniGames: React.FC = () => {
         />
       </div>
     );
-  }  // Result screen
+  }
+
+  if (activeGame === 'slots') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 p-8">
+        <Slots
+          onCancel={() => setActiveGame(null)}
+          onGameEnd={(gemsWon, gemsLost) => {
+            setActiveGame(null);
+            setGameTab('casino');
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (activeGame === 'roulette') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 p-8">
+        <Roulette
+          onCancel={() => setActiveGame(null)}
+          onGameEnd={(gemsWon, gemsLost) => {
+            setActiveGame(null);
+            setGameTab('casino');
+          }}
+        />
+      </div>
+    );
+  }// Result screen
   if (showResult) {
     return (
       <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', textAlign: 'center' }}>
@@ -434,6 +464,58 @@ export const MiniGames: React.FC = () => {
             </div>
             <button
               onClick={() => setActiveGame('blackjack')}
+              className="btn primary"
+              style={{ width: '100%' }}
+            >
+              Play →
+            </button>
+          </div>
+
+          {/* Slots Card */}
+          <div className="panel" style={{
+            padding: 24,
+            background: 'linear-gradient(135deg, rgba(251, 146, 60, 0.1) 0%, rgba(253, 224, 71, 0.05) 100%)',
+            border: '2px solid rgba(251, 146, 60, 0.3)',
+            borderRadius: 12,
+            textAlign: 'left'
+          }}>
+            <h2 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', color: '#fb923c' }}>🎰 Slots</h2>
+            <p className="subtle" style={{ fontSize: '0.95rem', marginBottom: 16, minHeight: 48 }}>
+              Spin 3 reels and match symbols! Match all three for big jackpots. Higher bets = Bigger multipliers!
+            </p>
+            <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: '0.9rem' }}>
+              <div style={{ marginBottom: 8 }}>💎 <strong>Bet gems</strong> (10-500)</div>
+              <div style={{ marginBottom: 8 }}>🎁 <strong>Win: 25x-500x bet</strong></div>
+              <div>⭐ <strong>Jackpot symbols pay 5x more</strong></div>
+            </div>
+            <button
+              onClick={() => setActiveGame('slots')}
+              className="btn primary"
+              style={{ width: '100%' }}
+            >
+              Play →
+            </button>
+          </div>
+
+          {/* Roulette Card */}
+          <div className="panel" style={{
+            padding: 24,
+            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%)',
+            border: '2px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: 12,
+            textAlign: 'left'
+          }}>
+            <h2 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', color: '#3b82f6' }}>🎡 Roulette</h2>
+            <p className="subtle" style={{ fontSize: '0.95rem', marginBottom: 16, minHeight: 48 }}>
+              Pick Red or Black and spin the wheel! Win 2x your bet on correct guess. 37-number wheel with house green!
+            </p>
+            <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: '0.9rem' }}>
+              <div style={{ marginBottom: 8 }}>💎 <strong>Bet gems</strong> (10-500)</div>
+              <div style={{ marginBottom: 8 }}>🎁 <strong>Win: 2x bet</strong></div>
+              <div>🏠 <strong>Green (0) always loses</strong></div>
+            </div>
+            <button
+              onClick={() => setActiveGame('roulette')}
               className="btn primary"
               style={{ width: '100%' }}
             >
