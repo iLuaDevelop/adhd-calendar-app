@@ -58,6 +58,7 @@ const DailySpinWheel: React.FC = () => {
   const [currentXp, setCurrentXp] = useState(getXp());
   const [lastReward, setLastReward] = useState<WheelSegment | null>(null);
   const [showRewardModal, setShowRewardModal] = useState(false);
+  const [showPayModal, setShowPayModal] = useState(false);
 
   const getTodayDate = () => new Date().toDateString();
 
@@ -72,11 +73,23 @@ const DailySpinWheel: React.FC = () => {
 
     // Check if free spin is available
     if (!isPaid && !spinState.canSpinFree) {
-      showToast('Free spin already used today! Buy more with gems.', 'info');
+      setShowPayModal(true);
       return;
     }
 
+    // If attempting to pay, show modal first
+    if (isPaid) {
+      setShowPayModal(true);
+      return;
+    }
+
+    // Proceed with free spin
+    executeSpin(false);
+  };
+
+  const executeSpin = (isPaid: boolean = false) => {
     setIsSpinning(true);
+    setShowPayModal(false);
 
     // Deduct gems if paid spin
     if (isPaid) {
@@ -90,7 +103,9 @@ const DailySpinWheel: React.FC = () => {
     const winningSegment = segments[winningIndex];
 
     // Calculate rotation (each segment is 45 degrees, plus extra rotations for drama)
-    const baseRotation = winningIndex * 45;
+    // To bring segment N to the top (0°), rotate by: 360 - (N * 45)
+    const segmentAngle = winningIndex * 45;
+    const baseRotation = 360 - segmentAngle;
     const extraRotations = 360 * 5; // 5 full rotations
     const finalRotation = extraRotations + baseRotation;
 
@@ -191,6 +206,7 @@ const DailySpinWheel: React.FC = () => {
                 transform: `rotate(${rotation}deg)`,
                 transition: isSpinning ? 'transform 3.5s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none',
                 filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.3))',
+                cursor: isSpinning ? 'default' : 'pointer',
               }}
             >
               <circle cx="160" cy="160" r="150" fill="url(#wheelGradient)" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
@@ -229,73 +245,153 @@ const DailySpinWheel: React.FC = () => {
                       opacity="0.85"
                     />
 
-                    {/* Text Label */}
+                    {/* Text Label - positioned closer to center with smaller font */}
                     <g transform={`translate(160, 160) rotate(${angle})`}>
                       <text
                         x="0"
-                        y="-100"
+                        y="-115"
                         textAnchor="middle"
                         fill="white"
-                        fontSize="12"
+                        fontSize="11"
                         fontWeight="bold"
                         style={{ userSelect: 'none', pointerEvents: 'none' }}
                       >
-                        {segment.icon} {segment.label}
+                        {segment.icon}
+                      </text>
+                      <text
+                        x="0"
+                        y="-103"
+                        textAnchor="middle"
+                        fill="white"
+                        fontSize="10"
+                        fontWeight="bold"
+                        style={{ userSelect: 'none', pointerEvents: 'none' }}
+                      >
+                        {segment.label}
                       </text>
                     </g>
                   </g>
                 );
               })}
 
-              {/* Center Circle */}
-              <circle cx="160" cy="160" r="40" fill="rgba(0,0,0,0.2)" stroke="white" strokeWidth="2" />
-              <circle cx="160" cy="160" r="35" fill="#1a1a2e" stroke="rgba(255,255,255,0.5)" strokeWidth="1" />
-              <text
-                x="160"
-                y="165"
-                textAnchor="middle"
-                fill="white"
-                fontSize="20"
-                fontWeight="bold"
-                style={{ userSelect: 'none', pointerEvents: 'none' }}
+              {/* Center Circle - Clickable Button */}
+              <g
+                onClick={() => !isSpinning && handleSpin(spinState.canSpinFree ? false : true)}
+                style={{ cursor: isSpinning ? 'default' : 'pointer' }}
               >
-                SPIN
-              </text>
+                <circle cx="160" cy="160" r="40" fill="rgba(0,0,0,0.2)" stroke="white" strokeWidth="2" />
+                <circle 
+                  cx="160" 
+                  cy="160" 
+                  r="35" 
+                  fill={isSpinning ? '#a78bfa' : '#6366f1'} 
+                  stroke={isSpinning ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.6)'} 
+                  strokeWidth="2"
+                  style={{ transition: 'all 0.3s ease' }}
+                />
+                <text
+                  x="160"
+                  y="165"
+                  textAnchor="middle"
+                  fill="white"
+                  fontSize="20"
+                  fontWeight="bold"
+                  style={{ userSelect: 'none', pointerEvents: 'none' }}
+                >
+                  SPIN
+                </text>
+              </g>
             </svg>
           </div>
         </div>
 
-        {/* Buttons */}
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Button
-            onClick={() => handleSpin(false)}
-            disabled={isSpinning || !spinState.canSpinFree}
-            style={{
-              background: spinState.canSpinFree ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'rgba(100,100,100,0.5)',
-              padding: '12px 24px',
-              fontSize: '1rem',
-            }}
-          >
-            🎁 Free Spin {spinState.canSpinFree ? '(Today)' : '(Used)'}
-          </Button>
-
-          <Button
-            onClick={() => handleSpin(true)}
-            disabled={isSpinning || currentGems < PAID_SPIN_COST}
-            style={{
-              background: currentGems >= PAID_SPIN_COST ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'rgba(100,100,100,0.5)',
-              padding: '12px 24px',
-              fontSize: '1rem',
-            }}
-          >
-            💎 Spin ({PAID_SPIN_COST} gems)
-          </Button>
+        <div style={{ textAlign: 'center', marginTop: 16, fontSize: '0.9rem', color: 'var(--muted)' }}>
+          {spinsRemainingToday > 0 ? '🎁 Free Spin Available' : '💎 Click the wheel to spin (25 gems)'}
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 16, fontSize: '0.9rem', color: 'var(--muted)' }}>
+        <div style={{ textAlign: 'center', marginTop: 8, fontSize: '0.85rem', color: 'var(--muted)' }}>
           Total Spins: {spinState.totalSpins}
         </div>
       </div>
+
+      {/* Pay Gems Confirmation Modal */}
+      {showPayModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.85)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowPayModal(false)}
+        >
+          <div
+            className="panel"
+            style={{
+              padding: 40,
+              textAlign: 'center',
+              maxWidth: 400,
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.95) 0%, rgba(168, 85, 247, 0.95) 100%)',
+              border: '3px solid rgba(236, 72, 153, 0.8)',
+              animation: 'scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              boxShadow: '0 20px 60px rgba(236, 72, 153, 0.4)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontSize: '2.5rem', marginBottom: 16 }}>💎</div>
+            <h2 style={{ margin: '0 0 16px 0', fontSize: '1.8rem', color: 'white' }}>Spin Again?</h2>
+            <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.95)', marginBottom: 24 }}>
+              Your free spin is used for today. Spin the wheel again for{' '}
+              <span style={{ fontWeight: 'bold', color: '#fbbf24' }}>25 gems</span>?
+            </div>
+            <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)', marginBottom: 24 }}>
+              Your gems: <span style={{ fontWeight: 'bold', color: '#ec4899' }}>{currentGems}</span>
+            </div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <Button
+                onClick={() => setShowPayModal(false)}
+                style={{
+                  flex: 1,
+                  background: 'rgba(255,255,255,0.2)',
+                  padding: '12px 16px',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => executeSpin(true)}
+                disabled={currentGems < PAID_SPIN_COST}
+                style={{
+                  flex: 1,
+                  background: currentGems >= PAID_SPIN_COST ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'rgba(100,100,100,0.5)',
+                  padding: '12px 16px',
+                }}
+              >
+                Spin Now 💎
+              </Button>
+            </div>
+          </div>
+          <style>{`
+            @keyframes scaleIn {
+              from {
+                opacity: 0;
+                transform: scale(0.5);
+              }
+              to {
+                opacity: 1;
+                transform: scale(1);
+              }
+            }
+          `}</style>
+        </div>
+      )}
 
       {/* Reward Modal */}
       {showRewardModal && lastReward && (
@@ -306,7 +402,7 @@ const DailySpinWheel: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0,0,0,0.7)',
+            background: 'rgba(0,0,0,0.85)',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
@@ -320,18 +416,19 @@ const DailySpinWheel: React.FC = () => {
               padding: 40,
               textAlign: 'center',
               maxWidth: 400,
-              background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%)',
-              border: '2px solid rgba(236, 72, 153, 0.5)',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.95) 0%, rgba(168, 85, 247, 0.95) 100%)',
+              border: '3px solid rgba(236, 72, 153, 0.8)',
               animation: 'scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              boxShadow: '0 20px 60px rgba(236, 72, 153, 0.4)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ fontSize: '3rem', marginBottom: 16 }}>{lastReward.icon}</div>
-            <h2 style={{ margin: '0 0 8px 0', fontSize: '1.8rem' }}>🎉 You Won!</h2>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: 16, color: lastReward.color }}>
+            <h2 style={{ margin: '0 0 8px 0', fontSize: '1.8rem', color: 'white' }}>🎉 You Won!</h2>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: 16, color: '#fbbf24' }}>
               {lastReward.label}
             </div>
-            <div style={{ fontSize: '0.95rem', color: 'var(--muted)', marginBottom: 24 }}>
+            <div style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.95)', marginBottom: 24 }}>
               {lastReward.reward.type === 'xp' && `+${lastReward.reward.amount} XP added to your profile!`}
               {lastReward.reward.type === 'gems' && `+${lastReward.reward.amount} Gems added to your collection!`}
               {lastReward.reward.type === 'crate' && `${lastReward.reward.tier?.toUpperCase()} crate added to your inventory!`}
