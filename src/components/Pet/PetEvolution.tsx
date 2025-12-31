@@ -1,208 +1,285 @@
 import React from 'react';
-import { Pet, getStageFromLevel } from '../../services/pet';
+import { Pet } from '../../services/pet';
 
 interface PetEvolutionProps {
   pet: Pet | null;
 }
 
-const evolutionPath = [
-  { level: 1, stage: 'egg', emoji: '🥚', description: 'Just hatched!', traits: ['Vulnerable', 'Learning'] },
-  { level: 2, stage: 'baby', emoji: '🐣', description: 'Growing and exploring', traits: ['Curious', 'Playful'] },
-  { level: 3, stage: 'teen', emoji: '🐥', description: 'Becoming stronger', traits: ['Active', 'Energetic'] },
-  { level: 4, stage: 'adult', emoji: '🐔', description: 'Full grown and wise', traits: ['Strong', 'Reliable'] },
-  { level: 5, stage: 'legendary', emoji: '🦅', description: 'Legendary power awakened', traits: ['Mighty', 'Ancient'] },
-  { level: 6, stage: 'mythic', emoji: '✨', description: 'Transcended into myth', traits: ['Immortal', 'Divine'] },
-];
-
 const PetEvolution: React.FC<PetEvolutionProps> = ({ pet }) => {
-  if (!pet) return null;
+  if (!pet) {
+    return <div style={{ padding: 16, color: '#9ca3af' }}>Loading pet data...</div>;
+  }
 
-  const currentStageIndex = evolutionPath.findIndex(p => p.stage === pet.stage);
-  const nextStage = currentStageIndex < evolutionPath.length - 1 ? evolutionPath[currentStageIndex + 1] : null;
+  const evolutionStages = [
+    { stage: 'Egg', emoji: '🥚', level: 1, trait: 'Beginning of a new journey' },
+    { stage: 'Baby', emoji: '👶', level: 10, trait: 'Learning and growing quickly' },
+    { stage: 'Teen', emoji: '🧒', level: 25, trait: 'Becoming stronger each day' },
+    { stage: 'Adult', emoji: '🐉', level: 50, trait: 'Powerful and experienced' },
+    { stage: 'Legendary', emoji: '⚡', level: 75, trait: 'Exceeding all expectations' },
+    { stage: 'Mythic', emoji: '✨', level: 100, trait: 'The stuff of legends' },
+  ];
+
+  const currentStageIndex = Math.min(
+    Math.floor(pet.level / 20),
+    evolutionStages.length - 1
+  );
+  const currentStage = evolutionStages[currentStageIndex];
+  const nextStage = evolutionStages[currentStageIndex + 1];
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 16 }}>
       {/* Current Evolution Info */}
-      <div className="p-6 bg-gradient-to-r from-blue-900/30 to-cyan-900/30 rounded-lg border border-blue-500/30">
-        <h3 className="font-semibold text-white mb-4">Current Evolution: {pet.stage.toUpperCase()}</h3>
-        <div className="flex items-center gap-6">
-          <div className="text-9xl">{evolutionPath[currentStageIndex].emoji}</div>
-          <div className="flex-1">
-            <p className="text-lg text-cyan-300 font-semibold mb-2">{evolutionPath[currentStageIndex].description}</p>
-            <p className="text-sm text-gray-400 mb-3">Traits:</p>
-            <div className="flex flex-wrap gap-2">
-              {evolutionPath[currentStageIndex].traits.map((trait, idx) => (
-                <span key={idx} className="px-3 py-1 bg-blue-900/50 rounded-full text-xs font-semibold text-blue-300">
-                  {trait}
-                </span>
-              ))}
-            </div>
-          </div>
+      <div
+        style={{
+          textAlign: 'center',
+          padding: 24,
+          background: 'rgba(147, 51, 234, 0.15)',
+          borderRadius: 8,
+        }}
+      >
+        <div style={{ fontSize: '7rem', marginBottom: 16 }}>{currentStage.emoji}</div>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: '#ffffff', marginBottom: 8 }}>
+          {currentStage.stage} Stage
+        </h2>
+        <p style={{ color: '#d1d5db', marginBottom: 16 }}>{currentStage.trait}</p>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {['Wise', 'Brave', 'Kindhearted'].map((trait) => (
+            <span
+              key={trait}
+              style={{
+                padding: '4px 12px',
+                background: '#6b21a8',
+                borderRadius: 16,
+                fontSize: '0.875rem',
+                color: '#e9d5ff',
+              }}
+            >
+              {trait}
+            </span>
+          ))}
         </div>
       </div>
 
       {/* Evolution Progress */}
       {nextStage && (
-        <div className="p-4 bg-purple-900/20 border border-purple-500/30 rounded-lg">
-          <h3 className="font-semibold text-white mb-4">📈 Progress to Next Evolution</h3>
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-300">Level Progress</span>
-                <span className="font-bold text-purple-300">{pet.level} → {nextStage.level}</span>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-3">
-                <div
-                  className="bg-purple-500 h-3 rounded-full transition-all"
-                  style={{ width: `${(pet.level / nextStage.level) * 100}%` }}
-                />
-              </div>
-              <p className="text-xs text-gray-400 mt-2">
-                Reach Level {nextStage.level} to evolve to {nextStage.stage.toUpperCase()}
-              </p>
+        <div
+          style={{
+            padding: 16,
+            background: 'rgba(59, 130, 246, 0.1)',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: 8,
+          }}
+        >
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ color: '#e5e7eb', fontSize: '0.875rem' }}>Evolution Progress</span>
+              <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
+                Level {pet.level} / {nextStage.level}
+              </span>
             </div>
-
-            {/* Next Stage Preview */}
-            <div className="p-4 bg-purple-900/30 rounded-lg border border-purple-500/20">
-              <p className="text-sm text-gray-400 mb-3">Next Evolution Preview:</p>
-              <div className="flex items-start gap-4">
-                <div className="text-6xl">{nextStage.emoji}</div>
-                <div>
-                  <p className="font-semibold text-white">{nextStage.stage.toUpperCase()}</p>
-                  <p className="text-sm text-gray-300 mt-1">{nextStage.description}</p>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {nextStage.traits.map((trait, idx) => (
-                      <span key={idx} className="px-2 py-0.5 bg-purple-900/50 rounded text-xs text-purple-300">
-                        {trait}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
+            <div
+              style={{
+                width: '100%',
+                height: 12,
+                background: '#1f2937',
+                borderRadius: 6,
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  width: `${(pet.level / nextStage.level) * 100}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #3b82f6, #a855f7)',
+                  transition: 'width 0.3s ease',
+                }}
+              />
             </div>
           </div>
+          <p style={{ color: '#d1d5db', fontSize: '0.875rem' }}>
+            Reach level {nextStage.level} to evolve to {nextStage.stage} stage!
+          </p>
         </div>
       )}
 
-      {/* Full Evolution Timeline */}
-      <div>
-        <h3 className="font-semibold text-white mb-4">🔮 Complete Evolution Path</h3>
-        <div className="relative">
-          {/* Timeline line */}
-          <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-500 to-purple-500" />
+      {/* Evolution Timeline */}
+      <div style={{ position: 'relative', paddingLeft: 48, paddingRight: 16 }}>
+        <div
+          style={{
+            position: 'absolute',
+            left: 32,
+            top: 0,
+            bottom: 0,
+            width: 2,
+            background: 'linear-gradient(180deg, #3b82f6, #a855f7)',
+          }}
+        />
 
-          {/* Timeline nodes */}
-          <div className="space-y-4">
-            {evolutionPath.map((stage, idx) => {
-              const isReached = pet.level >= stage.level;
-              const isCurrent = pet.stage === stage.stage;
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {evolutionStages.map((stage, index) => {
+            const isCurrent = index === currentStageIndex;
+            const isReached = index <= currentStageIndex;
+            const locked = index > currentStageIndex;
 
-              return (
-                <div key={idx} className="relative pl-24">
-                  {/* Timeline dot */}
-                  <div
-                    className={`absolute left-0 w-16 h-16 rounded-full flex items-center justify-center text-4xl border-4 transition-all ${
-                      isCurrent
-                        ? 'border-yellow-400 bg-yellow-900/30 scale-110'
-                        : isReached
-                        ? 'border-green-400 bg-green-900/20'
-                        : 'border-gray-600 bg-gray-900/20'
-                    }`}
-                  >
-                    {stage.emoji}
-                  </div>
+            return (
+              <div key={stage.stage} style={{ position: 'relative' }}>
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: -40,
+                    top: 0,
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    background: isCurrent ? '#ffffff' : isReached ? '#a855f7' : '#6b7280',
+                    border: isCurrent ? '2px solid #a855f7' : 'none',
+                  }}
+                />
 
-                  {/* Content card */}
-                  <div
-                    className={`p-4 rounded-lg border transition-all ${
-                      isCurrent
-                        ? 'bg-yellow-900/20 border-yellow-500/30'
-                        : isReached
-                        ? 'bg-green-900/10 border-green-500/20'
-                        : 'bg-gray-800/20 border-gray-700/30'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className={`font-semibold ${
-                          isCurrent ? 'text-yellow-300' : isReached ? 'text-green-300' : 'text-gray-400'
-                        }`}>
-                          {stage.stage.toUpperCase()}
-                        </h4>
-                        <p className="text-sm text-gray-400 mt-1">{stage.description}</p>
-                      </div>
-                      <div className={`text-sm font-bold ${
-                        isCurrent ? 'text-yellow-400' : isReached ? 'text-green-400' : 'text-gray-500'
-                      }`}>
-                        Lv. {stage.level}
-                      </div>
-                    </div>
-
-                    {/* Status badge */}
-                    <div className="mt-3 flex items-center gap-2">
-                      {isCurrent && (
-                        <span className="px-2 py-1 bg-yellow-900/50 rounded text-xs font-bold text-yellow-300">
-                          ★ CURRENT
-                        </span>
-                      )}
-                      {isReached && !isCurrent && (
-                        <span className="px-2 py-1 bg-green-900/50 rounded text-xs font-bold text-green-300">
-                          ✓ REACHED
-                        </span>
-                      )}
-                      {!isReached && (
-                        <span className="px-2 py-1 bg-gray-900/50 rounded text-xs font-bold text-gray-400">
-                          LOCKED
-                        </span>
-                      )}
+                <div
+                  style={{
+                    padding: 12,
+                    background: isCurrent
+                      ? 'rgba(168, 85, 247, 0.2)'
+                      : isReached
+                        ? 'rgba(168, 85, 247, 0.1)'
+                        : 'rgba(107, 114, 128, 0.3)',
+                    border: isCurrent ? '1px solid #a855f7' : '1px solid transparent',
+                    borderRadius: 8,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                    <span style={{ fontSize: '1.5rem' }}>{stage.emoji}</span>
+                    <div>
+                      <h4 style={{ color: '#ffffff', fontWeight: '600', marginBottom: 2 }}>
+                        {stage.stage}
+                      </h4>
+                      <p style={{ color: '#d1d5db', fontSize: '0.75rem' }}>Level {stage.level}+</p>
                     </div>
                   </div>
+                  <p style={{ color: '#9ca3af', fontSize: '0.875rem', marginBottom: 8 }}>
+                    {stage.trait}
+                  </p>
+
+                  {isCurrent && (
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        padding: '4px 12px',
+                        background: '#a855f7',
+                        borderRadius: 4,
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        color: '#ffffff',
+                      }}
+                    >
+                      ✓ CURRENT
+                    </span>
+                  )}
+                  {isReached && !isCurrent && (
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        padding: '4px 12px',
+                        background: '#6b21a8',
+                        borderRadius: 4,
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        color: '#e9d5ff',
+                      }}
+                    >
+                      ✓ REACHED
+                    </span>
+                  )}
+                  {locked && (
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        padding: '4px 12px',
+                        background: 'rgba(107, 114, 128, 0.5)',
+                        borderRadius: 4,
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        color: '#9ca3af',
+                      }}
+                    >
+                      LOCKED
+                    </span>
+                  )}
                 </div>
-              );
-            })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Evolution Benefits */}
+      <div
+        style={{
+          padding: 16,
+          background: 'rgba(34, 197, 94, 0.15)',
+          border: '1px solid rgba(34, 197, 94, 0.3)',
+          borderRadius: 8,
+        }}
+      >
+        <h3 style={{ fontWeight: '600', color: '#ffffff', marginBottom: 16 }}>
+          🎁 Evolution Benefits
+        </h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <span style={{ fontSize: '1.25rem' }}>📊</span>
+            <div>
+              <p style={{ fontWeight: '600', color: '#ffffff', marginBottom: 2 }}>Stat Bonuses</p>
+              <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
+                Each evolution grants increased base stats and new abilities
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <span style={{ fontSize: '1.25rem' }}>⚡</span>
+            <div>
+              <p style={{ fontWeight: '600', color: '#ffffff', marginBottom: 2 }}>New Abilities</p>
+              <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
+                Unlock powerful abilities at each evolution stage
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <span style={{ fontSize: '1.25rem' }}>✨</span>
+            <div>
+              <p style={{ fontWeight: '600', color: '#ffffff', marginBottom: 2 }}>Special Quests</p>
+              <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
+                Evolved pets unlock unique quests and rewards
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <span style={{ fontSize: '1.25rem' }}>🏆</span>
+            <div>
+              <p style={{ fontWeight: '600', color: '#ffffff', marginBottom: 2 }}>
+                Enhanced Bonuses
+              </p>
+              <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
+                Ability bonuses scale better with each evolution
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Evolution Bonuses Info */}
-      <div className="p-4 bg-cyan-900/20 border border-cyan-500/30 rounded-lg">
-        <h3 className="font-semibold text-white mb-4">🎁 Evolution Benefits</h3>
-        <div className="space-y-3 text-sm">
-          <div className="flex items-start gap-3">
-            <span className="text-xl">📊</span>
-            <div>
-              <p className="font-semibold text-white">Stat Bonuses</p>
-              <p className="text-gray-400">Each evolution grants increased base stats and new abilities</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-xl">⚡</span>
-            <div>
-              <p className="font-semibold text-white">New Abilities</p>
-              <p className="text-gray-400">Unlock powerful abilities at each evolution stage</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-xl">✨</span>
-            <div>
-              <p className="font-semibold text-white">Special Quests</p>
-              <p className="text-gray-400">Evolved pets unlock unique quests and rewards</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-xl">🏆</span>
-            <div>
-              <p className="font-semibold text-white">Enhanced Bonuses</p>
-              <p className="text-gray-400">Ability bonuses scale better with each evolution</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Pet Customization Hint */}
-      <div className="p-4 bg-gray-800/50 border border-gray-700/50 rounded-lg">
-        <p className="text-sm text-gray-400">
-          💡 <span className="font-semibold">Tip:</span> Your pet will grow stronger as you interact with it. Keep feeding, playing, and bonding to unlock its full potential!
+      {/* Customization Hint */}
+      <div
+        style={{
+          padding: 16,
+          background: 'rgba(107, 114, 128, 0.2)',
+          border: '1px solid rgba(107, 114, 128, 0.3)',
+          borderRadius: 8,
+        }}
+      >
+        <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
+          💡 <span style={{ fontWeight: '600', color: '#e5e7eb' }}>Tip:</span> Your pet will grow
+          stronger as you interact with it. Keep feeding, playing, and bonding to unlock its full
+          potential!
         </p>
       </div>
     </div>
