@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
 import { getXp, getLevelFromXp, grantXp, setXp, getXpToNextLevel, getTotalXpForCurrentLevel, getXpIntoCurrentLevel } from '../services/xp';
 import { getGems, addGems } from '../services/currency';
-import { getPet, getAllPets, getCurrentPetId, setCurrentPet, feedPet, updatePetStats } from '../services/pet';
+import { getPet, getAllPets, getCurrentPetId, setCurrentPet, feedPet, updatePetStats, getPetEmoji } from '../services/pet';
 import { getMedals } from '../services/medals';
 import { getSelectedTitle } from '../services/titles';
 import { getInventory, getCratesByTier, removeFromInventory } from '../services/inventory';
