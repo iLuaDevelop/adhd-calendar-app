@@ -23,6 +23,11 @@ import {
 import { getGems } from '../services/currency';
 import { getXp } from '../services/xp';
 import { useToast } from '../context/ToastContext';
+import PetOverview from '../components/Pet/PetOverview';
+import PetAbilities from '../components/Pet/PetAbilities';
+import PetQuests from '../components/Pet/PetQuests';
+import PetStats from '../components/Pet/PetStats';
+import PetEvolution from '../components/Pet/PetEvolution';
 
 const PetPage: React.FC = () => {
   const { showToast } = useToast();
@@ -36,6 +41,7 @@ const PetPage: React.FC = () => {
   const [showSkinPicker, setShowSkinPicker] = useState(false);
   const [ownedPets, setOwnedPets] = useState<Pet[]>([]);
   const [currentPetId, setCurrentPetIdState] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'abilities' | 'quests' | 'stats' | 'evolution'>('overview');
 
   const feedCostGems = 5;
   const feedCostXp = 30;
@@ -498,8 +504,60 @@ const PetPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Customization Section */}
-        <div className="panel" style={{ padding: 20, marginBottom: 24 }}>
+        {/* Tab Navigation */}
+        <div style={{
+          display: 'flex',
+          gap: 12,
+          marginBottom: 24,
+          borderBottom: '1px solid var(--border)',
+          overflowX: 'auto',
+          paddingBottom: 0,
+        }}>
+          {[
+            { id: 'overview', label: '📊 Overview', icon: '📊' },
+            { id: 'abilities', label: '⚡ Abilities', icon: '⚡' },
+            { id: 'quests', label: '🗺️ Quests', icon: '🗺️' },
+            { id: 'stats', label: '📈 Stats', icon: '📈' },
+            { id: 'evolution', label: '🔮 Evolution', icon: '🔮' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              style={{
+                padding: '12px 16px',
+                background: activeTab === tab.id ? 'var(--accent)' : 'transparent',
+                color: activeTab === tab.id ? 'white' : 'var(--muted)',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.95rem',
+                fontWeight: activeTab === tab.id ? 'bold' : 'normal',
+                borderBottom: activeTab === tab.id ? '2px solid var(--accent)' : '2px solid transparent',
+                transition: 'all 0.2s',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        <div style={{ marginBottom: 24 }}>
+          {activeTab === 'overview' && <PetOverview pet={pet} onUpdate={() => {
+            reloadCurrentPet(pet?.id || '');
+          }} />}
+          {activeTab === 'abilities' && <PetAbilities pet={pet} onUpdate={() => {
+            reloadCurrentPet(pet?.id || '');
+          }} />}
+          {activeTab === 'quests' && <PetQuests pet={pet} onUpdate={() => {
+            reloadCurrentPet(pet?.id || '');
+          }} />}
+          {activeTab === 'stats' && <PetStats pet={pet} />}
+          {activeTab === 'evolution' && <PetEvolution pet={pet} />}
+        </div>
+
+        {/* Old Customization Section - Hidden but kept for reference */}
+        <div className="panel" style={{ padding: 20, marginBottom: 24, display: 'none' }}>
           <h3 style={{ marginTop: 0, marginBottom: 16 }}>🎨 Customize Your Pet</h3>
 
           {/* Color Picker */}
