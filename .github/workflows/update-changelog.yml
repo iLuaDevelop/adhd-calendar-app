@@ -26,38 +26,35 @@ jobs:
           COMMIT_MSG=$(git log -1 --pretty=%B)
           COMMIT_HASH=$(git log -1 --pretty=%h)
           
-          # Parse emoji and title from commit message
-          # New format: "emoji Title | Description"
-          # Example: "🔧 Fixed commit parsing | Now extracts emoji, title, and description correctly"
+          # Parse title and description from commit message
+          # New format: "Title | Description"
+          # Example: "Fixed commit parsing | Now extracts title and description correctly"
+          # Emoji will be assigned randomly by the app
           
-          EMOJI=""
           TITLE=""
           DESC=""
           
-          # Extract everything after first space (skips emoji)
-          AFTER_EMOJI="${COMMIT_MSG#* }"
-          
-          # Extract emoji by removing everything from first space onward
-          EMOJI="${COMMIT_MSG%% *}"
+          # Get the full message after first space (remove commit type if present)
+          MSG="$COMMIT_MSG"
           
           # Check if pipe exists and split
-          if [[ "$AFTER_EMOJI" == *"|"* ]]; then
+          if [[ "$MSG" == *"|"* ]]; then
             # Split on pipe using parameter expansion
-            BEFORE_PIPE="${AFTER_EMOJI%%|*}"
-            AFTER_PIPE="${AFTER_EMOJI#*|}"
-            TITLE=$(echo "$BEFORE_PIPE" | xargs)
-            DESC=$(echo "$AFTER_PIPE" | xargs)
+            TITLE="${MSG%%|*}"
+            DESC="${MSG#*|}"
+            # Trim whitespace
+            TITLE=$(echo "$TITLE" | xargs)
+            DESC=$(echo "$DESC" | xargs)
           else
-            TITLE="$AFTER_EMOJI"
+            TITLE="$MSG"
             DESC=""
           fi
           
-          # Debug output
-          echo "EMOJI: '$EMOJI'"
-          echo "TITLE: '$TITLE'"
-          echo "DESC: '$DESC'"
-          
-          # Fallback if something went wrong
+          # Skip if empty
+          if [ -z "$TITLE" ]; then
+            echo "Skipping: No title found"
+            exit 0
+          fi
           if [ -z "$EMOJI" ] || [ -z "$TITLE" ]; then
             EMOJI="📝"
             TITLE=$(echo "$COMMIT_MSG" | head -1)
@@ -91,13 +88,16 @@ jobs:
           });
           
           const db = admin.firestore();
-          const emoji = process.argv[2];
-          const title = process.argv[3];
-          const desc = process.argv[4];
-          const hash = process.argv[5];
+          const title = process.argv[2];
+          const desc = process.argv[3];
+          const hash = process.argv[4];
+          
+          // Random emojis for commits
+          const emojis = ['🔧', '✨', '🎯', '🚀', '🐛', '📝', '⚡', '🎨', '💡', '🔨'];
+          const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
           
           db.collection('updates').add({
-            icon: emoji,
+            icon: randomEmoji,
             title: title,
             desc: desc,
             active: true,
@@ -114,4 +114,4 @@ jobs:
           EOF
           
           # Add update to Firebase
-          node add-update.js "$EMOJI" "$TITLE" "$DESC" "$COMMIT_HASH"
+          node add-update.js "$TITLE" "$DESC" "$COMMIT_HASH"
