@@ -14,7 +14,7 @@ export interface Update {
 
 /**
  * Real-time listener for active updates of a specific type
- * Returns up to 5 most recent active updates of that type
+ * Returns up to 15 most recent active updates of that type
  */
 export const subscribeToUpdates = (callback: (updates: Update[]) => void, type?: 'commit' | 'release') => {
   const updatesRef = collection(db, 'updates');
@@ -26,14 +26,14 @@ export const subscribeToUpdates = (callback: (updates: Update[]) => void, type?:
       where('active', '==', true),
       where('type', '==', type),
       orderBy('timestamp', 'desc'),
-      limit(4)
+      limit(15)
     );
   } else {
     q = query(
       updatesRef,
       where('active', '==', true),
       orderBy('timestamp', 'desc'),
-      limit(4)
+      limit(15)
     );
   }
 
