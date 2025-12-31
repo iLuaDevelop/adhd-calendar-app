@@ -41,16 +41,20 @@ const ProfileHeaderCardWrapper: React.FC<{ currentAuthUser: any }> = ({ currentA
   return (
     <ProfileHeaderCard 
       onClick={() => {
+        // Allow click whether logged in or logged out
+        const profileKey = 'adhd_profile';
+        const stored = localStorage.getItem(profileKey);
         if (currentAuthUser) {
-          // Get profile data from localStorage to pass to modal
-          const profileKey = 'adhd_profile';
-          const stored = localStorage.getItem(profileKey);
+          // Logged in - open with current user ID
           if (stored) {
             const profile = JSON.parse(stored);
             openProfileModal(currentAuthUser.uid, profile.username, profile.avatar);
           } else {
             openProfileModal(currentAuthUser.uid, 'Player', '👤');
           }
+        } else {
+          // Logged out - open login modal with empty ID
+          openProfileModal('', 'Player', '👤');
         }
       }} 
     />
@@ -306,8 +310,13 @@ const AppProfileModalRenderer: React.FC = () => {
   const { isOpen, userId, closeProfileModal } = useProfileModal();
   const auth = getAuth();
   
-  // Only show if it's the current user's profile (not a friend profile from social menu)
-  return isOpen && userId && auth.currentUser && userId === auth.currentUser.uid ? (
+  // Show modal if:
+  // 1. It's the current user's profile when logged in
+  // 2. It's the login modal when NOT logged in (userId will be empty string)
+  return isOpen && (
+    (userId && auth.currentUser && userId === auth.currentUser.uid) || 
+    (!auth.currentUser && userId === '')
+  ) ? (
     <AppProfileModal open={isOpen} onClose={closeProfileModal} />
   ) : null;
 };

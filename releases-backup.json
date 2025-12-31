@@ -1,0 +1,152 @@
+{
+  "__meta__": {
+    "indexes": []
+  },
+  "updates": {
+    "doc1": {
+      "__meta__": {
+        "createTime": "2024-12-01T00:00:00Z",
+        "updateTime": "2024-12-01T00:00:00Z"
+      },
+      "data": {
+        "title": {
+          "stringValue": "Test Release Demo | Auto-posted via webhook"
+        },
+        "description": {
+          "stringValue": "This is a test to verify the release webhook works"
+        },
+        "releaseTag": {
+          "stringValue": "test-release-demo"
+        },
+        "type": {
+          "stringValue": "release"
+        },
+        "icon": {
+          "stringValue": "🚀"
+        },
+        "timestamp": {
+          "integerValue": "1735689600000"
+        },
+        "active": {
+          "booleanValue": true
+        }
+      }
+    },
+    "doc2": {
+      "__meta__": {
+        "createTime": "2024-11-15T00:00:00Z",
+        "updateTime": "2024-11-15T00:00:00Z"
+      },
+      "data": {
+        "title": {
+          "stringValue": "Version 1.0.3 - Quality of Life & Social Features"
+        },
+        "description": {
+          "stringValue": "🎉 **ADHD Calendar v1.0.3** is here with major improvements including What's New feed, enhanced task system, and improved UI/UX"
+        },
+        "releaseTag": {
+          "stringValue": "v1.0.3"
+        },
+        "type": {
+          "stringValue": "release"
+        },
+        "icon": {
+          "stringValue": "🚀"
+        },
+        "timestamp": {
+          "integerValue": "1731619200000"
+        },
+        "active": {
+          "booleanValue": true
+        }
+      }
+    },
+    "doc3": {
+      "__meta__": {
+        "createTime": "2024-10-01T00:00:00Z",
+        "updateTime": "2024-10-01T00:00:00Z"
+      },
+      "data": {
+        "title": {
+          "stringValue": "Version 1.0.2 - Multi-Platform Release"
+        },
+        "description": {
+          "stringValue": "## 🎉 Version 1.0.2 - Multi-Platform Support\n\nADHD Calendar now available on Windows, Web, iOS, and Android!"
+        },
+        "releaseTag": {
+          "stringValue": "v1.0.2"
+        },
+        "type": {
+          "stringValue": "release"
+        },
+        "icon": {
+          "stringValue": "🚀"
+        },
+        "timestamp": {
+          "integerValue": "1727740800000"
+        },
+        "active": {
+          "booleanValue": true
+        }
+      }
+    },
+    "doc4": {
+      "__meta__": {
+        "createTime": "2024-09-01T00:00:00Z",
+        "updateTime": "2024-09-01T00:00:00Z"
+      },
+      "data": {
+        "title": {
+          "stringValue": "ADHD Calendar v1.0.1 - Bug Fixes & Payment Integration"
+        },
+        "description": {
+          "stringValue": "## 🎉 Official Release v1.0.1\n\nThe complete ADHD Calendar app with gamification, task management, and pet system"
+        },
+        "releaseTag": {
+          "stringValue": "v1.0.1"
+        },
+        "type": {
+          "stringValue": "release"
+        },
+        "icon": {
+          "stringValue": "🚀"
+        },
+        "timestamp": {
+          "integerValue": "1725148800000"
+        },
+        "active": {
+          "booleanValue": true
+        }
+      }
+    },
+    "doc5": {
+      "__meta__": {
+        "createTime": "2024-08-01T00:00:00Z",
+        "updateTime": "2024-08-01T00:00:00Z"
+      },
+      "data": {
+        "title": {
+          "stringValue": "ADHD Calendar v1.0.0 - Windows"
+        },
+        "description": {
+          "stringValue": "## 🎉 Official Release\n\nThe complete ADHD Calendar app - Windows release with Electron"
+        },
+        "releaseTag": {
+          "stringValue": "v1.0-desktop-app"
+        },
+        "type": {
+          "stringValue": "release"
+        },
+        "icon": {
+          "stringValue": "🚀"
+        },
+        "timestamp": {
+          "integerValue": "1722556800000"
+        },
+        "active": {
+          "booleanValue": true
+        }
+      }
+    }
+  }
+}

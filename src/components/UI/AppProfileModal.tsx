@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { getAuth, signOut } from 'firebase/auth';
+import { getAuth, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getXp, getLevelFromXp } from '../../services/xp';
 import { getSelectedTitle, getTitles, unlockTitle, setSelectedTitle as setSelectedTitleService, getUnlockedTitles, ALL_TITLES } from '../../services/titles';
 import { getMedals } from '../../services/medals';
 import { subscribeToUserProfile } from '../../services/messaging';
 import { useToast } from '../../context/ToastContext';
+import { initializeUserProfile } from '../../services/auth';
 
 interface AppProfileModalProps {
   open: boolean;
@@ -25,6 +26,13 @@ const AVATAR_OPTIONS = ['👤', '😊', '🧠', '🎯', '🌟', '✨', '🚀', '
 const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
   const auth = getAuth();
   const { showToast } = useToast();
+  
+  // Login form state
+  const [isLoginMode, setIsLoginMode] = useState(true);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  
   const [profile, setProfile] = useState<ProfileData>({
     username: 'Player',
     hashtag: '0000',
@@ -43,6 +51,46 @@ const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
   const [streak, setStreak] = useState({ current: 0, longest: 0 });
   const [xp, setXp] = useState(getXp());
   const [level, setLevel] = useState(getLevelFromXp(getXp()));
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      showToast('Logged in successfully!', 'success');
+      setLoginEmail('');
+      setLoginPassword('');
+      onClose();
+    } catch (error: any) {
+      showToast('Login failed: ' + error.message, 'error');
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginLoading(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, loginPassword);
+      // Initialize profile for new user
+      await initializeUserProfile(userCredential.user.uid, {
+        username: 'Player',
+        hashtag: Math.random().toString().slice(2, 6),
+        avatar: '👤',
+        tasksCompleted: 0,
+        eventsCreated: 0,
+      });
+      showToast('Account created and logged in!', 'success');
+      setLoginEmail('');
+      setLoginPassword('');
+      onClose();
+    } catch (error: any) {
+      showToast('Registration failed: ' + error.message, 'error');
+    } finally {
+      setLoginLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -179,6 +227,109 @@ const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
   };
 
   if (!open) return null;
+
+  // Show login form if user is not authenticated
+  if (!auth.currentUser) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9998,
+        }}
+        onClick={onClose}
+      >
+        <div
+          className="panel"
+          style={{
+            maxWidth: 400,
+            padding: 32,
+            backgroundColor: 'var(--panel)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            userSelect: 'none',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2 style={{ textAlign: 'center', marginBottom: 24 }}>
+            {isLoginMode ? 'Login' : 'Create Account'}
+          </h2>
+
+          <form onSubmit={isLoginMode ? handleLogin : handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                Email
+              </label>
+              <input
+                type="email"
+                className="input"
+                placeholder="your@email.com"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                required
+                disabled={loginLoading}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: 4, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                Password
+              </label>
+              <input
+                type="password"
+                className="input"
+                placeholder="••••••••"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                required
+                disabled={loginLoading}
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="btn"
+              disabled={loginLoading}
+              style={{ marginTop: 8 }}
+            >
+              {loginLoading ? (isLoginMode ? 'Logging in...' : 'Creating account...') : (isLoginMode ? 'Login' : 'Create Account')}
+            </button>
+          </form>
+
+          <div style={{ textAlign: 'center', marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+            <p style={{ margin: '0 0 12px 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+              {isLoginMode ? "Don't have an account?" : 'Already have an account?'}
+            </p>
+            <button
+              className="btn ghost"
+              onClick={() => {
+                setIsLoginMode(!isLoginMode);
+                setLoginEmail('');
+                setLoginPassword('');
+              }}
+              style={{ width: '100%' }}
+            >
+              {isLoginMode ? 'Create Account' : 'Login'}
+            </button>
+          </div>
+
+          <button
+            className="btn ghost"
+            onClick={onClose}
+            style={{ width: '100%', marginTop: 12, opacity: 0.7 }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

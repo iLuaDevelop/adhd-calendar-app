@@ -104,3 +104,37 @@ export const signInAsGuest = async (): Promise<User> => {
     throw error;
   }
 };
+// Initialize user profile after registration
+export const initializeUserProfile = async (
+  uid: string,
+  profileData: {
+    username: string;
+    hashtag: string;
+    avatar: string;
+    tasksCompleted?: number;
+    eventsCreated?: number;
+  }
+): Promise<void> => {
+  const userProfile = {
+    uid,
+    username: profileData.username,
+    hashtag: profileData.hashtag,
+    avatar: profileData.avatar,
+    customAvatarUrl: undefined,
+    tasksCompleted: profileData.tasksCompleted || 0,
+    eventsCreated: profileData.eventsCreated || 0,
+    createdAt: Date.now(),
+  };
+
+  // Save to playerProfiles collection (for leaderboard/public profile)
+  await setDoc(doc(db, "playerProfiles", uid), userProfile);
+  
+  // Also save to localStorage
+  localStorage.setItem('adhd_profile', JSON.stringify({
+    username: profileData.username,
+    hashtag: profileData.hashtag,
+    avatar: profileData.avatar,
+    tasksCompleted: profileData.tasksCompleted || 0,
+    eventsCreated: profileData.eventsCreated || 0,
+  }));
+};
