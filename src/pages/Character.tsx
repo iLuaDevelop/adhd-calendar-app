@@ -9,6 +9,10 @@ import { getInventory, getCratesByTier, removeFromInventory } from '../services/
 import Button from '../components/UI/Button';
 import { useToast } from '../context/ToastContext';
 import PetOverview from '../components/Pet/PetOverview';
+import PetAbilities from '../components/Pet/PetAbilities';
+import PetQuests from '../components/Pet/PetQuests';
+import PetStats from '../components/Pet/PetStats';
+import PetEvolution from '../components/Pet/PetEvolution';
 import InventoryCrateModal from '../components/InventoryCrateModal/InventoryCrateModal';
 
 const Character: React.FC = () => {
@@ -22,6 +26,7 @@ const Character: React.FC = () => {
   const [pets, setPets] = useState(getAllPets());
   const [inventory, setInventory] = useState(getInventory());
   const [selectedTab, setSelectedTab] = useState<'overview' | 'pets' | 'inventory' | 'insights'>('overview');
+  const [petDetailsTab, setPetDetailsTab] = useState<'overview' | 'abilities' | 'quests' | 'stats' | 'evolution'>('overview');
   const [streak, setStreak] = useState({ current: 0, longest: 0 });
   const [medals, setMedals] = useState<any[]>([]);
   const [quests, setQuests] = useState<any[]>([]);
@@ -350,30 +355,116 @@ const Character: React.FC = () => {
         {selectedTab === 'pets' && (
           <div>
             <h2 style={{ marginBottom: 24 }}>🐾 Your Pets</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
-              {pets.map(pet => (
-                <div
-                  key={pet.id}
-                  className="panel"
-                  style={{
-                    padding: 20,
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    border: currentPetId === pet.id ? '2px solid var(--accent)' : '1px solid var(--border)',
-                    background: currentPetId === pet.id ? 'rgba(124, 92, 255, 0.1)' : 'var(--panel)',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onClick={() => handleSwitchPet(pet.id)}
-                >
-                  <div style={{ fontSize: '3rem', marginBottom: 12 }}>{getPetEmoji(pet.stage, pet.color, pet.emoji)}</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: 4 }}>{pet.name}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 12 }}>Level {Math.floor((pet.xp || 0) / 100) || 1}</div>
-                  {currentPetId === pet.id && (
-                    <div style={{ color: 'var(--accent)', fontSize: '0.85rem', fontWeight: 'bold' }}>✓ Active</div>
+            
+            {/* Pet Selector Grid */}
+            <div style={{ marginBottom: 32 }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--muted)', marginBottom: 12 }}>Select Active Pet:</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
+                {pets.map(pet => (
+                  <div
+                    key={pet.id}
+                    className="panel"
+                    style={{
+                      padding: 16,
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: currentPetId === pet.id ? '2px solid var(--accent)' : '1px solid var(--border)',
+                      background: currentPetId === pet.id ? 'rgba(124, 92, 255, 0.15)' : 'var(--panel)',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onClick={() => handleSwitchPet(pet.id)}
+                  >
+                    <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>{getPetEmoji(pet.stage, pet.color, pet.emoji)}</div>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: 4 }}>{pet.name}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: 8 }}>Level {Math.floor((pet.xp || 0) / 100) || 1}</div>
+                    {currentPetId === pet.id && (
+                      <div style={{ color: 'var(--accent)', fontSize: '0.8rem', fontWeight: 'bold' }}>✓ Active</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Pet Details Section with Nested Tabs */}
+            {currentPet && (
+              <div style={{ marginTop: 32 }}>
+                <div className="panel" style={{ padding: 24 }}>
+                  {/* Nested Pet Details Tab Navigation */}
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 24, borderBottom: '2px solid var(--border)', paddingBottom: 16, flexWrap: 'wrap' }}>
+                    {(['overview', 'abilities', 'quests', 'stats', 'evolution'] as const).map(tab => (
+                      <button
+                        key={tab}
+                        onClick={() => setPetDetailsTab(tab)}
+                        style={{
+                          padding: '8px 16px',
+                          background: petDetailsTab === tab 
+                            ? 'var(--accent)' 
+                            : 'rgba(124, 92, 255, 0.08)',
+                          color: petDetailsTab === tab ? '#fff' : 'var(--text)',
+                          border: 'none',
+                          borderRadius: 8,
+                          cursor: 'pointer',
+                          fontWeight: petDetailsTab === tab ? '600' : '500',
+                          fontSize: '0.9rem',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        {tab === 'overview' && '📊 Overview'}
+                        {tab === 'abilities' && '⚡ Abilities'}
+                        {tab === 'quests' && '🗺️ Quests'}
+                        {tab === 'stats' && '📈 Stats'}
+                        {tab === 'evolution' && '🔮 Evolution'}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Tab Content */}
+                  {petDetailsTab === 'overview' && (
+                    <PetOverview 
+                      pet={currentPet} 
+                      onUpdate={() => {
+                        setPets(getAllPets());
+                        setCurrentPetId(getCurrentPetId());
+                      }} 
+                    />
+                  )}
+
+                  {petDetailsTab === 'abilities' && (
+                    <PetAbilities 
+                      pet={currentPet} 
+                      onAbilityUnlock={() => {
+                        setPets(getAllPets());
+                      }}
+                    />
+                  )}
+
+                  {petDetailsTab === 'quests' && (
+                    <PetQuests 
+                      pet={currentPet} 
+                      onQuestStart={() => {
+                        setPets(getAllPets());
+                      }}
+                      onQuestComplete={() => {
+                        setPets(getAllPets());
+                      }}
+                    />
+                  )}
+
+                  {petDetailsTab === 'stats' && (
+                    <PetStats pet={currentPet} />
+                  )}
+
+                  {petDetailsTab === 'evolution' && (
+                    <PetEvolution 
+                      pet={currentPet} 
+                      onEvolve={() => {
+                        setPets(getAllPets());
+                      }}
+                    />
                   )}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
