@@ -15,13 +15,17 @@ const PetQuests: React.FC<PetQuestsProps> = ({ pet, onUpdate }) => {
   const [selectedQuest, setSelectedQuest] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<Record<string, number>>({});
 
+  // Safe defaults for potentially undefined arrays
+  const activeQuests = pet?.activeQuests || [];
+  const questHistory = pet?.questHistory || [];
+
   // Update timer for active quests
   useEffect(() => {
-    if (!pet || pet.activeQuests.length === 0) return;
+    if (!pet || activeQuests.length === 0) return;
 
     const interval = setInterval(() => {
       const newTimes: Record<string, number> = {};
-      pet.activeQuests.forEach(quest => {
+      activeQuests.forEach(quest => {
         const remaining = getQuestTimeRemaining(quest);
         if (remaining !== null) {
           newTimes[quest.id] = remaining;
@@ -36,7 +40,7 @@ const PetQuests: React.FC<PetQuestsProps> = ({ pet, onUpdate }) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [pet?.activeQuests]);
+  }, [activeQuests]);
 
   const completeActiveQuest = (questId: string) => {
     // This would update the pet state, but since we're in a component,
@@ -65,17 +69,17 @@ const PetQuests: React.FC<PetQuestsProps> = ({ pet, onUpdate }) => {
         <div className="grid grid-cols-3 gap-4 text-sm">
           <div>
             <p className="text-gray-400">Active Quests</p>
-            <p className="text-2xl font-bold text-orange-400">{pet.activeQuests.length}</p>
+            <p className="text-2xl font-bold text-orange-400">{activeQuests.length}</p>
           </div>
           <div>
             <p className="text-gray-400">Completed Quests</p>
-            <p className="text-2xl font-bold text-green-400">{pet.questHistory.length}</p>
+            <p className="text-2xl font-bold text-green-400">{questHistory.length}</p>
           </div>
           <div>
             <p className="text-gray-400">Success Rate</p>
             <p className="text-2xl font-bold text-blue-400">
-              {pet.questHistory.length > 0
-                ? Math.round((pet.questHistory.filter(q => q.status === 'completed').length / pet.questHistory.length) * 100)
+              {questHistory.length > 0
+                ? Math.round((questHistory.filter(q => q.status === 'completed').length / questHistory.length) * 100)
                 : 0}%
             </p>
           </div>
@@ -83,13 +87,13 @@ const PetQuests: React.FC<PetQuestsProps> = ({ pet, onUpdate }) => {
       </div>
 
       {/* Active Quests */}
-      {pet.activeQuests.length > 0 && (
+      {activeQuests.length > 0 && (
         <div>
           <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
-            ⚔️ Active Quests ({pet.activeQuests.length})
+            ⚔️ Active Quests ({activeQuests.length})
           </h3>
           <div className="space-y-3">
-            {pet.activeQuests.map(quest => {
+            {activeQuests.map(quest => {
               const timeLeft = timeRemaining[quest.id] ?? getQuestTimeRemaining(quest) ?? 0;
               const formattedTime = formatQuestTime(timeLeft);
               const isComplete = timeLeft <= 0;

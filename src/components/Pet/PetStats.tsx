@@ -9,14 +9,23 @@ interface PetStatsProps {
 const PetStats: React.FC<PetStatsProps> = ({ pet }) => {
   if (!pet) return null;
 
-  const bondMilestone = getCurrentBondMilestone(pet.bondLevel);
+  // Safe defaults for potentially undefined properties
+  const hunger = pet.hunger ?? 50;
+  const happiness = pet.happiness ?? 50;
+  const health = pet.health ?? 100;
+  const energy = pet.energy ?? 50;
+  const cleanliness = pet.cleanliness ?? 50;
+  const bondLevel = pet.bondLevel ?? 0;
+  const totalInteractions = pet.totalInteractions ?? 0;
+
+  const bondMilestone = getCurrentBondMilestone(bondLevel);
   const stats = [
-    { label: '🍖 Hunger', value: pet.hunger, max: 100, color: 'bg-red-500', description: 'Lower is better' },
-    { label: '💛 Happiness', value: pet.happiness, max: 100, color: 'bg-yellow-400', description: 'Higher is better' },
-    { label: '❤️ Health', value: pet.health, max: 100, color: 'bg-green-500', description: 'Higher is better' },
-    { label: '⚡ Energy', value: pet.energy, max: 100, color: 'bg-blue-400', description: 'Higher is better' },
-    { label: '✨ Cleanliness', value: pet.cleanliness, max: 100, color: 'bg-cyan-400', description: 'Higher is better' },
-    { label: '💖 Bond Level', value: pet.bondLevel, max: 100, color: 'bg-pink-500', description: 'Higher is better' },
+    { label: '🍖 Hunger', value: hunger, max: 100, color: 'bg-red-500', description: 'Lower is better' },
+    { label: '💛 Happiness', value: happiness, max: 100, color: 'bg-yellow-400', description: 'Higher is better' },
+    { label: '❤️ Health', value: health, max: 100, color: 'bg-green-500', description: 'Higher is better' },
+    { label: '⚡ Energy', value: energy, max: 100, color: 'bg-blue-400', description: 'Higher is better' },
+    { label: '✨ Cleanliness', value: cleanliness, max: 100, color: 'bg-cyan-400', description: 'Higher is better' },
+    { label: '💖 Bond Level', value: bondLevel, max: 100, color: 'bg-pink-500', description: 'Higher is better' },
   ];
 
   return (
@@ -118,14 +127,14 @@ const PetStats: React.FC<PetStatsProps> = ({ pet }) => {
             <div className="w-full bg-gray-700 rounded-full h-2">
               <div
                 className="bg-pink-500 h-2 rounded-full transition-all"
-                style={{ width: `${pet.bondLevel}%` }}
+                style={{ width: `${bondLevel}%` }}
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm mt-4">
             <div className="bg-pink-900/30 rounded px-3 py-2">
               <p className="text-gray-400">Bond Level</p>
-              <p className="font-bold text-pink-300">{pet.bondLevel} / 100</p>
+              <p className="font-bold text-pink-300">{bondLevel} / 100</p>
             </div>
             <div className="bg-purple-900/30 rounded px-3 py-2">
               <p className="text-gray-400">Affinity Points</p>
@@ -141,7 +150,7 @@ const PetStats: React.FC<PetStatsProps> = ({ pet }) => {
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="bg-green-900/30 rounded px-3 py-2">
             <p className="text-gray-400">Total Interactions</p>
-            <p className="font-bold text-green-300">{pet.totalInteractions}</p>
+            <p className="font-bold text-green-300">{totalInteractions}</p>
           </div>
           <div className="bg-green-900/30 rounded px-3 py-2">
             <p className="text-gray-400">Times Fed</p>
