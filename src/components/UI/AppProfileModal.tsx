@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getAuth, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { getXp, getLevelFromXp } from '../../services/xp';
 import { getSelectedTitle, getTitles, unlockTitle, setSelectedTitle as setSelectedTitleService, getUnlockedTitles, ALL_TITLES } from '../../services/titles';
 import { getMedals } from '../../services/medals';
-import { subscribeToUserProfile } from '../../services/messaging';
 import { useToast } from '../../context/ToastContext';
 import { initializeUserProfile } from '../../services/auth';
 import { db } from '../../services/firebase';
@@ -129,10 +128,13 @@ const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
     const medalsList = getMedals();
     setMedals(medalsList);
 
-    // Subscribe to profile updates
+    // Subscribe to profile updates from Firebase
+    let unsubscribe: (() => void) | null = null;
     if (auth.currentUser) {
-      const unsubscribe = subscribeToUserProfile(auth.currentUser.uid, (profileData) => {
-        if (profileData) {
+      const profileDoc = doc(db, 'playerProfiles', auth.currentUser.uid);
+      unsubscribe = onSnapshot(profileDoc, (snapshot) => {
+        if (snapshot.exists()) {
+          const profileData = snapshot.data();
           setProfile({
             username: profileData.username || 'Player',
             hashtag: profileData.hashtag || '0000',
@@ -141,11 +143,20 @@ const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
             avatar: profileData.avatar || '👤',
             customAvatarUrl: profileData.customAvatarUrl,
           });
+          // Also update localStorage when Firebase updates
+          localStorage.setItem('adhd_profile', JSON.stringify({
+            username: profileData.username || 'Player',
+            hashtag: profileData.hashtag || '0000',
+            tasksCompleted: profileData.tasksCompleted || 0,
+            eventsCreated: profileData.eventsCreated || 0,
+            avatar: profileData.avatar || '👤',
+            customAvatarUrl: profileData.customAvatarUrl,
+          }));
         }
       });
       return () => {
         window.removeEventListener('xp:update', handleXpUpdate as EventListener);
-        unsubscribe();
+        if (unsubscribe) unsubscribe();
       };
     }
 
@@ -167,14 +178,11 @@ const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
       setProfile(newProfile);
       localStorage.setItem('adhd_profile', JSON.stringify(newProfile));
       
-      // Save to Firebase playerProfiles collection - only include defined fields
+      // Save to Firebase playerProfiles collection - only include fields users can edit
       const updateData: any = {
-        uid: auth.currentUser.uid,
         username: newProfile.username,
         hashtag: newProfile.hashtag,
         avatar: newProfile.avatar,
-        tasksCompleted: newProfile.tasksCompleted,
-        eventsCreated: newProfile.eventsCreated,
       };
       
       // Only include customAvatarUrl if it has a value
