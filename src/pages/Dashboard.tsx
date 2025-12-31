@@ -957,9 +957,33 @@ const Dashboard: React.FC = () => {
                 border: '1px solid rgba(147, 51, 234, 0.2)',
                 borderRadius: 8
             }}>
-                <h3 style={{margin: '0 0 16px 0', fontSize: '1rem', fontWeight: '600', color: '#d1d5db'}}>
-                    ✨ What's New
-                </h3>
+                <div style={{display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16}}>
+                    <h3 style={{margin: 0, fontSize: '1rem', fontWeight: '600', color: '#d1d5db'}}>
+                        ✨ What's New
+                    </h3>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '4px 10px',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        borderRadius: 4,
+                        fontSize: '0.75rem',
+                        fontWeight: '700',
+                        letterSpacing: '0.05em',
+                        color: '#ef4444'
+                    }}>
+                        <div style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: '#ef4444',
+                            animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                        }} />
+                        LIVE
+                    </div>
+                </div>
                 
                 {/* Two-column layout for Commits and Releases */}
                 <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
