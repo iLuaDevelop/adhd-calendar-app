@@ -355,6 +355,7 @@ export const getXpToNextLevel = (level: number): number => {
 // Save pet to localStorage (uses forward references to functions defined below)
 const savePet = (pet: Pet) => {
   // Save to legacy system
+  console.log('[savePet] Saving pet to localStorage:', pet.id);
   localStorage.setItem(PET_KEY, JSON.stringify(pet));
   
   // Also save to multi-pet system - always try to update the pet in the array
@@ -363,9 +364,11 @@ const savePet = (pet: Pet) => {
   const index = allPets.findIndex(p => p.id === pet.id);
   if (index >= 0) {
     allPets[index] = pet;
+    console.log('[savePet] Updated pet in array, saving:', allPets.length, 'total pets');
     localStorage.setItem(PETS_KEY, JSON.stringify(allPets));
     dispatchPetUpdate();
   } else {
+    console.log('[savePet] Pet not found in array');
   }
 };
 
@@ -454,7 +457,8 @@ export const getAllPets = (): Pet[] => {
     const pets = JSON.parse(petsStr);
     // Migrate each pet to ensure all required properties exist
     return Array.isArray(pets) ? pets.map(migratePetData) : [];
-  } catch {
+  } catch (e) {
+    console.error('[getAllPets] Error:', e);
     return [];
   }
 };

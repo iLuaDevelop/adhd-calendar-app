@@ -5,11 +5,17 @@
  */
 
 const admin = require('firebase-admin');
+const path = require('path');
+const fs = require('fs');
 
-// Initialize with default credentials (CLI auth)
+// Load credentials
+const credPath = path.join(__dirname, 'firebase-credentials.json');
+const serviceAccount = JSON.parse(fs.readFileSync(credPath, 'utf8'));
+
+// Initialize with service account credentials
 if (!admin.apps.length) {
   admin.initializeApp({
-    projectId: 'adhd-calendar-prod'
+    credential: admin.credential.cert(serviceAccount)
   });
 }
 

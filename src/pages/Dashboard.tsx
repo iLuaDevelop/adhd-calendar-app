@@ -298,24 +298,11 @@ const Dashboard: React.FC = () => {
                             // Fire event to notify UI to reload titles
                             window.dispatchEvent(new CustomEvent('titles:restored'));
                         }
-                        // Restore pets
-                        if (gameProgress?.pets && Array.isArray(gameProgress.pets)) {
-                            // Save all pets (default + shop pets) to adhd_pets
-                            localStorage.setItem('adhd_pets', JSON.stringify(gameProgress.pets));
-                            
-                            // Extract and set the default pet (usually the first one or with id starting with 'pet_')
-                            if (gameProgress.pets.length > 0) {
-                                // Find the first pet that looks like a default pet (created before any shop purchases)
-                                const firstPet = gameProgress.pets[0];
-                                localStorage.setItem('adhd_pet', JSON.stringify(firstPet));
-                            }
-                            
-                            if (gameProgress.currentPetId) {
-                                localStorage.setItem('adhd_current_pet_id', gameProgress.currentPetId);
-                            }
-                            // Fire event to notify Pet page to reload
-                            window.dispatchEvent(new CustomEvent('pets:restored'));
-                        }
+                        // NOTE: Pets are now managed by pet.ts service via localStorage
+                        // We DO NOT restore pets from gameProgress here because:
+                        // 1. gameProgress.pets may be empty/undefined in Firestore (esp. after DB reset)
+                        // 2. This would overwrite valid pet data that was previously saved
+                        // 3. pet.ts handles all pet persistence and syncing
                         // Restore tasks
                         if (gameProgress.tasks && Array.isArray(gameProgress.tasks)) {
                             localStorage.setItem('adhd_tasks', JSON.stringify(gameProgress.tasks));
@@ -349,8 +336,9 @@ const Dashboard: React.FC = () => {
                 localStorage.removeItem(QUESTS_KEY);
                 localStorage.removeItem('adhd_tasks'); // Clear tasks on logout
                 localStorage.removeItem('adhd_titles'); // Clear titles on logout
-                localStorage.removeItem('adhd_pets'); // Clear pets on logout
-                localStorage.removeItem('adhd_current_pet_id'); // Clear current pet ID on logout
+                // NOTE: Don't clear pets - they're local device data that should persist
+                // localStorage.removeItem('adhd_pets'); // Clear pets on logout
+                // localStorage.removeItem('adhd_current_pet_id'); // Clear current pet ID on logout
 
                 // Fire event to notify UI to clear titles
                 window.dispatchEvent(new CustomEvent('titles:cleared'));
@@ -615,8 +603,9 @@ const Dashboard: React.FC = () => {
             localStorage.removeItem(QUESTS_KEY);
             localStorage.removeItem('adhd_tasks'); // Clear tasks on logout
             localStorage.removeItem('adhd_titles'); // Clear titles on logout
-            localStorage.removeItem('adhd_pets'); // Clear pets on logout
-            localStorage.removeItem('adhd_current_pet_id'); // Clear current pet ID on logout
+            // NOTE: Don't clear pets - they're local device data that should persist
+            // localStorage.removeItem('adhd_pets'); // Clear pets on logout
+            // localStorage.removeItem('adhd_current_pet_id'); // Clear current pet ID on logout
             
             // Fire event to notify useCalendar to clear tasks
             window.dispatchEvent(new CustomEvent('tasks:cleared'));

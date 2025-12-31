@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../services/firebase';
 import { getXp, getLevelFromXp, grantXp, setXp, getXpToNextLevel, getTotalXpForCurrentLevel, getXpIntoCurrentLevel } from '../services/xp';
 import { getGems, addGems } from '../services/currency';
-import { getPet, getAllPets, getCurrentPetId, setCurrentPet, feedPet, updatePetStats, getPetEmoji } from '../services/pet';
+import { getPet, getAllPets, getCurrentPetId, setCurrentPet, feedPet, updatePetStats, getPetEmoji, createPet } from '../services/pet';
 import { getMedals } from '../services/medals';
 import { getSelectedTitle } from '../services/titles';
 import { getInventory, getCratesByTier, removeFromInventory } from '../services/inventory';
@@ -20,12 +22,13 @@ const Character: React.FC = () => {
   const location = useLocation();
   const auth = getAuth();
   const { showToast } = useToast();
+  
   const [profile, setProfile] = useState<any>({ username: 'Player', avatar: '👤', tasksCompleted: 0 });
   const [level, setLevel] = useState(getLevelFromXp(getXp()));
   const [xp, setXp] = useState(getXp());
   const [gems, setGems] = useState(getGems());
-  const [currentPetId, setCurrentPetId] = useState(getCurrentPetId());
-  const [pets, setPets] = useState(getAllPets());
+  const [currentPetId, setCurrentPetId] = useState<string | null>(null);
+  const [pets, setPets] = useState<Pet[]>([]);
   const [inventory, setInventory] = useState(getInventory());
   const [selectedTab, setSelectedTab] = useState<'overview' | 'pets' | 'inventory' | 'insights'>(() => {
     // Check if we were navigated from dashboard to open pets tab
@@ -52,11 +55,100 @@ const Character: React.FC = () => {
     }
   }, []);
 
+  // Load/reload pet data on mount to ensure fresh data
   useEffect(() => {
-    // Load profile
+    let allPets = getAllPets();
+    
+    // If user has no pets, create a default starter pet
+    if (allPets.length === 0) {
+      createPet('Butterfly');
+      allPets = getAllPets();
+    }
+    
+    const currentId = getCurrentPetId();
+    setPets(allPets);
+    setCurrentPetId(currentId);
+  }, []);
+
+  useEffect(() => {
+    // Load profile from localStorage as fallback
     const stored = localStorage.getItem('adhd_profile');
     if (stored) {
       setProfile(JSON.parse(stored));
+    }
+
+    // Subscribe to real-time profile updates from Firestore playerProfiles collection
+    if (auth.currentUser) {
+      const profileDoc = doc(db, 'playerProfiles', auth.currentUser.uid);
+      const unsubscribe = onSnapshot(profileDoc, (snapshot) => {
+        if (snapshot.exists()) {
+          const profileData = snapshot.data();
+          setProfile({
+            username: profileData.username || 'Player',
+            avatar: profileData.avatar || '👤',
+            customAvatarUrl: profileData.customAvatarUrl || '',
+            tasksCompleted: profileData.tasksCompleted || 0,
+          });
+          // Also update localStorage for consistency
+          localStorage.setItem('adhd_profile', JSON.stringify({
+            username: profileData.username || 'Player',
+            avatar: profileData.avatar || '👤',
+            customAvatarUrl: profileData.customAvatarUrl || '',
+            tasksCompleted: profileData.tasksCompleted || 0,
+          }));
+        }
+      });
+
+      // Load streak
+      const streakStored = localStorage.getItem('adhd_streak');
+      if (streakStored) {
+        setStreak(JSON.parse(streakStored));
+      }
+
+      // Load medals and title
+      setMedals(getMedals());
+      setSelectedTitle(getSelectedTitle());
+
+      // Load quests
+      const questsStr = localStorage.getItem('adhd_quests_progress');
+      if (questsStr) {
+        setQuests(JSON.parse(questsStr));
+      }
+
+      // Set up event listeners
+      const handleXpUpdate = () => {
+        const newXp = getXp();
+        setXp(newXp);
+        setLevel(getLevelFromXp(newXp));
+      };
+
+      const handleInventoryUpdate = () => {
+        setInventory(getInventory());
+      };
+
+      const handleCurrencyUpdate = () => {
+        setGems(getGems());
+      };
+
+      const handlePetUpdate = () => {
+        const updated = getAllPets();
+        const updatedId = getCurrentPetId();
+        setPets(updated);
+        setCurrentPetId(updatedId);
+      };
+
+      window.addEventListener('xp:update', handleXpUpdate as EventListener);
+      window.addEventListener('inventory:update', handleInventoryUpdate as EventListener);
+      window.addEventListener('currencyUpdated', handleCurrencyUpdate as EventListener);
+      window.addEventListener('pet:update', handlePetUpdate as EventListener);
+
+      return () => {
+        unsubscribe();
+        window.removeEventListener('xp:update', handleXpUpdate as EventListener);
+        window.removeEventListener('inventory:update', handleInventoryUpdate as EventListener);
+        window.removeEventListener('currencyUpdated', handleCurrencyUpdate as EventListener);
+        window.removeEventListener('pet:update', handlePetUpdate as EventListener);
+      };
     }
 
     // Load streak
@@ -91,8 +183,10 @@ const Character: React.FC = () => {
     };
 
     const handlePetUpdate = () => {
-      setPets(getAllPets());
-      setCurrentPetId(getCurrentPetId());
+      const updated = getAllPets();
+      const updatedId = getCurrentPetId();
+      setPets(updated);
+      setCurrentPetId(updatedId);
     };
 
     window.addEventListener('xp:update', handleXpUpdate as EventListener);
