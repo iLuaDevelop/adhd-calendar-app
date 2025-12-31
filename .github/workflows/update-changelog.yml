@@ -29,11 +29,11 @@ jobs:
           # Format: "emoji label: title - description"
           # Example: "✨ feat: Pet display improvements - Added level badges to compact views"
           
-          if [[ $COMMIT_MSG =~ ^([[:space:]]*[^[:space:]]+)[[:space:]]+([^:]+):[[:space:]]*([^-]+)-[[:space:]]*(.+)$ ]]; then
-            # Extract just the emoji (first group), skip the label
+          if [[ $COMMIT_MSG =~ ^([[:space:]]*[^[:space:]]+)[[:space:]]+([^:]+):[[:space:]]*(.+?)([[:space:]]*-[[:space:]]*(.+))?$ ]]; then
+            # Extract just the emoji (first group), skip the label completely
             EMOJI="${BASH_REMATCH[1]}"
             TITLE=$(echo "${BASH_REMATCH[3]}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-            DESC=$(echo "${BASH_REMATCH[4]}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            DESC=$(echo "${BASH_REMATCH[5]}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
           else
             # Fallback if message doesn't match pattern
             EMOJI="📝"

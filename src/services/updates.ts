@@ -26,14 +26,14 @@ export const subscribeToUpdates = (callback: (updates: Update[]) => void, type?:
       where('active', '==', true),
       where('type', '==', type),
       orderBy('timestamp', 'desc'),
-      limit(5)
+      limit(4)
     );
   } else {
     q = query(
       updatesRef,
       where('active', '==', true),
       orderBy('timestamp', 'desc'),
-      limit(5)
+      limit(4)
     );
   }
 
