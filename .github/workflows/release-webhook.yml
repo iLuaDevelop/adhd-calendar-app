@@ -1,0 +1,93 @@
+name: Auto-Post Release to What's New
+
+on:
+  release:
+    types: [published, released]
+
+jobs:
+  post-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Post Release to Firebase
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+        run: |
+          # Get release data
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          RELEASE_TITLE="${{ github.event.release.name }}"
+          RELEASE_DESC="${{ github.event.release.body }}"
+          
+          # If no title provided, use tag as title
+          if [ -z "$RELEASE_TITLE" ]; then
+            RELEASE_TITLE="$RELEASE_TAG"
+          fi
+          
+          # Truncate description to first 200 chars if too long
+          if [ ${#RELEASE_DESC} -gt 200 ]; then
+            RELEASE_DESC="${RELEASE_DESC:0:200}..."
+          fi
+          
+          echo "Release Title: $RELEASE_TITLE"
+          echo "Release Desc: $RELEASE_DESC"
+          
+          # Install firebase-admin locally in temp directory
+          mkdir -p /tmp/firebase-app
+          cd /tmp/firebase-app
+          npm init -y > /dev/null 2>&1
+          npm install firebase-admin > /dev/null 2>&1
+          
+          # Create Node script to add release
+          cat > add-release.js << 'EOF'
+          const admin = require('firebase-admin');
+          const serviceAccount = {
+            type: 'service_account',
+            project_id: process.env.FIREBASE_PROJECT_ID,
+            private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+            client_email: process.env.FIREBASE_CLIENT_EMAIL
+          };
+          
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+          });
+          
+          const db = admin.firestore();
+          const title = process.argv[2];
+          const desc = process.argv[3];
+          const tag = process.argv[4];
+          
+          console.log('DEBUG: Adding release to Firebase:');
+          console.log('  emoji: 🚀');
+          console.log('  title:', title);
+          console.log('  desc:', desc);
+          console.log('  tag:', tag);
+          
+          const releaseData = {
+            icon: '🚀',
+            title: title,
+            desc: desc || '',
+            active: true,
+            type: 'release',
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            releaseTag: tag
+          };
+          
+          console.log('DEBUG: Data object:', JSON.stringify(releaseData, null, 2));
+          
+          db.collection('updates').add(releaseData).then(() => {
+            console.log('✅ Release added to Firebase!');
+            process.exit(0);
+          }).catch(err => {
+            console.error('❌ Error:', err.message);
+            process.exit(1);
+          });
+          EOF
+          
+          # Add release to Firebase
+          node add-release.js "$RELEASE_TITLE" "$RELEASE_DESC" "$RELEASE_TAG"
