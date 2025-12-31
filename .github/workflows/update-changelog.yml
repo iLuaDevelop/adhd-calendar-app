@@ -29,14 +29,16 @@ jobs:
           # Format: "emoji label: title - description"
           # Example: "🔧 fix: Rewrite commit parsing - Extract emoji separately from label"
           
-          # Step 1: Extract the emoji (everything before the first space)
-          EMOJI=$(echo "$COMMIT_MSG" | grep -o '^[^ ]*')
+          # Extract emoji (first word before space)
+          EMOJI=$(echo "$COMMIT_MSG" | cut -d' ' -f1)
           
-          # Step 2: Extract title and description (remove emoji and label)
-          # Remove: emoji + space + label + colon + space
-          AFTER_LABEL=$(echo "$COMMIT_MSG" | sed 's/^[^ ]* [^:]*:[[:space:]]*//')
+          # Get everything after emoji
+          REST=$(echo "$COMMIT_MSG" | cut -d' ' -f2-)
           
-          # Step 3: Split on dash - title is before dash, description is after
+          # Remove label (everything before and including first colon+space)
+          AFTER_LABEL=$(echo "$REST" | sed 's/^[^:]*:[[:space:]]*//')
+          
+          # Split title and description on dash
           if [[ "$AFTER_LABEL" == *"-"* ]]; then
             TITLE=$(echo "$AFTER_LABEL" | cut -d'-' -f1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
             DESC=$(echo "$AFTER_LABEL" | cut -d'-' -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
