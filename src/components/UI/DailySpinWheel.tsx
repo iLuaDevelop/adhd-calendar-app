@@ -349,14 +349,17 @@ const DailySpinWheel: React.FC = () => {
             <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)', marginBottom: 24 }}>
               Your gems: <span style={{ fontWeight: 'bold', color: '#ec4899' }}>{currentGems}</span>
             </div>
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 12, flexDirection: 'column', width: '100%' }}>
               <Button
                 onClick={() => setShowPayModal(false)}
                 style={{
-                  flex: 1,
-                  background: 'rgba(255,255,255,0.2)',
-                  padding: '12px 16px',
-                  border: '1px solid rgba(255,255,255,0.4)',
+                  width: '100%',
+                  background: 'rgba(255,255,255,0.25)',
+                  padding: '12px 24px',
+                  border: '2px solid rgba(255,255,255,0.6)',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
                 }}
               >
                 Cancel
@@ -365,9 +368,14 @@ const DailySpinWheel: React.FC = () => {
                 onClick={() => executeSpin(true)}
                 disabled={currentGems < PAID_SPIN_COST}
                 style={{
-                  flex: 1,
-                  background: currentGems >= PAID_SPIN_COST ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'rgba(100,100,100,0.5)',
-                  padding: '12px 16px',
+                  width: '100%',
+                  background: currentGems >= PAID_SPIN_COST ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'rgba(100,100,100,0.6)',
+                  padding: '14px 24px',
+                  border: 'none',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  boxShadow: currentGems >= PAID_SPIN_COST ? '0 4px 15px rgba(245, 158, 11, 0.4)' : 'none',
                 }}
               >
                 Spin Now 💎
