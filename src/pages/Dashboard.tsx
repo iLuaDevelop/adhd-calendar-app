@@ -957,7 +957,7 @@ const Dashboard: React.FC = () => {
                 border: '1px solid rgba(147, 51, 234, 0.2)',
                 borderRadius: 8
             }}>
-                <div style={{display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16}}>
+                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 24}}>
                     <h3 style={{margin: 0, fontSize: '1rem', fontWeight: '600', color: '#d1d5db'}}>
                         ✨ What's New
                     </h3>
@@ -988,7 +988,12 @@ const Dashboard: React.FC = () => {
                 {/* Two-column layout for Commits and Releases */}
                 <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
                     {/* Commits Section */}
-                    <div>
+                    <div style={{
+                        padding: 16,
+                        background: 'rgba(31, 41, 55, 0.2)',
+                        border: '1px solid rgba(168, 85, 247, 0.15)',
+                        borderRadius: 8
+                    }}>
                         <h4 style={{margin: '0 0 12px 0', fontSize: '0.9rem', fontWeight: '600', color: '#a1a1a1'}}>
                             📝 Latest Commits
                         </h4>
@@ -999,9 +1004,10 @@ const Dashboard: React.FC = () => {
                                         display: 'flex',
                                         gap: 12,
                                         padding: 10,
-                                        background: 'rgba(31, 41, 55, 0.3)',
+                                        background: 'rgba(31, 41, 55, 0.4)',
                                         borderRadius: 6,
-                                        borderLeft: '3px solid rgba(168, 85, 247, 0.4)'
+                                        borderLeft: '3px solid rgba(168, 85, 247, 0.5)',
+                                        transition: 'all 0.2s ease'
                                     }}>
                                         <span style={{fontSize: '1.2rem', minWidth: '24px'}}>{item.icon}</span>
                                         <div style={{flex: 1, minWidth: 0}}>
@@ -1026,7 +1032,12 @@ const Dashboard: React.FC = () => {
                     </div>
 
                     {/* Releases Section */}
-                    <div>
+                    <div style={{
+                        padding: 16,
+                        background: 'rgba(31, 41, 55, 0.2)',
+                        border: '1px solid rgba(34, 197, 94, 0.15)',
+                        borderRadius: 8
+                    }}>
                         <h4 style={{margin: '0 0 12px 0', fontSize: '0.9rem', fontWeight: '600', color: '#a1a1a1'}}>
                             🚀 Latest Releases
                         </h4>
@@ -1037,9 +1048,10 @@ const Dashboard: React.FC = () => {
                                         display: 'flex',
                                         gap: 12,
                                         padding: 10,
-                                        background: 'rgba(31, 41, 55, 0.3)',
+                                        background: 'rgba(31, 41, 55, 0.4)',
                                         borderRadius: 6,
-                                        borderLeft: '3px solid rgba(34, 197, 94, 0.4)'
+                                        borderLeft: '3px solid rgba(34, 197, 94, 0.5)',
+                                        transition: 'all 0.2s ease'
                                     }}>
                                         <span style={{fontSize: '1.2rem', minWidth: '24px'}}>{item.icon}</span>
                                         <div style={{flex: 1, minWidth: 0}}>
