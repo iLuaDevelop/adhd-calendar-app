@@ -195,7 +195,7 @@ export const CasinoLeaderboard: React.FC<CasinoLeaderboardProps> = ({ entries })
             </div>
 
             {/* Player Info */}
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
               <div style={{
                 fontWeight: 'bold',
                 fontSize: '0.95rem',
