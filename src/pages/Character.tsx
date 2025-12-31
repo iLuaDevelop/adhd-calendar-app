@@ -26,6 +26,9 @@ const Character: React.FC = () => {
   const [selectedTitle, setSelectedTitle] = useState<any>(null);
   const [crateModalOpen, setCrateModalOpen] = useState(false);
   const [selectedCrate, setSelectedCrate] = useState<any>(null);
+  const [inventoryFilter, setInventoryFilter] = useState<'all' | 'bronze' | 'silver' | 'gold' | 'platinum'>('all');
+  const [inventorySortBy, setInventorySortBy] = useState<'tier' | 'quantity'>('tier');
+  const [hoveredControl, setHoveredControl] = useState<string | null>(null);
 
   useEffect(() => {
     // Load profile
@@ -127,7 +130,7 @@ const Character: React.FC = () => {
 
   return (
     <div className="container">
-      <div style={{ maxWidth: 1200, margin: '24px auto' }}>
+      <div style={{ maxWidth: 1200, margin: '-25px auto' }}>
         {/* Header */}
         <div style={{ marginBottom: 40 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 24 }}>
@@ -210,20 +213,41 @@ const Character: React.FC = () => {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 24, paddingBottom: 16, justifyContent: 'center' }}>
           {(['overview', 'pets', 'inventory'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setSelectedTab(tab)}
               style={{
-                padding: '8px 16px',
-                background: selectedTab === tab ? 'var(--accent)' : 'transparent',
+                padding: '10px 20px',
+                background: selectedTab === tab 
+                  ? 'var(--accent)' 
+                  : 'rgba(124, 92, 255, 0.08)',
                 color: selectedTab === tab ? '#fff' : 'var(--text)',
-                border: 'none',
-                borderRadius: 6,
+                border: selectedTab === tab 
+                  ? '1px solid var(--accent)' 
+                  : '1px solid rgba(124, 92, 255, 0.25)',
+                borderRadius: 20,
                 cursor: 'pointer',
-                fontWeight: selectedTab === tab ? 'bold' : 'normal',
+                fontWeight: selectedTab === tab ? '600' : '500',
                 textTransform: 'capitalize',
+                fontSize: '0.95rem',
+                transition: 'all 0.25s ease',
+                boxShadow: selectedTab === tab 
+                  ? '0 0 12px rgba(124, 92, 255, 0.3)' 
+                  : 'none',
+              }}
+              onMouseEnter={(e) => {
+                if (selectedTab !== tab) {
+                  e.currentTarget.style.background = 'rgba(124, 92, 255, 0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(124, 92, 255, 0.4)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (selectedTab !== tab) {
+                  e.currentTarget.style.background = 'rgba(124, 92, 255, 0.08)';
+                  e.currentTarget.style.borderColor = 'rgba(124, 92, 255, 0.25)';
+                }
               }}
             >
               {tab === 'overview' && '📊 Overview'}
@@ -267,7 +291,7 @@ const Character: React.FC = () => {
             {currentPet && (
               <div className="panel" style={{ padding: 24, textAlign: 'center' }}>
                 <h3 style={{ margin: '0 0 16px 0' }}>🐾 Your Companion</h3>
-                <div style={{ fontSize: '4rem', marginBottom: 16 }}>{getPetEmoji(currentPet.name)}</div>
+                <div style={{ fontSize: '4rem', marginBottom: 16 }}>{getPetEmoji(currentPet.stage, currentPet.color, currentPet.emoji)}</div>
                 <div style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: 8 }}>{currentPet.name}</div>
                 <div style={{ color: 'var(--muted)', marginBottom: 16 }}>Level {Math.floor((currentPet.xp || 0) / 100) || 1}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.9rem', marginBottom: 16 }}>
@@ -396,7 +420,7 @@ const Character: React.FC = () => {
                   }}
                   onClick={() => handleSwitchPet(pet.id)}
                 >
-                  <div style={{ fontSize: '3rem', marginBottom: 12 }}>{getPetEmoji(pet.name)}</div>
+                  <div style={{ fontSize: '3rem', marginBottom: 12 }}>{getPetEmoji(pet.stage, pet.color, pet.emoji)}</div>
                   <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: 4 }}>{pet.name}</div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 12 }}>Level {Math.floor((pet.xp || 0) / 100) || 1}</div>
                   {currentPetId === pet.id && (
@@ -409,17 +433,158 @@ const Character: React.FC = () => {
         )}
 
         {selectedTab === 'inventory' && (
-          <div>
-            <h2 style={{ marginBottom: 24 }}>🎒 Inventory</h2>
+          <div className="panel" style={{ padding: 24 }}>
+            <h2 style={{ marginTop: 0, marginBottom: 20, textAlign: 'center', fontSize: '1.5rem', fontWeight: '600', paddingBottom: 16, borderBottom: '2px solid var(--accent)' }}>Inventory</h2>
+            
+            {/* Inventory Controls */}
+            <div style={{ 
+              marginBottom: 24, 
+              padding: 16, 
+              background: 'rgba(124, 92, 255, 0.06)', 
+              borderRadius: 12, 
+              border: '1px solid rgba(124, 92, 255, 0.15)',
+              display: 'flex', 
+              gap: 16, 
+              flexWrap: 'wrap', 
+              justifyContent: 'center',
+              alignItems: 'center',
+              position: 'relative'
+            }}>
+              {/* Filter Tabs */}
+              <div style={{ display: 'flex', gap: 6, position: 'relative' }}>
+                {(['all', 'bronze', 'silver', 'gold', 'platinum'] as const).map(filter => {
+                  const tooltipLabels: Record<string, string> = {
+                    all: 'Show All',
+                    bronze: 'Bronze',
+                    silver: 'Silver',
+                    gold: 'Gold',
+                    platinum: 'Platinum',
+                  };
+                  return (
+                    <div key={filter} style={{ position: 'relative' }}>
+                      <button
+                        onClick={() => setInventoryFilter(filter)}
+                        onMouseEnter={() => setHoveredControl(`filter-${filter}`)}
+                        onMouseLeave={() => setHoveredControl(null)}
+                        style={{
+                          padding: '5px 12px',
+                          fontSize: '0.8rem',
+                          background: inventoryFilter === filter 
+                            ? filter === 'all' ? 'var(--accent)' : (filter === 'bronze' ? '#b45309' : filter === 'silver' ? '#a1a1a1' : filter === 'gold' ? '#eab308' : '#60a5fa')
+                            : 'rgba(100, 100, 100, 0.1)',
+                          color: inventoryFilter === filter ? '#fff' : 'var(--text)',
+                          border: 'none',
+                          borderRadius: 14,
+                          cursor: 'pointer',
+                          fontWeight: inventoryFilter === filter ? '600' : '500',
+                          transition: 'all 0.2s ease',
+                          textTransform: 'capitalize',
+                        }}
+                      >
+                        {filter === 'all' && '📦'}
+                        {filter === 'bronze' && '🟤'}
+                        {filter === 'silver' && '⚪'}
+                        {filter === 'gold' && '🟨'}
+                        {filter === 'platinum' && '🔵'}
+                      </button>
+                      {hoveredControl === `filter-${filter}` && (
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '-32px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          background: 'rgba(0, 0, 0, 0.85)',
+                          color: '#7c5cff',
+                          padding: '6px 12px',
+                          borderRadius: 6,
+                          fontSize: '0.75rem',
+                          whiteSpace: 'nowrap',
+                          fontWeight: '600',
+                          zIndex: 1000,
+                          border: '1px solid rgba(124, 92, 255, 0.4)',
+                          pointerEvents: 'none',
+                        }}>
+                          {tooltipLabels[filter]}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Divider */}
+              <div style={{ width: '1px', height: '24px', background: 'rgba(124, 92, 255, 0.2)' }} />
+
+              {/* Sort Controls */}
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', position: 'relative' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--muted)', fontWeight: '500' }}>Sort:</span>
+                {(['tier', 'quantity'] as const).map(sort => {
+                  const tooltipLabels: Record<string, string> = {
+                    tier: 'Sort by Tier',
+                    quantity: 'Sort by Quantity',
+                  };
+                  return (
+                    <div key={sort} style={{ position: 'relative' }}>
+                      <button
+                        onClick={() => setInventorySortBy(sort)}
+                        onMouseEnter={() => setHoveredControl(`sort-${sort}`)}
+                        onMouseLeave={() => setHoveredControl(null)}
+                        style={{
+                          padding: '5px 11px',
+                          fontSize: '0.8rem',
+                          background: inventorySortBy === sort 
+                            ? 'rgba(99, 102, 241, 0.4)' 
+                            : 'rgba(100, 100, 100, 0.1)',
+                          color: 'var(--text)',
+                          border: inventorySortBy === sort 
+                            ? '1px solid rgba(99, 102, 241, 0.4)' 
+                            : 'none',
+                          borderRadius: 10,
+                          cursor: 'pointer',
+                          fontWeight: inventorySortBy === sort ? '600' : '500',
+                          transition: 'all 0.2s ease',
+                          textTransform: 'capitalize',
+                        }}
+                      >
+                        {sort === 'tier' && '⭐'}
+                        {sort === 'quantity' && '📊'}
+                      </button>
+                      {hoveredControl === `sort-${sort}` && (
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '-32px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          background: 'rgba(0, 0, 0, 0.85)',
+                          color: '#7c5cff',
+                          padding: '6px 12px',
+                          borderRadius: 6,
+                          fontSize: '0.75rem',
+                          whiteSpace: 'nowrap',
+                          fontWeight: '600',
+                          zIndex: 1000,
+                          border: '1px solid rgba(124, 92, 255, 0.4)',
+                          pointerEvents: 'none',
+                        }}>
+                          {tooltipLabels[sort]}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
             
             {totalCrates === 0 ? (
-              <div className="panel" style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
+              <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
                 <div style={{ fontSize: '2rem', marginBottom: 12 }}>📦</div>
                 <div>No crates yet! Complete tasks or purchase from the Store to get started.</div>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                {Object.entries(cratesByTier).map(([tier, crates]) => {
+                {Object.entries(cratesByTier)
+                  .filter(([tier]) => inventoryFilter === 'all' || inventoryFilter === tier)
+                  .map(([tier, crates]) => {
                   const totalInTier = crates.reduce((sum, c) => sum + c.quantity, 0);
                   if (totalInTier === 0) return null;
 
@@ -429,6 +594,14 @@ const Character: React.FC = () => {
                     gold: '#eab308',
                     platinum: '#60a5fa',
                   };
+
+                  // Sort crates based on selected sort option
+                  const sortedCrates = [...crates].sort((a, b) => {
+                    if (inventorySortBy === 'quantity') {
+                      return b.quantity - a.quantity;
+                    }
+                    return 0; // tier order is already correct
+                  });
 
                   return (
                     <div key={tier}>
@@ -447,7 +620,7 @@ const Character: React.FC = () => {
                         {tier} Crates ({totalInTier})
                       </h3>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
-                        {crates.map(crate => (
+                        {sortedCrates.map(crate => (
                           <div
                             key={crate.id}
                             className="panel"

@@ -258,7 +258,7 @@ const Quests: React.FC = () => {
 
   return (
     <div className="container">
-      <div style={{ maxWidth: 900, margin: '24px auto' }}>
+      <div style={{ maxWidth: 900, margin: '-40px auto', paddingBottom: 40 }}>
         <div style={{ marginBottom: 32 }}>
           <h1 style={{ fontSize: '2.5rem', marginBottom: 8 }}>Quests</h1>
           <p style={{ color: 'var(--muted)', marginBottom: 0 }}>

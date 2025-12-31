@@ -34,7 +34,7 @@ const ProfileHeaderCardWrapper: React.FC<{ currentAuthUser: any }> = ({ currentA
   const location = useLocation();
   
   // Hide profile card on Character page since full profile is already displayed
-  if (location.pathname === '#/character') {
+  if (location.pathname === '/character') {
     return null;
   }
   
@@ -202,6 +202,7 @@ const App: React.FC = () => {
             <Route path="/day" component={DayView} />
             <Route path="/week" component={WeekView} />
             <Route path="/month" component={MonthView} />
+            <Route path="/games" component={MiniGames} />
             <Route path="/store" component={Store} />
             <Route path="/leaderboards" component={Leaderboards} />
             <Route path="/quests" component={Quests} />
