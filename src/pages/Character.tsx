@@ -387,26 +387,34 @@ const Character: React.FC = () => {
 
             {/* Pet Details Section with Nested Tabs */}
             {currentPet && (
-              <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div className="panel" style={{ padding: 24, width: '100%', maxWidth: 900 }}>
-                  {/* Nested Pet Details Tab Navigation */}
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 24, borderBottom: '2px solid var(--border)', paddingBottom: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
-                    {(['overview', 'abilities', 'quests', 'stats', 'evolution'] as const).map(tab => (
+              <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                <div className="panel" style={{ padding: 0, width: '100%', maxWidth: 900, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                  {/* Nested Pet Details Tab Navigation - Integrated into panel */}
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: 0, 
+                    borderBottom: '2px solid var(--border)', 
+                    flexWrap: 'wrap', 
+                    justifyContent: 'center',
+                    background: 'rgba(124, 92, 255, 0.05)',
+                    padding: '16px 24px',
+                  }}>
+                    {(['overview', 'abilities', 'quests', 'stats', 'evolution'] as const).map((tab, idx) => (
                       <button
                         key={tab}
                         onClick={() => setPetDetailsTab(tab)}
                         style={{
-                          padding: '8px 16px',
-                          background: petDetailsTab === tab 
-                            ? 'var(--accent)' 
-                            : 'rgba(124, 92, 255, 0.08)',
-                          color: petDetailsTab === tab ? '#fff' : 'var(--text)',
+                          padding: '10px 20px',
+                          background: 'transparent',
+                          color: petDetailsTab === tab ? 'var(--accent)' : 'var(--text-secondary)',
                           border: 'none',
-                          borderRadius: 8,
+                          borderBottom: petDetailsTab === tab ? '3px solid var(--accent)' : '3px solid transparent',
                           cursor: 'pointer',
-                          fontWeight: petDetailsTab === tab ? '600' : '500',
-                          fontSize: '0.9rem',
+                          fontWeight: petDetailsTab === tab ? '700' : '500',
+                          fontSize: '0.95rem',
                           transition: 'all 0.2s ease',
+                          marginBottom: '-16px',
+                          paddingBottom: '16px',
                         }}
                       >
                         {tab === 'overview' && '📊 Overview'}
@@ -419,6 +427,7 @@ const Character: React.FC = () => {
                   </div>
 
                   {/* Tab Content */}
+                  <div style={{ padding: 24 }}>
                   {petDetailsTab === 'overview' && (
                     <div style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}>
                       <PetOverview 
@@ -472,6 +481,7 @@ const Character: React.FC = () => {
                       />
                     </div>
                   )}
+                  </div>
                 </div>
               </div>
             )}
