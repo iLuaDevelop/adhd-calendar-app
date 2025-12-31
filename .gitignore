@@ -6,4 +6,4 @@ build/
 *.log
 .env.local
 customSign.js
-preload.js
+preload.jsfirebase-credentials.json

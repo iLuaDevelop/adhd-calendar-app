@@ -316,7 +316,7 @@ export const searchUsers = async (username: string, hashtag: string): Promise<an
  */
 export const getUserProfile = async (uid: string) => {
   try {
-    const userDoc = await getDoc(doc(db, 'users', uid));
+    const userDoc = await getDoc(doc(db, 'playerProfiles', uid));
     if (userDoc.exists()) {
       return { uid: userDoc.id, ...userDoc.data() };
     }
@@ -533,7 +533,7 @@ export const subscribeToUserProfile = (
   callback: (profile: any) => void
 ) => {
   try {
-    const userDoc = doc(db, 'users', userUid);
+    const userDoc = doc(db, 'playerProfiles', userUid);
     const unsubscribe = onSnapshot(userDoc, (snapshot) => {
       if (snapshot.exists()) {
         const fullData = snapshot.data();
