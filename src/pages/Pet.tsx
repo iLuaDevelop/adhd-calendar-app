@@ -337,8 +337,8 @@ const PetPage: React.FC = () => {
           </div>
         )}
 
-        {/* Pet Display & Mood */}
-        <div className="panel" style={{ padding: 40, textAlign: 'center', marginBottom: 24, background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(90, 208, 168, 0.1) 100%)' }}>
+        {/* OLD PET DISPLAY - HIDDEN, replaced by new tab system below */}
+        <div style={{ display: 'none' }}>
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginBottom: 20 }}>
             <div style={{ fontSize: '5rem', animation: 'pulse 2s infinite' }}>
               {getPetEmoji(pet.stage, pet.color || 'default', pet.emoji)}
@@ -503,6 +503,8 @@ const PetPage: React.FC = () => {
             </div>
           </button>
         </div>
+        </div>
+        {/* END OLD PET DISPLAY */}
 
         {/* Tab Navigation */}
         <div style={{

@@ -8,6 +8,7 @@ import { getSelectedTitle } from '../services/titles';
 import { getInventory, getCratesByTier, removeFromInventory } from '../services/inventory';
 import Button from '../components/UI/Button';
 import { useToast } from '../context/ToastContext';
+import PetOverview from '../components/Pet/PetOverview';
 import InventoryCrateModal from '../components/InventoryCrateModal/InventoryCrateModal';
 
 const Character: React.FC = () => {
@@ -295,85 +296,21 @@ const Character: React.FC = () => {
               </div>
             </div>
 
-            {/* Current Pet Preview */}
+            {/* Current Pet Preview - NEW SYSTEM */}
             {currentPet && (
-              <div className="panel" style={{ padding: 24, textAlign: 'center' }}>
+              <div className="panel" style={{ padding: 24 }}>
                 <h3 style={{ margin: '0 0 16px 0' }}>🐾 Your Companion</h3>
-                <div style={{ fontSize: '4rem', marginBottom: 16 }}>{getPetEmoji(currentPet.stage, currentPet.color, currentPet.emoji)}</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: 8 }}>{currentPet.name}</div>
-                <div style={{ color: 'var(--muted)', marginBottom: 16 }}>Level {Math.floor((currentPet.xp || 0) / 100) || 1}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.9rem', marginBottom: 16 }}>
-                  <div>Hunger: {currentPet.hunger || 0}%</div>
-                  <div>Happiness: {currentPet.happiness || 0}%</div>
-                  <div>Health: {currentPet.health || 0}%</div>
-                </div>
-
-                {/* Pet Care Buttons */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      const updatedPet = feedPet(currentPet.id);
-                      if (updatedPet) {
-                        setPets(getAllPets());
-                        setCurrentPetId(updatedPet.id);
-                        showToast(`${currentPet.name} is happily eating! 😋`, 'success');
-                      }
-                    }}
-                    style={{ fontSize: '0.85rem' }}
-                  >
-                    🍖 Feed
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      const updatedPet = updatePetStats(currentPet.id, {
-                        happiness: Math.min((currentPet.happiness || 0) + 20, 100),
-                        hunger: Math.min((currentPet.hunger || 0) + 10, 100),
-                        xp: (currentPet.xp || 0) + 10,
-                      });
-                      setPets(getAllPets());
-                      setCurrentPetId(currentPetId);
-                      showToast(`${currentPet.name} had fun playing! 🎾`, 'success');
-                    }}
-                    style={{ fontSize: '0.85rem' }}
-                  >
-                    🎾 Play
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      const updatedPet = updatePetStats(currentPet.id, {
-                        health: Math.min((currentPet.health || 0) + 25, 100),
-                        hunger: Math.max((currentPet.hunger || 0) - 5, 0),
-                      });
-                      setPets(getAllPets());
-                      setCurrentPetId(currentPetId);
-                      showToast(`${currentPet.name} feels better! 💊`, 'success');
-                    }}
-                    style={{ fontSize: '0.85rem' }}
-                  >
-                    💊 Heal
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      const updatedPet = updatePetStats(currentPet.id, {
-                        happiness: Math.min((currentPet.happiness || 0) + 10, 100),
-                        xp: (currentPet.xp || 0) + 5,
-                      });
-                      setPets(getAllPets());
-                      setCurrentPetId(currentPetId);
-                      showToast(`${currentPet.name} is so loved! 💕`, 'success');
-                    }}
-                    style={{ fontSize: '0.85rem' }}
-                  >
-                    💕 Pet
-                  </Button>
-                </div>
-
+                <PetOverview 
+                  pet={currentPet} 
+                  onUpdate={() => {
+                    setPets(getAllPets());
+                    setCurrentPetId(getCurrentPetId());
+                  }} 
+                />
+                
+                {/* Pet Navigation */}
                 {pets.length > 1 && (
-                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 16 }}>
                     <Button 
                       variant="ghost"
                       onClick={() => {
