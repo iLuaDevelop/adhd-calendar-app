@@ -91,8 +91,8 @@ jobs:
           const desc = process.argv[3];
           const hash = process.argv[4];
           
-          // Random emojis for commits
-          const emojis = ['🔧', '✨', '🎯', '🚀', '🐛', '📝', '⚡', '🎨', '💡', '🔨'];
+          // Random emoji - either cog or pencil
+          const emojis = ['🔧', '✏️'];
           const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
           
           console.log('DEBUG: Adding to Firebase:');
