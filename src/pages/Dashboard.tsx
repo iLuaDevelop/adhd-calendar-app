@@ -9,6 +9,7 @@ import TaskCard from '../components/Task/TaskCard';
 import Calendar from '../components/Calendar/Calendar';
 import Button from '../components/UI/Button';
 import QuickAdd from '../components/Task/QuickAdd';
+import PetQuickView from '../components/Pet/PetQuickView';
 import { grantXp, getXp, setXp, resetXp } from '../services/xp';
 import { getGems, setGems, addGems } from '../services/currency';
 import { getMedals } from '../services/medals';
@@ -906,97 +907,20 @@ const Dashboard: React.FC = () => {
                     <Calendar view={view} />
                 </main>
 
-                {/* Pet Widget */}
+                {/* Pet Widget - Compact Quick View */}
                 {pet && (
                     <aside className="panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 16 }}>
-                        <h3 style={{ margin: 0, marginBottom: 8 }}>{t('dashboard.yourPet')}</h3>
-                        <div style={{ fontSize: '3rem' }}>{getPetEmoji(pet.stage, pet.color, pet.emoji)}</div>
-                        <div style={{ textAlign: 'center', fontSize: '0.85rem' }}>
-                            <div style={{ fontWeight: 'bold', marginBottom: 2 }}>{pet.name}</div>
-                            <div style={{ color: 'var(--muted)', fontSize: '0.8rem', marginBottom: 8 }}>
-                                {t('dashboard.level')} {pet.level} {pet.stage.charAt(0).toUpperCase() + pet.stage.slice(1)}
-                            </div>
-                        </div>
-                        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            {/* Hunger */}
-                            <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pet.hunger')}</div>
-                            <div style={{ height: 6, background: 'var(--border)', borderRadius: 3 }}>
-                                <div style={{
-                                    height: '100%',
-                                    width: `${Math.max(0, 100 - pet.hunger)}%`,
-                                    background: pet.hunger > 70 ? '#ef4444' : '#22c55e',
-                                    borderRadius: 3,
-                                }} />
-                            </div>
-                        </div>
-                            <div style={{ width: '100%', marginBottom: 6 }}>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginBottom: 12, textAlign: 'center' }}>{t('dashboard.switchPet')}</div>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))', gap: 4 }}>
-                                    {ownedPets.map(p => (
-                                        <button
-                                            key={p.id}
-                                            onClick={() => setCurrentPet(p.id)}
-                                            style={{
-                                                padding: '6px 4px',
-                                                borderRadius: 4,
-                                                border: currentPetId === p.id ? '2px solid var(--accent)' : '1px solid var(--border)',
-                                                background: currentPetId === p.id ? 'rgba(167, 139, 250, 0.2)' : 'transparent',
-                                                cursor: 'pointer',
-                                                fontSize: '0.75rem',
-                                                color: 'var(--text)',
-                                                fontWeight: currentPetId === p.id ? 'bold' : 'normal',
-                                                transition: 'all 0.2s',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}
-                                            title={p.name}
-                                        >
-                                            {p.name}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                            <button
-                                className="btn primary"
-                                onClick={() => {
-                                    const updated = feedPet('gems');
-                                    if (updated) {
-                                        setPet(updated);
-                                        setGemsState(getGems());
-                                    }
-                                }}
-                                disabled={currentGems < 5}
-                                style={{ fontSize: '0.7rem', padding: '6px', opacity: currentGems < 5 ? 0.5 : 1, cursor: currentGems < 5 ? 'not-allowed' : 'pointer', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            >
-                                Feed with gems (5)
-                            </button>
-                            <button
-                                className="btn primary"
-                                onClick={() => {
-                                    const updated = feedPet('xp');
-                                    if (updated) {
-                                        setPet(updated);
-                                        setCurrentXp(getXp());
-                                    }
-                                }}
-                                disabled={currentXp < 30}
-                                style={{ fontSize: '0.7rem', padding: '6px', opacity: currentXp < 30 ? 0.5 : 1, cursor: currentXp < 30 ? 'not-allowed' : 'pointer', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            >
-                                Feed with XP (30)
-                            </button>
-                        </div>
-                        <button
-                            className="btn primary"
-                            onClick={() => history.push('/pet')}
-                            style={{ width: '100%', fontSize: '0.85rem', padding: '8px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                            Care for Pet →
-                        </button>
+                        <PetQuickView 
+                            pet={pet} 
+                            allPets={ownedPets}
+                            currentPetId={currentPetId}
+                            onViewDetails={() => history.push('/pet')}
+                            onPetSwitch={(petId) => {
+                                setCurrentPet(petId);
+                                const updated = getPet();
+                                if (updated) setPet(updated);
+                            }}
+                        />
                     </aside>
                 )}
             </div>
