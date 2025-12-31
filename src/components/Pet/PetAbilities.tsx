@@ -13,9 +13,10 @@ const PetAbilities: React.FC<PetAbilitiesProps> = ({ pet, onUpdate }) => {
 
   if (!pet) return null;
 
+  const petUnlockedAbilities = pet.unlockedAbilities || [];
   const availableAbilities = getAvailableAbilities(pet.level);
-  const unlockedAbilities = availableAbilities.filter(a => pet.unlockedAbilities.includes(a.id));
-  const lockableAbilities = availableAbilities.filter(a => !pet.unlockedAbilities.includes(a.id));
+  const unlockedAbilities = availableAbilities.filter(a => petUnlockedAbilities.includes(a.id));
+  const lockableAbilities = availableAbilities.filter(a => !petUnlockedAbilities.includes(a.id));
 
   const handleUnlockAbility = (abilityId: string) => {
     const updated = unlockAbility(abilityId);

@@ -423,10 +423,30 @@ export const PET_SHOP: PetSlot[] = [
 ];
 
 // Get all owned pets
+// Migrate pet data to ensure all required fields exist
+const migratePetData = (pet: any): Pet => {
+  return {
+    ...pet,
+    unlockedAbilities: pet.unlockedAbilities || [],
+    activeQuests: pet.activeQuests || [],
+    questHistory: pet.questHistory || [],
+    totalInteractions: pet.totalInteractions || 0,
+    bondLevel: pet.bondLevel || 0,
+    affinity: pet.affinity || 0,
+    energy: pet.energy || 50,
+    cleanliness: pet.cleanliness || 50,
+    emoji: pet.emoji || '🐔',
+    mood: pet.mood || 'happy'
+  };
+};
+
 export const getAllPets = (): Pet[] => {
   try {
     const petsStr = localStorage.getItem(PETS_KEY);
-    return petsStr ? JSON.parse(petsStr) : [];
+    if (!petsStr) return [];
+    const pets = JSON.parse(petsStr);
+    // Migrate each pet to ensure all required properties exist
+    return Array.isArray(pets) ? pets.map(migratePetData) : [];
   } catch {
     return [];
   }
