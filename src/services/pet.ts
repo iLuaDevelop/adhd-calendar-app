@@ -9,6 +9,41 @@ const CURRENT_PET_KEY = 'adhd_current_pet_id'; // Track which pet is active
 export type PetColor = 'default' | 'golden' | 'cosmic' | 'forest' | 'sunset' | 'ocean' | 'rose';
 export type PetSkin = 'default' | 'fluffy' | 'shiny' | 'mystical';
 
+export interface PetEvolution {
+  level: number;
+  stage: 'egg' | 'baby' | 'teen' | 'adult' | 'legendary' | 'mythic';
+  emoji: string;
+  bonusStats: { hunger: number; happiness: number; health: number };
+}
+
+export interface PetAbility {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  effect: string; // e.g., "xp-boost", "casino-luck", "task-speed"
+  bonus: number; // Percentage or flat bonus (e.g., 10 for 10% XP boost)
+  levelRequirement: number;
+  evolutionRequirement?: 'baby' | 'teen' | 'adult' | 'legendary' | 'mythic';
+}
+
+export interface PetQuest {
+  id: string;
+  name: string;
+  description: string;
+  difficulty: 'easy' | 'medium' | 'hard' | 'extreme';
+  duration: number; // Duration in milliseconds
+  rewards: {
+    gems: number;
+    xp: number;
+    petXp: number;
+  };
+  riskFactor: number; // 0-1 (higher = more risk of failure)
+  startTime?: number;
+  completedAt?: number;
+  status: 'available' | 'active' | 'completed' | 'failed';
+}
+
 export interface Pet {
   id: string;
   name: string;
@@ -17,16 +52,26 @@ export interface Pet {
   hunger: number; // 0-100 (0 = full, 100 = starving)
   happiness: number; // 0-100
   health: number; // 0-100
+  energy: number; // 0-100 (new)
+  cleanliness: number; // 0-100 (new)
   timesFeeding: number;
   totalXpSpent: number; // Track XP spent on feeding
   lastFedAt: number;
+  lastPlayedAt?: number; // For energy recovery
   createdAt: number;
-  stage: 'egg' | 'baby' | 'teen' | 'adult' | 'legendary';
+  stage: 'egg' | 'baby' | 'teen' | 'adult' | 'legendary' | 'mythic';
   color: PetColor;
   skin: PetSkin;
   favoriteFood?: string; // Pet's favorite food type
-  mood: 'happy' | 'content' | 'neutral' | 'sad' | 'excited';
+  mood: 'happy' | 'content' | 'neutral' | 'sad' | 'excited' | 'sleepy' | 'playful';
   emoji?: string; // Store pet's emoji (from shop)
+  bondLevel: number; // 0-100 (new)
+  affinity: number; // Points towards bonding
+  unlockedAbilities: string[]; // Array of ability IDs (new)
+  activeQuests: PetQuest[]; // Currently active quests (new)
+  questHistory: PetQuest[]; // Completed quests (new)
+  totalInteractions: number; // Track total play/feed/heal interactions (new)
+  evolutionPath?: PetEvolution[]; // Custom evolution path for future
 }
 
 // XP per level threshold
@@ -67,15 +112,24 @@ export const createPet = (name: string = 'My Pet'): Pet => {
     hunger: 30,
     happiness: 80,
     health: 100,
+    energy: 80,
+    cleanliness: 80,
     timesFeeding: 0,
     totalXpSpent: 0,
     lastFedAt: Date.now(),
+    lastPlayedAt: Date.now(),
     createdAt: Date.now(),
     stage: 'egg',
     color: 'default',
     skin: 'default',
     favoriteFood: 'treats',
     mood: 'happy',
+    bondLevel: 0,
+    affinity: 0,
+    unlockedAbilities: [],
+    activeQuests: [],
+    questHistory: [],
+    totalInteractions: 0,
   };
   localStorage.setItem(PET_KEY, JSON.stringify(pet));
   
@@ -171,6 +225,7 @@ export const updatePetStats = (): Pet | null => {
 
   const now = Date.now();
   const timeSinceLastFed = (now - pet.lastFedAt) / 1000 / 60; // minutes
+  const timeSinceLastPlayed = pet.lastPlayedAt ? (now - pet.lastPlayedAt) / 1000 / 60 : 0; // minutes
 
   // Hunger increases over time (~1 hunger per minute, capped at 10 per update)
   if (timeSinceLastFed > 1) {
@@ -179,9 +234,23 @@ export const updatePetStats = (): Pet | null => {
     pet.happiness = Math.max(0, pet.happiness - 1); // Slow happiness decay
   }
 
+  // Energy recovers slowly over time (~1% per minute)
+  if (timeSinceLastPlayed > 1) {
+    const energyRecovery = Math.min(10, Math.floor(timeSinceLastPlayed / 10));
+    pet.energy = Math.min(100, pet.energy + energyRecovery);
+  }
+
+  // Cleanliness decreases over time
+  pet.cleanliness = Math.max(0, pet.cleanliness - 1);
+
   // Health decreases if too hungry
   if (pet.hunger > 80) {
     pet.health = Math.max(0, pet.health - 2);
+  }
+
+  // Health decreases if too dirty
+  if (pet.cleanliness < 20) {
+    pet.health = Math.max(0, pet.health - 1);
   }
 
   // If health is 0, reset to egg stage as a penalty
@@ -197,12 +266,13 @@ export const updatePetStats = (): Pet | null => {
 };
 
 // Get pet stage based on level
-export const getStageFromLevel = (level: number): 'egg' | 'baby' | 'teen' | 'adult' | 'legendary' => {
+export const getStageFromLevel = (level: number): 'egg' | 'baby' | 'teen' | 'adult' | 'legendary' | 'mythic' => {
   if (level === 1) return 'egg';
   if (level <= 2) return 'baby';
   if (level <= 3) return 'teen';
   if (level <= 4) return 'adult';
-  return 'legendary';
+  if (level <= 5) return 'legendary';
+  return 'mythic';
 };
 
 // Get pet emoji based on stage and color
@@ -231,8 +301,10 @@ export const getPetEmoji = (stage: string, color: PetColor = 'default', storedEm
 };
 
 // Get pet mood based on stats
-export const getMoodFromStats = (pet: Pet): 'happy' | 'content' | 'neutral' | 'sad' | 'excited' => {
-  if (pet.happiness > 80 && pet.hunger < 30) return 'excited';
+export const getMoodFromStats = (pet: Pet): 'happy' | 'content' | 'neutral' | 'sad' | 'excited' | 'sleepy' | 'playful' => {
+  if (pet.energy < 20) return 'sleepy';
+  if (pet.happiness > 80 && pet.hunger < 30 && pet.energy > 60) return 'excited';
+  if (pet.happiness > 70 && pet.bondLevel > 50) return 'playful';
   if (pet.happiness > 60 && pet.health > 70) return 'happy';
   if (pet.happiness > 40 && pet.hunger < 70) return 'content';
   if (pet.health < 30) return 'sad';
@@ -403,9 +475,12 @@ export const buyPet = async (petShopId: string, customName?: string): Promise<Pe
     hunger: 30,
     happiness: 80,
     health: 100,
+    energy: 80,
+    cleanliness: 80,
     timesFeeding: 0,
     totalXpSpent: 0,
     lastFedAt: Date.now(),
+    lastPlayedAt: Date.now(),
     createdAt: Date.now(),
     stage: getStageFromLevel(petShop.presetLevel),
     color: 'default',
@@ -413,6 +488,12 @@ export const buyPet = async (petShopId: string, customName?: string): Promise<Pe
     favoriteFood: 'treats',
     mood: 'happy',
     emoji: petShop.emoji,
+    bondLevel: 0,
+    affinity: 0,
+    unlockedAbilities: [],
+    activeQuests: [],
+    questHistory: [],
+    totalInteractions: 0,
   };
 
   // Add to pets list
@@ -465,4 +546,156 @@ export const hasBoughtPetType = (petShopId: string): boolean => {
 // Get emoji for pet by ID
 export const getPetEmojiBySkin = (pet: Pet): string => {
   return '🐔'; // Default, can be customized based on pet type
+};
+
+// ===== NEW PET SYSTEMS =====
+
+// Play with the pet (increases happiness, decreases energy)
+export const playWithPet = (): Pet | null => {
+  const pet = getPet();
+  if (!pet) return null;
+
+  if (pet.energy < 20) {
+    console.warn('[pet] Pet is too tired to play');
+    return pet;
+  }
+
+  pet.happiness = Math.min(100, pet.happiness + 20);
+  pet.energy = Math.max(0, pet.energy - 25);
+  pet.bondLevel = Math.min(100, pet.bondLevel + 5);
+  pet.affinity = Math.min(100, pet.affinity + 3);
+  pet.totalInteractions += 1;
+  pet.lastPlayedAt = Date.now();
+
+  // Small XP bonus to pet
+  pet.experience += 10;
+  while (pet.experience >= LEVEL_THRESHOLDS[pet.level] && pet.level < LEVEL_THRESHOLDS.length) {
+    pet.level += 1;
+  }
+  pet.stage = getStageFromLevel(pet.level);
+
+  savePet(pet);
+  window.dispatchEvent(new CustomEvent('petUpdated', { detail: { pet } }));
+  return pet;
+};
+
+// Heal the pet (costs gems or XP)
+export const healPet = (method: 'gems' | 'xp' = 'gems'): Pet | null => {
+  const pet = getPet();
+  if (!pet) return null;
+
+  const healCostGems = 10;
+  const healCostXp = 50;
+
+  const currentXp = getXp();
+  const gems = getGems();
+
+  if (method === 'gems') {
+    if (gems < healCostGems) {
+      console.warn('Not enough gems to heal pet');
+      return pet;
+    }
+    addGems(-healCostGems);
+  } else if (method === 'xp') {
+    if (currentXp < healCostXp) {
+      console.warn('Not enough XP to heal pet');
+      return pet;
+    }
+    setXp(currentXp - healCostXp);
+    pet.totalXpSpent += healCostXp;
+  }
+
+  pet.health = Math.min(100, pet.health + 50);
+  pet.happiness = Math.min(100, pet.happiness + 15);
+  pet.bondLevel = Math.min(100, pet.bondLevel + 3);
+  pet.totalInteractions += 1;
+
+  savePet(pet);
+  window.dispatchEvent(new CustomEvent('petUpdated', { detail: { pet } }));
+  return pet;
+};
+
+// Clean the pet (restores cleanliness)
+export const cleanPet = (): Pet | null => {
+  const pet = getPet();
+  if (!pet) return null;
+
+  const gems = getGems();
+  const cleanCost = 3;
+
+  if (gems < cleanCost) {
+    console.warn('Not enough gems to clean pet');
+    return pet;
+  }
+
+  addGems(-cleanCost);
+  pet.cleanliness = 100;
+  pet.happiness = Math.min(100, pet.happiness + 5);
+  pet.bondLevel = Math.min(100, pet.bondLevel + 2);
+  pet.totalInteractions += 1;
+
+  savePet(pet);
+  window.dispatchEvent(new CustomEvent('petUpdated', { detail: { pet } }));
+  return pet;
+};
+
+// Increase bond level (through repeated interactions)
+export const increaseBond = (amount: number = 5): Pet | null => {
+  const pet = getPet();
+  if (!pet) return null;
+
+  pet.bondLevel = Math.min(100, pet.bondLevel + amount);
+  pet.affinity = Math.min(100, pet.affinity + amount * 2);
+
+  if (pet.bondLevel >= 100 && pet.level < 5) {
+    pet.level += 1;
+    pet.stage = getStageFromLevel(pet.level);
+  }
+
+  savePet(pet);
+  return pet;
+};
+
+// Unlock a pet ability
+export const unlockAbility = (abilityId: string): Pet | null => {
+  const pet = getPet();
+  if (!pet) return null;
+
+  if (!pet.unlockedAbilities.includes(abilityId)) {
+    pet.unlockedAbilities.push(abilityId);
+    pet.bondLevel = Math.min(100, pet.bondLevel + 10);
+    savePet(pet);
+    window.dispatchEvent(new CustomEvent('petUpdated', { detail: { pet } }));
+  }
+
+  return pet;
+};
+
+// Get pet's active ability bonuses
+export const getPetAbilityBonuses = (pet: Pet): Record<string, number> => {
+  const bonuses: Record<string, number> = {
+    xpBoost: 0,
+    casinoLuck: 0,
+    taskSpeed: 0,
+    gemMagnet: 0,
+  };
+
+  // Bonuses scale with bond level and level
+  const bondMultiplier = pet.bondLevel / 100;
+  const levelMultiplier = pet.level / 6; // Scales from 0 to 1 as pet levels up
+
+  if (pet.unlockedAbilities.includes('xp-boost')) {
+    bonuses.xpBoost = Math.floor(5 * bondMultiplier * levelMultiplier);
+  }
+  if (pet.unlockedAbilities.includes('casino-luck')) {
+    bonuses.casinoLuck = Math.floor(8 * bondMultiplier * levelMultiplier);
+  }
+  if (pet.unlockedAbilities.includes('task-speed')) {
+    bonuses.taskSpeed = Math.floor(10 * bondMultiplier * levelMultiplier);
+  }
+  if (pet.unlockedAbilities.includes('gem-magnet')) {
+    bonuses.gemMagnet = Math.floor(15 * bondMultiplier * levelMultiplier);
+  }
+
+  return bonuses;
 };
