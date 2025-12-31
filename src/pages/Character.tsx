@@ -301,21 +301,53 @@ const Character: React.FC = () => {
               </div>
             </div>
 
-            {/* Current Pet Preview - NEW SYSTEM */}
+            {/* Current Pet Preview - QUICK OVERVIEW */}
             {currentPet && (
               <div className="panel" style={{ padding: 24 }}>
                 <h3 style={{ margin: '0 0 16px 0' }}>🐾 Your Companion</h3>
-                <PetOverview 
-                  pet={currentPet} 
-                  onUpdate={() => {
-                    setPets(getAllPets());
-                    setCurrentPetId(getCurrentPetId());
-                  }} 
-                />
+                
+                {/* Quick Pet Preview */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                  {/* Pet Emoji */}
+                  <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <div style={{ fontSize: '5rem' }}>{currentPet.emoji}</div>
+                    <div style={{ position: 'absolute', bottom: 0, right: 0, fontSize: '1.8rem' }}>
+                      {currentPet.mood === 'happy' && '😊'}
+                      {currentPet.mood === 'excited' && '🤩'}
+                      {currentPet.mood === 'playful' && '🎮'}
+                      {currentPet.mood === 'content' && '😌'}
+                      {currentPet.mood === 'sad' && '😢'}
+                      {currentPet.mood === 'sleepy' && '😴'}
+                      {!currentPet.mood && '😐'}
+                    </div>
+                  </div>
+
+                  {/* Pet Name & Level */}
+                  <div style={{ textAlign: 'center' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', fontWeight: 'bold', color: '#fff' }}>{currentPet.name}</h4>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#9ca3af' }}>Level {currentPet.level} • {currentPet.stage}</p>
+                  </div>
+
+                  {/* Quick Stats - Just 3 key ones */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, width: '100%', fontSize: '0.8rem' }}>
+                    <div style={{ textAlign: 'center', padding: 8, background: 'rgba(124, 92, 255, 0.1)', borderRadius: 6 }}>
+                      <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.7rem' }}>Hunger</p>
+                      <p style={{ margin: '4px 0 0 0', fontWeight: 'bold', color: '#ef4444' }}>{currentPet.hunger}%</p>
+                    </div>
+                    <div style={{ textAlign: 'center', padding: 8, background: 'rgba(124, 92, 255, 0.1)', borderRadius: 6 }}>
+                      <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.7rem' }}>Happiness</p>
+                      <p style={{ margin: '4px 0 0 0', fontWeight: 'bold', color: '#facc15' }}>{currentPet.happiness}%</p>
+                    </div>
+                    <div style={{ textAlign: 'center', padding: 8, background: 'rgba(124, 92, 255, 0.1)', borderRadius: 6 }}>
+                      <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.7rem' }}>Health</p>
+                      <p style={{ margin: '4px 0 0 0', fontWeight: 'bold', color: '#22c55e' }}>{currentPet.health}%</p>
+                    </div>
+                  </div>
+                </div>
                 
                 {/* Pet Navigation */}
                 {pets.length > 1 && (
-                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 16 }}>
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16 }}>
                     <Button 
                       variant="ghost"
                       onClick={() => {
@@ -459,8 +491,6 @@ const Character: React.FC = () => {
             )}
 
             {/* Pet Selector Grid - NOW SECOND */}
-            <h2 style={{ marginBottom: 24 }}>🐾 Your Pets</h2>
-            
             <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               {/* All pets are now shown in the PetOverview component selector */}
             </div>
