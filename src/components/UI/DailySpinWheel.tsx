@@ -347,10 +347,10 @@ const DailySpinWheel: React.FC = () => {
               <span style={{ fontWeight: 'bold', color: '#fbbf24' }}>25 gems</span>?
             </div>
             <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)', marginBottom: 24 }}>
-              Your gems: <span style={{ fontWeight: 'bold', color: '#ec4899' }}>{currentGems}</span>
+              Your gems: <span style={{ fontWeight: 'bold', color: '#ffffff' }}>{currentGems}</span>
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Button
+              <button
                 onClick={() => setShowPayModal(false)}
                 style={{
                   background: 'white',
@@ -360,11 +360,13 @@ const DailySpinWheel: React.FC = () => {
                   fontWeight: 'bold',
                   fontSize: '0.95rem',
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                  cursor: 'pointer',
+                  borderRadius: '6px',
                 }}
               >
                 Cancel
-              </Button>
-              <Button
+              </button>
+              <button
                 onClick={() => executeSpin(true)}
                 disabled={currentGems < PAID_SPIN_COST}
                 style={{
@@ -374,11 +376,13 @@ const DailySpinWheel: React.FC = () => {
                   color: currentGems >= PAID_SPIN_COST ? '#000' : 'white',
                   fontWeight: 'bold',
                   fontSize: '0.95rem',
-                  boxShadow: currentGems >= PAID_SPIN_COST ? '0 6px 20px rgba(251, 191, 36, 0.6)' : 'none',
+                  boxShadow: currentGems >= PAID_SPIN_COST ? '0 4px 12px rgba(0, 0, 0, 0.3)' : 'none',
+                  cursor: currentGems >= PAID_SPIN_COST ? 'pointer' : 'not-allowed',
+                  borderRadius: '6px',
                 }}
               >
                 Spin Now 💎
-              </Button>
+              </button>
             </div>
           </div>
           <style>{`

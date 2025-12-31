@@ -214,7 +214,7 @@ export const MiniGames: React.FC = () => {
   // Main games menu
   return (
     <div className="container">
-      <div style={{ textAlign: 'center', maxWidth: '1000px', margin: '-15px auto 0', paddingBottom: 40, position: 'relative', zIndex: 10, width: '100%', boxSizing: 'border-box' }}>
+      <div style={{ textAlign: 'center', maxWidth: '1000px', margin: '-15px auto 0', paddingBottom: 40, width: '100%', boxSizing: 'border-box' }}>
         {/* Game Tabs */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 32, justifyContent: 'center', position: 'relative', zIndex: 100, pointerEvents: 'auto', paddingTop: 50 }}>
           {(['brain', 'casino'] as const).map(tab => (
