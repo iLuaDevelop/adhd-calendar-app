@@ -420,47 +420,57 @@ const Character: React.FC = () => {
 
                   {/* Tab Content */}
                   {petDetailsTab === 'overview' && (
-                    <PetOverview 
-                      pet={currentPet} 
-                      onUpdate={() => {
-                        setPets(getAllPets());
-                        setCurrentPetId(getCurrentPetId());
-                      }} 
-                    />
+                    <div style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}>
+                      <PetOverview 
+                        pet={currentPet} 
+                        onUpdate={() => {
+                          setPets(getAllPets());
+                          setCurrentPetId(getCurrentPetId());
+                        }} 
+                      />
+                    </div>
                   )}
 
                   {petDetailsTab === 'abilities' && (
-                    <PetAbilities 
-                      pet={currentPet} 
-                      onAbilityUnlock={() => {
-                        setPets(getAllPets());
-                      }}
-                    />
+                    <div style={{ maxWidth: 900, margin: '0 auto', width: '100%' }}>
+                      <PetAbilities 
+                        pet={currentPet} 
+                        onAbilityUnlock={() => {
+                          setPets(getAllPets());
+                        }}
+                      />
+                    </div>
                   )}
 
                   {petDetailsTab === 'quests' && (
-                    <PetQuests 
-                      pet={currentPet} 
-                      onQuestStart={() => {
-                        setPets(getAllPets());
-                      }}
-                      onQuestComplete={() => {
-                        setPets(getAllPets());
-                      }}
-                    />
+                    <div style={{ maxWidth: 900, margin: '0 auto', width: '100%' }}>
+                      <PetQuests 
+                        pet={currentPet} 
+                        onQuestStart={() => {
+                          setPets(getAllPets());
+                        }}
+                        onQuestComplete={() => {
+                          setPets(getAllPets());
+                        }}
+                      />
+                    </div>
                   )}
 
                   {petDetailsTab === 'stats' && (
-                    <PetStats pet={currentPet} />
+                    <div style={{ maxWidth: 900, margin: '0 auto', width: '100%' }}>
+                      <PetStats pet={currentPet} />
+                    </div>
                   )}
 
                   {petDetailsTab === 'evolution' && (
-                    <PetEvolution 
-                      pet={currentPet} 
-                      onEvolve={() => {
-                        setPets(getAllPets());
-                      }}
-                    />
+                    <div style={{ maxWidth: 900, margin: '0 auto', width: '100%' }}>
+                      <PetEvolution 
+                        pet={currentPet} 
+                        onEvolve={() => {
+                          setPets(getAllPets());
+                        }}
+                      />
+                    </div>
                   )}
                 </div>
               </div>

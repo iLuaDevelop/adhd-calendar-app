@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Pet, feedPet, playWithPet, healPet, cleanPet, getPet } from '../../services/pet';
+import React, { useState } from 'react';
+import { Pet, feedPet, playWithPet, healPet, cleanPet } from '../../services/pet';
 import { getCurrentBondMilestone, getBondProgress, getAffinityMessage } from '../../services/petBonding';
 import { useToast } from '../../context/ToastContext';
 
@@ -62,8 +62,8 @@ const PetOverview: React.FC<PetOverviewProps> = ({ pet, onUpdate }) => {
 
   if (!pet) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-400">No pet yet...</p>
+      <div style={{ textAlign: 'center', padding: '32px 0', color: '#999' }}>
+        <p>No pet yet...</p>
       </div>
     );
   }
@@ -72,7 +72,7 @@ const PetOverview: React.FC<PetOverviewProps> = ({ pet, onUpdate }) => {
   const bondProgress = getBondProgress(pet.bondLevel);
   const affinityMessage = getAffinityMessage(pet);
 
-  // Determine mood emoji and animation
+  // Determine mood emoji
   const moodEmojis: Record<string, string> = {
     happy: '😊',
     excited: '🤩',
@@ -87,34 +87,45 @@ const PetOverview: React.FC<PetOverviewProps> = ({ pet, onUpdate }) => {
     switch (pet.mood) {
       case 'excited':
       case 'happy':
-        return 'text-yellow-400';
+        return '#facc15';
       case 'playful':
-        return 'text-blue-400';
+        return '#60a5fa';
       case 'content':
-        return 'text-green-400';
+        return '#22c55e';
       case 'sad':
-        return 'text-red-400';
+        return '#ef4444';
       case 'sleepy':
-        return 'text-purple-400';
+        return '#a855f7';
       default:
-        return 'text-gray-400';
+        return '#9ca3af';
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 24, alignItems: 'center' }}>
       {/* Main Pet Display */}
       <div
-        className="relative flex flex-col items-center justify-center p-8 bg-gradient-to-b from-purple-900/20 to-blue-900/20 rounded-lg border border-purple-500/30"
         style={{
-          animation: isAnimating ? `pulse 0.6s ease-in-out` : 'none',
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 48,
+          background: 'linear-gradient(to bottom, rgba(147, 51, 234, 0.2), rgba(30, 58, 138, 0.2))',
+          borderRadius: 12,
+          border: '1px solid rgba(124, 92, 255, 0.3)',
+          width: '100%',
+          maxWidth: 500,
         }}
       >
-        {/* Pet Emoji - Large and centered */}
-        <div className="relative mb-4">
+        {/* Pet Emoji - Large */}
+        <div style={{ position: 'relative', marginBottom: 32 }}>
           <div
-            className="text-9xl transition-transform duration-300"
             style={{
+              fontSize: 160,
+              lineHeight: 1,
+              transition: 'transform 0.3s ease',
               transform: isAnimating
                 ? animationType === 'play'
                   ? 'scale(1.2) rotate(5deg)'
@@ -130,134 +141,373 @@ const PetOverview: React.FC<PetOverviewProps> = ({ pet, onUpdate }) => {
           </div>
 
           {/* Mood indicator */}
-          <div className={`absolute top-0 right-0 text-5xl ${getMoodColor()}`}>
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              fontSize: 56,
+              color: getMoodColor(),
+            }}
+          >
             {moodEmojis[pet.mood] || moodEmojis.neutral}
           </div>
 
           {/* Level badge */}
-          <div className="absolute bottom-0 left-0 bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold text-white border-2 border-blue-400">
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              background: '#2563eb',
+              borderRadius: '50%',
+              width: 48,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 20,
+              fontWeight: 'bold',
+              color: '#fff',
+              border: '2px solid #60a5fa',
+            }}
+          >
             {pet.level}
           </div>
 
           {/* Stage indicator */}
-          <div className="absolute bottom-0 right-0 bg-purple-600 rounded-full px-3 py-1 text-xs font-bold text-white border-2 border-purple-400">
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              background: '#7c3aed',
+              borderRadius: 6,
+              padding: '4px 12px',
+              fontSize: 10,
+              fontWeight: 'bold',
+              color: '#fff',
+              border: '2px solid #a78bfa',
+            }}
+          >
             {pet.stage.toUpperCase()}
           </div>
         </div>
 
         {/* Pet Name */}
-        <h2 className="text-3xl font-bold text-white mb-2">{pet.name}</h2>
+        <h2
+          style={{
+            fontSize: 32,
+            fontWeight: 'bold',
+            color: '#fff',
+            margin: '0 0 12px 0',
+            textAlign: 'center',
+          }}
+        >
+          {pet.name}
+        </h2>
 
         {/* Affinity Message */}
-        <p className="text-sm text-gray-300 italic mb-6 text-center max-w-xs">
+        <p
+          style={{
+            fontSize: 14,
+            color: '#d1d5db',
+            fontStyle: 'italic',
+            marginBottom: 24,
+            textAlign: 'center',
+            maxWidth: 400,
+          }}
+        >
           "{affinityMessage}"
         </p>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4 w-full mb-6">
+        {/* Stats Grid - 2 columns */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 16,
+            width: '100%',
+            marginBottom: 24,
+          }}
+        >
           {/* Hunger */}
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-gray-300">🍖 Hunger</span>
-              <span className="text-xs font-semibold text-gray-200">{pet.hunger}%</span>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 8,
+              }}
+            >
+              <span style={{ fontSize: 12, color: '#d1d5db' }}>🍖 Hunger</span>
+              <span style={{ fontSize: 12, fontWeight: 'bold', color: '#e5e7eb' }}>
+                {pet.hunger}%
+              </span>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
+            <div
+              style={{
+                width: '100%',
+                background: '#374151',
+                borderRadius: 9999,
+                height: 8,
+                overflow: 'hidden',
+              }}
+            >
               <div
-                className="bg-red-500 h-2 rounded-full transition-all"
-                style={{ width: `${pet.hunger}%` }}
+                style={{
+                  background: '#ef4444',
+                  height: '100%',
+                  transition: 'all 0.3s',
+                  width: `${pet.hunger}%`,
+                }}
               />
             </div>
           </div>
 
           {/* Happiness */}
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-gray-300">💛 Happiness</span>
-              <span className="text-xs font-semibold text-gray-200">{pet.happiness}%</span>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 8,
+              }}
+            >
+              <span style={{ fontSize: 12, color: '#d1d5db' }}>💛 Happiness</span>
+              <span style={{ fontSize: 12, fontWeight: 'bold', color: '#e5e7eb' }}>
+                {pet.happiness}%
+              </span>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
+            <div
+              style={{
+                width: '100%',
+                background: '#374151',
+                borderRadius: 9999,
+                height: 8,
+                overflow: 'hidden',
+              }}
+            >
               <div
-                className="bg-yellow-400 h-2 rounded-full transition-all"
-                style={{ width: `${pet.happiness}%` }}
+                style={{
+                  background: '#facc15',
+                  height: '100%',
+                  transition: 'all 0.3s',
+                  width: `${pet.happiness}%`,
+                }}
               />
             </div>
           </div>
 
           {/* Health */}
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-gray-300">❤️ Health</span>
-              <span className="text-xs font-semibold text-gray-200">{pet.health}%</span>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 8,
+              }}
+            >
+              <span style={{ fontSize: 12, color: '#d1d5db' }}>❤️ Health</span>
+              <span style={{ fontSize: 12, fontWeight: 'bold', color: '#e5e7eb' }}>
+                {pet.health}%
+              </span>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
+            <div
+              style={{
+                width: '100%',
+                background: '#374151',
+                borderRadius: 9999,
+                height: 8,
+                overflow: 'hidden',
+              }}
+            >
               <div
-                className="bg-green-500 h-2 rounded-full transition-all"
-                style={{ width: `${pet.health}%` }}
+                style={{
+                  background: '#22c55e',
+                  height: '100%',
+                  transition: 'all 0.3s',
+                  width: `${pet.health}%`,
+                }}
               />
             </div>
           </div>
 
           {/* Energy */}
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-gray-300">⚡ Energy</span>
-              <span className="text-xs font-semibold text-gray-200">{pet.energy}%</span>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 8,
+              }}
+            >
+              <span style={{ fontSize: 12, color: '#d1d5db' }}>⚡ Energy</span>
+              <span style={{ fontSize: 12, fontWeight: 'bold', color: '#e5e7eb' }}>
+                {pet.energy}%
+              </span>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
+            <div
+              style={{
+                width: '100%',
+                background: '#374151',
+                borderRadius: 9999,
+                height: 8,
+                overflow: 'hidden',
+              }}
+            >
               <div
-                className="bg-blue-400 h-2 rounded-full transition-all"
-                style={{ width: `${pet.energy}%` }}
+                style={{
+                  background: '#60a5fa',
+                  height: '100%',
+                  transition: 'all 0.3s',
+                  width: `${pet.energy}%`,
+                }}
               />
             </div>
           </div>
 
           {/* Cleanliness */}
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-gray-300">✨ Cleanliness</span>
-              <span className="text-xs font-semibold text-gray-200">{pet.cleanliness}%</span>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 8,
+              }}
+            >
+              <span style={{ fontSize: 12, color: '#d1d5db' }}>✨ Cleanliness</span>
+              <span style={{ fontSize: 12, fontWeight: 'bold', color: '#e5e7eb' }}>
+                {pet.cleanliness}%
+              </span>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
+            <div
+              style={{
+                width: '100%',
+                background: '#374151',
+                borderRadius: 9999,
+                height: 8,
+                overflow: 'hidden',
+              }}
+            >
               <div
-                className="bg-cyan-400 h-2 rounded-full transition-all"
-                style={{ width: `${pet.cleanliness}%` }}
+                style={{
+                  background: '#06b6d4',
+                  height: '100%',
+                  transition: 'all 0.3s',
+                  width: `${pet.cleanliness}%`,
+                }}
               />
             </div>
           </div>
 
           {/* Bond Level */}
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-gray-300">💖 Bond</span>
-              <span className="text-xs font-semibold text-gray-200">{pet.bondLevel}%</span>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 8,
+              }}
+            >
+              <span style={{ fontSize: 12, color: '#d1d5db' }}>💖 Bond</span>
+              <span style={{ fontSize: 12, fontWeight: 'bold', color: '#e5e7eb' }}>
+                {pet.bondLevel}%
+              </span>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
+            <div
+              style={{
+                width: '100%',
+                background: '#374151',
+                borderRadius: 9999,
+                height: 8,
+                overflow: 'hidden',
+              }}
+            >
               <div
-                className="bg-pink-500 h-2 rounded-full transition-all"
-                style={{ width: `${pet.bondLevel}%` }}
+                style={{
+                  background: '#ec4899',
+                  height: '100%',
+                  transition: 'all 0.3s',
+                  width: `${pet.bondLevel}%`,
+                }}
               />
             </div>
           </div>
         </div>
 
         {/* Bond Milestone */}
-        <div className="w-full p-4 bg-pink-900/30 border border-pink-500/30 rounded-lg mb-6">
-          <div className="flex items-center gap-3 justify-center">
-            <span className="text-2xl">{bondMilestone.emoji}</span>
+        <div
+          style={{
+            width: '100%',
+            padding: 16,
+            background: 'rgba(190, 24, 93, 0.2)',
+            border: '1px solid rgba(236, 72, 153, 0.3)',
+            borderRadius: 8,
+            marginBottom: 24,
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              justifyContent: 'center',
+              marginBottom: 12,
+            }}
+          >
+            <span style={{ fontSize: 24 }}>{bondMilestone.emoji}</span>
             <div>
-              <p className="font-semibold text-pink-300">{bondMilestone.name}</p>
-              <p className="text-xs text-gray-400">{bondMilestone.description}</p>
+              <p
+                style={{
+                  fontWeight: 'bold',
+                  color: '#f472b6',
+                  margin: '0 0 4px 0',
+                  fontSize: 14,
+                }}
+              >
+                {bondMilestone.name}
+              </p>
+              <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>
+                {bondMilestone.description}
+              </p>
             </div>
           </div>
           {bondProgress.progress < 100 && (
-            <div className="mt-3">
-              <div className="w-full bg-gray-700 rounded-full h-2">
+            <div>
+              <div
+                style={{
+                  width: '100%',
+                  background: '#374151',
+                  borderRadius: 9999,
+                  height: 6,
+                  overflow: 'hidden',
+                }}
+              >
                 <div
-                  className="bg-pink-500 h-2 rounded-full transition-all"
-                  style={{ width: `${bondProgress.progress}%` }}
+                  style={{
+                    background: '#ec4899',
+                    height: '100%',
+                    transition: 'all 0.3s',
+                    width: `${bondProgress.progress}%`,
+                  }}
                 />
               </div>
-              <p className="text-xs text-gray-400 mt-2">
+              <p
+                style={{
+                  fontSize: 11,
+                  color: '#9ca3af',
+                  marginTop: 8,
+                  textAlign: 'center',
+                  margin: '8px 0 0 0',
+                }}
+              >
                 {bondProgress.progress}% to {bondProgress.next}
               </p>
             </div>
@@ -265,29 +515,105 @@ const PetOverview: React.FC<PetOverviewProps> = ({ pet, onUpdate }) => {
         </div>
 
         {/* Action Buttons */}
-        <div className="w-full grid grid-cols-2 gap-3">
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 12,
+            width: '100%',
+          }}
+        >
           <button
             onClick={handleFeed}
-            className="py-3 px-4 bg-red-600 hover:bg-red-700 rounded-lg font-semibold text-white transition-colors flex items-center justify-center gap-2"
+            style={{
+              padding: '12px 16px',
+              background: '#dc2626',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: 13,
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.background = '#b91c1c')}
+            onMouseOut={(e) => (e.currentTarget.style.background = '#dc2626')}
           >
             🍖 Feed
           </button>
           <button
             onClick={handlePlay}
-            className="py-3 px-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-white transition-colors flex items-center justify-center gap-2"
             disabled={pet.energy < 20}
+            style={{
+              padding: '12px 16px',
+              background: pet.energy < 20 ? '#666' : '#2563eb',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              fontWeight: 'bold',
+              cursor: pet.energy < 20 ? 'not-allowed' : 'pointer',
+              fontSize: 13,
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              opacity: pet.energy < 20 ? 0.6 : 1,
+            }}
+            onMouseOver={(e) =>
+              pet.energy >= 20 && (e.currentTarget.style.background = '#1d4ed8')
+            }
+            onMouseOut={(e) =>
+              pet.energy >= 20 && (e.currentTarget.style.background = '#2563eb')
+            }
           >
             🎮 Play
           </button>
           <button
             onClick={handleHeal}
-            className="py-3 px-4 bg-green-600 hover:bg-green-700 rounded-lg font-semibold text-white transition-colors flex items-center justify-center gap-2"
+            style={{
+              padding: '12px 16px',
+              background: '#16a34a',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: 13,
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.background = '#15803d')}
+            onMouseOut={(e) => (e.currentTarget.style.background = '#16a34a')}
           >
             ❤️ Heal
           </button>
           <button
             onClick={handleClean}
-            className="py-3 px-4 bg-cyan-600 hover:bg-cyan-700 rounded-lg font-semibold text-white transition-colors flex items-center justify-center gap-2"
+            style={{
+              padding: '12px 16px',
+              background: '#0891b2',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: 13,
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.background = '#0e7490')}
+            onMouseOut={(e) => (e.currentTarget.style.background = '#0891b2')}
           >
             ✨ Clean
           </button>
@@ -295,24 +621,57 @@ const PetOverview: React.FC<PetOverviewProps> = ({ pet, onUpdate }) => {
       </div>
 
       {/* Interaction Stats */}
-      <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700/50">
-        <h3 className="font-semibold text-white mb-3">📊 Interaction Stats</h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
+      <div
+        style={{
+          padding: 16,
+          background: 'rgba(31, 41, 55, 0.5)',
+          borderRadius: 8,
+          border: '1px solid rgba(75, 85, 99, 0.5)',
+          width: '100%',
+          maxWidth: 500,
+        }}
+      >
+        <h3
+          style={{
+            fontWeight: 'bold',
+            color: '#fff',
+            marginBottom: 16,
+            margin: '0 0 16px 0',
+            fontSize: 14,
+          }}
+        >
+          📊 Interaction Stats
+        </h3>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 16,
+          }}
+        >
           <div>
-            <p className="text-gray-400">Total Interactions</p>
-            <p className="text-xl font-bold text-white">{pet.totalInteractions}</p>
+            <p style={{ color: '#9ca3af', fontSize: 12, margin: '0 0 4px 0' }}>
+              Total Interactions
+            </p>
+            <p style={{ fontSize: 18, fontWeight: 'bold', color: '#fff', margin: 0 }}>
+              {pet.totalInteractions}
+            </p>
           </div>
           <div>
-            <p className="text-gray-400">Times Fed</p>
-            <p className="text-xl font-bold text-white">{pet.timesFeeding}</p>
+            <p style={{ color: '#9ca3af', fontSize: 12, margin: '0 0 4px 0' }}>Times Fed</p>
+            <p style={{ fontSize: 18, fontWeight: 'bold', color: '#fff', margin: 0 }}>
+              {pet.timesFeeding}
+            </p>
           </div>
           <div>
-            <p className="text-gray-400">Pet Level</p>
-            <p className="text-xl font-bold text-white">{pet.level}</p>
+            <p style={{ color: '#9ca3af', fontSize: 12, margin: '0 0 4px 0' }}>Pet Level</p>
+            <p style={{ fontSize: 18, fontWeight: 'bold', color: '#fff', margin: 0 }}>
+              {pet.level}
+            </p>
           </div>
           <div>
-            <p className="text-gray-400">Pet Age</p>
-            <p className="text-xl font-bold text-white">
+            <p style={{ color: '#9ca3af', fontSize: 12, margin: '0 0 4px 0' }}>Pet Age</p>
+            <p style={{ fontSize: 18, fontWeight: 'bold', color: '#fff', margin: 0 }}>
               {Math.floor((Date.now() - pet.createdAt) / 86400000)} days
             </p>
           </div>
