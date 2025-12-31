@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
 import { getXp, getLevelFromXp, grantXp, setXp, getXpToNextLevel, getTotalXpForCurrentLevel, getXpIntoCurrentLevel } from '../services/xp';
 import { getGems, addGems } from '../services/currency';
-import { getPet, getAllPets, getCurrentPetId, setCurrentPet, getPetEmoji, feedPet, updatePetStats } from '../services/pet';
+import { getPet, getAllPets, getCurrentPetId, setCurrentPet, feedPet, updatePetStats } from '../services/pet';
 import { getMedals } from '../services/medals';
 import { getSelectedTitle } from '../services/titles';
 import { getInventory, getCratesByTier, removeFromInventory } from '../services/inventory';
@@ -354,40 +354,9 @@ const Character: React.FC = () => {
 
         {selectedTab === 'pets' && (
           <div style={{ textAlign: 'center' }}>
-            <h2 style={{ marginBottom: 24 }}>🐾 Your Pets</h2>
-            
-            {/* Pet Selector Grid */}
-            <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--muted)', marginBottom: 12 }}>Select Active Pet:</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, maxWidth: 800, width: '100%' }}>
-                {pets.map(pet => (
-                  <div
-                    key={pet.id}
-                    className="panel"
-                    style={{
-                      padding: 16,
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: currentPetId === pet.id ? '2px solid var(--accent)' : '1px solid var(--border)',
-                      background: currentPetId === pet.id ? 'rgba(124, 92, 255, 0.15)' : 'var(--panel)',
-                      transition: 'all 0.2s ease',
-                    }}
-                    onClick={() => handleSwitchPet(pet.id)}
-                  >
-                    <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>{getPetEmoji(pet.stage, pet.color, pet.emoji)}</div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: 4 }}>{pet.name}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: 8 }}>Level {Math.floor((pet.xp || 0) / 100) || 1}</div>
-                    {currentPetId === pet.id && (
-                      <div style={{ color: 'var(--accent)', fontSize: '0.8rem', fontWeight: 'bold' }}>✓ Active</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Pet Details Section with Nested Tabs */}
+            {/* Pet Details Section with Nested Tabs - NOW FIRST */}
             {currentPet && (
-              <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              <div style={{ marginTop: 0, marginBottom: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
                 <div className="panel" style={{ padding: 0, width: '100%', maxWidth: 900, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                   {/* Nested Pet Details Tab Navigation - Integrated into panel */}
                   <div style={{ 
@@ -431,7 +400,10 @@ const Character: React.FC = () => {
                   {petDetailsTab === 'overview' && (
                     <div style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}>
                       <PetOverview 
-                        pet={currentPet} 
+                        pet={currentPet}
+                        allPets={pets}
+                        currentPetId={currentPetId}
+                        onPetSwitch={handleSwitchPet}
                         onUpdate={() => {
                           setPets(getAllPets());
                           setCurrentPetId(getCurrentPetId());
@@ -485,6 +457,13 @@ const Character: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Pet Selector Grid - NOW SECOND */}
+            <h2 style={{ marginBottom: 24 }}>🐾 Your Pets</h2>
+            
+            <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {/* All pets are now shown in the PetOverview component selector */}
+            </div>
           </div>
         )}
 

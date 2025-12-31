@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { Pet, feedPet, playWithPet, healPet, cleanPet } from '../../services/pet';
+import { Pet, feedPet, playWithPet, healPet, cleanPet, getPetEmoji } from '../../services/pet';
 import { getCurrentBondMilestone, getBondProgress, getAffinityMessage } from '../../services/petBonding';
 import { useToast } from '../../context/ToastContext';
 
 interface PetOverviewProps {
   pet: Pet | null;
   onUpdate?: () => void;
+  allPets?: Pet[];
+  currentPetId?: string;
+  onPetSwitch?: (petId: string) => void;
 }
 
-const PetOverview: React.FC<PetOverviewProps> = ({ pet, onUpdate }) => {
+const PetOverview: React.FC<PetOverviewProps> = ({ pet, onUpdate, allPets, currentPetId, onPetSwitch }) => {
   const { showToast } = useToast();
   const [isAnimating, setIsAnimating] = useState(false);
   const [animationType, setAnimationType] = useState<string | null>(null);
@@ -619,6 +622,34 @@ const PetOverview: React.FC<PetOverviewProps> = ({ pet, onUpdate }) => {
           </button>
         </div>
       </div>
+
+      {/* Pet Selector - Switch Pets */}
+      {allPets && allPets.length > 1 && (
+        <div style={{ width: '100%', maxWidth: 500 }}>
+          <h4 style={{ fontSize: '0.9rem', fontWeight: '600', color: '#d1d5db', marginBottom: 12, margin: '0 0 12px 0', textAlign: 'center' }}>Select Active Pet:</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 8 }}>
+            {allPets.map(p => (
+              <div
+                key={p.id}
+                style={{
+                  padding: 12,
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  border: currentPetId === p.id ? '2px solid var(--accent)' : '1px solid rgba(124, 92, 255, 0.2)',
+                  background: currentPetId === p.id ? 'rgba(124, 92, 255, 0.15)' : 'rgba(31, 41, 55, 0.5)',
+                  borderRadius: 8,
+                  transition: 'all 0.2s ease',
+                }}
+                onClick={() => onPetSwitch?.(p.id)}
+              >
+                <div style={{ fontSize: '1.8rem', marginBottom: 4 }}>{getPetEmoji(p.stage, p.color, p.emoji)}</div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#fff', marginBottom: 2 }}>{p.name}</div>
+                <div style={{ fontSize: '0.7rem', color: '#9ca3af' }}>Lv {Math.floor((p.xp || 0) / 100) || 1}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Interaction Stats */}
       <div
