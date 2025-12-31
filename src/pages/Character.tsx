@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
 import { getXp, getLevelFromXp, grantXp, setXp, getXpToNextLevel, getTotalXpForCurrentLevel, getXpIntoCurrentLevel } from '../services/xp';
 import { getGems, addGems } from '../services/currency';
@@ -16,6 +17,7 @@ import PetEvolution from '../components/Pet/PetEvolution';
 import InventoryCrateModal from '../components/InventoryCrateModal/InventoryCrateModal';
 
 const Character: React.FC = () => {
+  const location = useLocation();
   const auth = getAuth();
   const { showToast } = useToast();
   const [profile, setProfile] = useState<any>({ username: 'Player', avatar: '👤', tasksCompleted: 0 });
@@ -25,7 +27,11 @@ const Character: React.FC = () => {
   const [currentPetId, setCurrentPetId] = useState(getCurrentPetId());
   const [pets, setPets] = useState(getAllPets());
   const [inventory, setInventory] = useState(getInventory());
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'pets' | 'inventory' | 'insights'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'pets' | 'inventory' | 'insights'>(() => {
+    // Check if we were navigated from dashboard to open pets tab
+    const state = location.state as any;
+    return state?.selectedTab === 'pets' ? 'pets' : 'overview';
+  });
   const [petDetailsTab, setPetDetailsTab] = useState<'overview' | 'abilities' | 'quests' | 'stats' | 'evolution'>('overview');
   const [streak, setStreak] = useState({ current: 0, longest: 0 });
   const [medals, setMedals] = useState<any[]>([]);
@@ -36,6 +42,15 @@ const Character: React.FC = () => {
   const [inventoryFilter, setInventoryFilter] = useState<'all' | 'bronze' | 'silver' | 'gold' | 'platinum'>('all');
   const [inventorySortBy, setInventorySortBy] = useState<'tier' | 'quantity'>('tier');
   const [hoveredControl, setHoveredControl] = useState<string | null>(null);
+
+  // Handle navigation to open specific tabs (using localStorage since HashRouter doesn't support state)
+  useEffect(() => {
+    const shouldOpenPetsTab = localStorage.getItem('adhd_open_pets_tab');
+    if (shouldOpenPetsTab === 'true') {
+      setSelectedTab('pets');
+      localStorage.removeItem('adhd_open_pets_tab');
+    }
+  }, []);
 
   useEffect(() => {
     // Load profile

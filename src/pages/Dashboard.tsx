@@ -914,7 +914,10 @@ const Dashboard: React.FC = () => {
                             pet={pet} 
                             allPets={ownedPets}
                             currentPetId={currentPetId}
-                            onViewDetails={() => history.push('/pet')}
+                            onViewDetails={() => {
+                                localStorage.setItem('adhd_open_pets_tab', 'true');
+                                history.push('/character');
+                            }}
                             onPetSwitch={(petId) => {
                                 setCurrentPet(petId);
                                 const updated = getPet();
