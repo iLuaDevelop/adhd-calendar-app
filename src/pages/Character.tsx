@@ -353,13 +353,13 @@ const Character: React.FC = () => {
         )}
 
         {selectedTab === 'pets' && (
-          <div>
+          <div style={{ textAlign: 'center' }}>
             <h2 style={{ marginBottom: 24 }}>🐾 Your Pets</h2>
             
             {/* Pet Selector Grid */}
-            <div style={{ marginBottom: 32 }}>
+            <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <h3 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--muted)', marginBottom: 12 }}>Select Active Pet:</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, maxWidth: 800, width: '100%' }}>
                 {pets.map(pet => (
                   <div
                     key={pet.id}
@@ -387,10 +387,10 @@ const Character: React.FC = () => {
 
             {/* Pet Details Section with Nested Tabs */}
             {currentPet && (
-              <div style={{ marginTop: 32 }}>
-                <div className="panel" style={{ padding: 24 }}>
+              <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div className="panel" style={{ padding: 24, width: '100%', maxWidth: 900 }}>
                   {/* Nested Pet Details Tab Navigation */}
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 24, borderBottom: '2px solid var(--border)', paddingBottom: 16, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 24, borderBottom: '2px solid var(--border)', paddingBottom: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
                     {(['overview', 'abilities', 'quests', 'stats', 'evolution'] as const).map(tab => (
                       <button
                         key={tab}
