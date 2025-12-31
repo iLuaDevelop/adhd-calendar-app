@@ -460,10 +460,12 @@ export const MiniGames: React.FC = () => {
             background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(74, 222, 128, 0.05) 100%)',
             border: '2px solid rgba(34, 197, 94, 0.3)',
             borderRadius: 12,
-            textAlign: 'left'
+            textAlign: 'left',
+            display: 'flex',
+            flexDirection: 'column',
           }}>
-            <h2 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', color: '#22c55e' }}>♠️ Blackjack</h2>
-            <p className="subtle" style={{ fontSize: '0.95rem', marginBottom: 16, minHeight: 48 }}>
+            <h2 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', color: '#22c55e', textAlign: 'center' }}>♠️ Blackjack</h2>
+            <p className="subtle" style={{ fontSize: '0.95rem', marginBottom: 16, minHeight: 48, flex: 1 }}>
               Classic card game - Get closer to 21 than the dealer without going over. Test your luck and strategy!
             </p>
             <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: '0.9rem' }}>
@@ -474,7 +476,7 @@ export const MiniGames: React.FC = () => {
             <button
               onClick={() => setActiveGame('blackjack')}
               className="btn primary"
-              style={{ width: '100%' }}
+              style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
             >
               Play →
             </button>
@@ -486,10 +488,12 @@ export const MiniGames: React.FC = () => {
             background: 'linear-gradient(135deg, rgba(251, 146, 60, 0.1) 0%, rgba(253, 224, 71, 0.05) 100%)',
             border: '2px solid rgba(251, 146, 60, 0.3)',
             borderRadius: 12,
-            textAlign: 'left'
+            textAlign: 'left',
+            display: 'flex',
+            flexDirection: 'column',
           }}>
-            <h2 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', color: '#fb923c' }}>🎰 Slots</h2>
-            <p className="subtle" style={{ fontSize: '0.95rem', marginBottom: 16, minHeight: 48 }}>
+            <h2 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', color: '#fb923c', textAlign: 'center' }}>🎰 Slots</h2>
+            <p className="subtle" style={{ fontSize: '0.95rem', marginBottom: 16, minHeight: 48, flex: 1 }}>
               Spin 3 reels and match symbols! Match all three for big jackpots. Higher bets = Bigger multipliers!
             </p>
             <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: '0.9rem' }}>
@@ -500,7 +504,7 @@ export const MiniGames: React.FC = () => {
             <button
               onClick={() => setActiveGame('slots')}
               className="btn primary"
-              style={{ width: '100%' }}
+              style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
             >
               Play →
             </button>
@@ -512,10 +516,12 @@ export const MiniGames: React.FC = () => {
             background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%)',
             border: '2px solid rgba(59, 130, 246, 0.3)',
             borderRadius: 12,
-            textAlign: 'left'
+            textAlign: 'left',
+            display: 'flex',
+            flexDirection: 'column',
           }}>
-            <h2 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', color: '#3b82f6' }}>🎡 Roulette</h2>
-            <p className="subtle" style={{ fontSize: '0.95rem', marginBottom: 16, minHeight: 48 }}>
+            <h2 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', color: '#3b82f6', textAlign: 'center' }}>🎡 Roulette</h2>
+            <p className="subtle" style={{ fontSize: '0.95rem', marginBottom: 16, minHeight: 48, flex: 1 }}>
               Pick Red or Black and spin the wheel! Win 2x your bet on correct guess. 37-number wheel with house green!
             </p>
             <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: '0.9rem' }}>
@@ -526,7 +532,7 @@ export const MiniGames: React.FC = () => {
             <button
               onClick={() => setActiveGame('roulette')}
               className="btn primary"
-              style={{ width: '100%' }}
+              style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
             >
               Play →
             </button>
