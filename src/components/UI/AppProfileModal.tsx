@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { getAuth, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { getXp, getLevelFromXp } from '../../services/xp';
 import { getSelectedTitle, getTitles, unlockTitle, setSelectedTitle as setSelectedTitleService, getUnlockedTitles, ALL_TITLES } from '../../services/titles';
 import { getMedals } from '../../services/medals';
 import { subscribeToUserProfile } from '../../services/messaging';
 import { useToast } from '../../context/ToastContext';
 import { initializeUserProfile } from '../../services/auth';
+import { db } from '../../services/firebase';
 
 interface AppProfileModalProps {
   open: boolean;
@@ -51,6 +53,7 @@ const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
   const [streak, setStreak] = useState({ current: 0, longest: 0 });
   const [xp, setXp] = useState(getXp());
   const [level, setLevel] = useState(getLevelFromXp(getXp()));
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,21 +154,60 @@ const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
     };
   }, [open, auth.currentUser?.uid]);
 
-  const handleSaveName = () => {
-    const newProfile = {
-      ...profile,
-      username: editNameValue || profile.username,
-      hashtag: editHashtagValue || profile.hashtag,
-    };
-    setProfile(newProfile);
-    localStorage.setItem('adhd_profile', JSON.stringify(newProfile));
-    setEditingName(false);
+  const handleSaveName = async () => {
+    if (!auth.currentUser) return;
+    
+    setIsSavingProfile(true);
+    try {
+      const newProfile = {
+        ...profile,
+        username: editNameValue || profile.username,
+        hashtag: editHashtagValue || profile.hashtag,
+      };
+      setProfile(newProfile);
+      localStorage.setItem('adhd_profile', JSON.stringify(newProfile));
+      
+      // Save to Firebase playerProfiles collection - only include defined fields
+      const updateData: any = {
+        uid: auth.currentUser.uid,
+        username: newProfile.username,
+        hashtag: newProfile.hashtag,
+        avatar: newProfile.avatar,
+        tasksCompleted: newProfile.tasksCompleted,
+        eventsCreated: newProfile.eventsCreated,
+      };
+      
+      // Only include customAvatarUrl if it has a value
+      if (newProfile.customAvatarUrl) {
+        updateData.customAvatarUrl = newProfile.customAvatarUrl;
+      }
+      
+      await setDoc(doc(db, 'playerProfiles', auth.currentUser.uid), updateData, { merge: true });
+      
+      showToast('Profile updated!', 'success');
+      setEditingName(false);
+    } catch (error: any) {
+      showToast('Failed to save profile: ' + error.message, 'error');
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
-  const handleAvatarSelect = (avatar: string) => {
-    const newProfile = { ...profile, avatar, customAvatarUrl: undefined };
-    setProfile(newProfile);
-    localStorage.setItem('adhd_profile', JSON.stringify(newProfile));
+  const handleAvatarSelect = async (avatar: string) => {
+    if (!auth.currentUser) return;
+    
+    try {
+      const newProfile = { ...profile, avatar, customAvatarUrl: undefined };
+      setProfile(newProfile);
+      localStorage.setItem('adhd_profile', JSON.stringify(newProfile));
+      
+      // Save to Firebase - only include defined fields
+      await setDoc(doc(db, 'playerProfiles', auth.currentUser.uid), {
+        avatar,
+      }, { merge: true });
+    } catch (error: any) {
+      showToast('Failed to update avatar: ' + error.message, 'error');
+    }
   };
 
   const handleCustomAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,13 +227,25 @@ const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
 
     // Create data URL
     const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      const newProfile = { ...profile, customAvatarUrl: dataUrl };
-      setProfile(newProfile);
-      localStorage.setItem('adhd_profile', JSON.stringify(newProfile));
-      setUploadError('');
-      showToast('Custom avatar uploaded!', 'success');
+    reader.onload = async (event) => {
+      if (!auth.currentUser) return;
+      
+      try {
+        const dataUrl = event.target?.result as string;
+        const newProfile = { ...profile, customAvatarUrl: dataUrl };
+        setProfile(newProfile);
+        localStorage.setItem('adhd_profile', JSON.stringify(newProfile));
+        
+        // Save to Firebase
+        await setDoc(doc(db, 'playerProfiles', auth.currentUser.uid), {
+          customAvatarUrl: dataUrl,
+        }, { merge: true });
+        
+        setUploadError('');
+        showToast('Custom avatar uploaded!', 'success');
+      } catch (error: any) {
+        showToast('Failed to upload avatar: ' + error.message, 'error');
+      }
     };
     reader.onerror = () => {
       setUploadError('Failed to read file');
@@ -480,10 +534,10 @@ const AppProfileModal: React.FC<AppProfileModalProps> = ({ open, onClose }) => {
                 />
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button className="btn" onClick={handleSaveName} style={{ flex: 1 }}>
-                  Save
+                <button className="btn" onClick={handleSaveName} disabled={isSavingProfile} style={{ flex: 1 }}>
+                  {isSavingProfile ? 'Saving...' : 'Save'}
                 </button>
-                <button className="btn ghost" onClick={() => setEditingName(false)} style={{ flex: 1 }}>
+                <button className="btn ghost" onClick={() => setEditingName(false)} disabled={isSavingProfile} style={{ flex: 1 }}>
                   Cancel
                 </button>
               </div>

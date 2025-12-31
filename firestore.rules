@@ -6,10 +6,10 @@ service cloud.firestore {
     match /playerProfiles/{userId} {
       allow read: if request.auth == null || request.auth.uid == userId;
       allow write: if request.auth.uid == userId && 
-                      request.resource.data.keys().hasAll(['username', 'avatar']) &&
                       !('xp' in request.resource.data) &&
                       !('level' in request.resource.data) &&
-                      !('tasksCompleted' in request.resource.data);
+                      !('tasksCompleted' in request.resource.data) &&
+                      !('eventsCreated' in request.resource.data);
     }
 
     // Leaderboard collection
