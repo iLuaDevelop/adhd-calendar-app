@@ -30,20 +30,30 @@ jobs:
           # New format: "emoji Title | Description"
           # Example: "🔧 Fixed commit parsing | Now extracts emoji, title, and description correctly"
           
-          # Extract emoji (first word before space)
-          EMOJI=$(echo "$COMMIT_MSG" | cut -d' ' -f1)
+          EMOJI=""
+          TITLE=""
+          DESC=""
           
-          # Extract everything after emoji
-          AFTER_EMOJI=$(echo "$COMMIT_MSG" | cut -d' ' -f2-)
+          # Extract emoji (everything before first space)
+          EMOJI=$(echo "$COMMIT_MSG" | awk -F' ' '{print $1}')
           
-          # Split on pipe | - title before pipe, description after
-          if [[ "$AFTER_EMOJI" == *"|"* ]]; then
-            TITLE=$(echo "$AFTER_EMOJI" | cut -d'|' -f1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-            DESC=$(echo "$AFTER_EMOJI" | cut -d'|' -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          # Get rest of message after emoji
+          REST=$(echo "$COMMIT_MSG" | sed "s/^$EMOJI[[:space:]]*//")
+          
+          # Check if pipe exists
+          if [[ "$REST" == *"|"* ]]; then
+            # Split on pipe
+            TITLE=$(echo "$REST" | awk -F'|' '{print $1}' | xargs)
+            DESC=$(echo "$REST" | awk -F'|' '{print $2}' | xargs)
           else
-            TITLE="$AFTER_EMOJI"
+            TITLE="$REST"
             DESC=""
           fi
+          
+          # Debug output
+          echo "EMOJI: '$EMOJI'"
+          echo "TITLE: '$TITLE'"
+          echo "DESC: '$DESC'"
           
           # Fallback if something went wrong
           if [ -z "$EMOJI" ] || [ -z "$TITLE" ]; then
