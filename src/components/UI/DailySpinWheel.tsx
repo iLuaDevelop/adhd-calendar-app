@@ -170,7 +170,7 @@ const DailySpinWheel: React.FC = () => {
         }}
       >
         <h2 style={{ margin: '0 0 8px 0', fontSize: '1.8rem', textAlign: 'center' }}>
-          🎡 Daily Spin Wheel
+          Daily Wheel Spin
         </h2>
         <div className="subtle" style={{ fontSize: '0.95rem', textAlign: 'center', marginBottom: 24 }}>
           {spinsRemainingToday > 0
@@ -305,11 +305,7 @@ const DailySpinWheel: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 16, fontSize: '0.9rem', color: 'var(--muted)' }}>
-          {spinsRemainingToday > 0 ? '🎁 Free Spin Available' : '💎 Click the wheel to spin (25 gems)'}
-        </div>
-
-        <div style={{ textAlign: 'center', marginTop: 8, fontSize: '0.85rem', color: 'var(--muted)' }}>
+        <div style={{ textAlign: 'center', marginTop: 16, fontSize: '0.85rem', color: 'var(--muted)' }}>
           Total Spins: {spinState.totalSpins}
         </div>
       </div>
