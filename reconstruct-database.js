@@ -21,16 +21,16 @@ try {
   if (credentials) {
     admin.initializeApp({
       credential: admin.credential.cert(credentials),
-      projectId: 'adhd-calendar-prod'
+      projectId: credentials.project_id
     });
   } else {
     admin.initializeApp({
-      projectId: 'adhd-calendar-prod'
+      projectId: 'adhd-calendar-app'
     });
   }
 } catch (err) {
   if (!admin.apps.length) {
-    admin.initializeApp({ projectId: 'adhd-calendar-prod' });
+    admin.initializeApp({ projectId: 'adhd-calendar-app' });
   }
 }
 
@@ -259,15 +259,8 @@ async function reconstructDatabase() {
     }, testUserId);
 
     // ========== FIRESTORE INDEXES (metadata) ==========
-    console.log('📝 Creating index metadata...');
-    await addWithBatch('__indexes__', {
-      lastVerified: now.toISOString(),
-      compositeIndexes: [
-        'updates: (active, type, timestamp)',
-        'tasks: (userId, status, dueDate)',
-        'gameHistory: (userId, createdAt)'
-      ]
-    }, 'metadata');
+    // Skipping - indexes are reserved collection names and handled by Firestore
+    console.log('📝 Indexes: managed by Firestore automatically');
 
     // Commit final batch
     if (batchSize > 0) {
