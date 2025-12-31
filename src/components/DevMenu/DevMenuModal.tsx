@@ -5,6 +5,7 @@ import { getPet, updatePetStats, feedPet, getAllPets, deletePet, createPet } fro
 import { unlockSkill, getAllSkills, getUnlockedSkills } from '../../services/skillTree';
 import { unlockTitle, setSelectedTitle, getUnlockedTitles, getSelectedTitle, getTitles, ALL_TITLES } from '../../services/titles';
 import { enableCriticalTestMode, disableCriticalTestMode, isCriticalTestModeEnabled, getCriticalChances, enableCrateTestMode, disableCrateTestMode, isCrateTestModeEnabled } from '../../services/critical';
+import { clientBackupDatabase } from '../../services/clientBackup';
 import { useToast } from '../../context/ToastContext';
 import { db } from '../../services/firebase';
 import { getAuth } from 'firebase/auth';
@@ -621,6 +622,21 @@ const DevMenuModal: React.FC = () => {
                 +Level 5 (Q5)
               </button>
             </div>
+          </div>
+
+          {/* Database Backup */}
+          <div style={{borderBottom: '1px solid var(--border)', paddingBottom: 12}}>
+            <h3 style={{margin: '0 0 8px 0'}}>Database Backup</h3>
+            <button className="btn" onClick={async () => {
+              try {
+                await clientBackupDatabase();
+                showToast('Database backup downloaded', 'success');
+              } catch (err) {
+                showToast('Backup failed', 'error');
+              }
+            }} style={{width: '100%'}}>
+              Download Backup (JSON)
+            </button>
           </div>
 
           {/* Close */}

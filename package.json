@@ -13,7 +13,9 @@
     "build-electron": "npm run build-preload && npm run build-main && vite build && electron-builder --dir --win",
     "build-electron-release": "npm run build-preload && npm run build-main && set CSC_IDENTITY_AUTO_DISCOVERY=false && vite build && electron-builder --win",
     "serve": "vite preview",
-    "dist": "npm run build-preload && npm run build-main && set CSC_IDENTITY_AUTO_DISCOVERY=false && vite build && electron-builder --win"
+    "dist": "npm run build-preload && npm run build-main && set CSC_IDENTITY_AUTO_DISCOVERY=false && vite build && electron-builder --win",
+    "backup-db": "node export-database.js",
+    "restore-db": "node restore-database.js"
   },
   "dependencies": {
     "@paypal/paypal-js": "^9.1.0",
