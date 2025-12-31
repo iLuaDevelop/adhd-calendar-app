@@ -1011,10 +1011,10 @@ const Dashboard: React.FC = () => {
                                     }}>
                                         <span style={{fontSize: '1.2rem', minWidth: '24px'}}>{item.icon}</span>
                                         <div style={{flex: 1, minWidth: 0}}>
-                                            <div style={{fontWeight: '600', color: '#e5e7eb', fontSize: '0.95rem', marginBottom: 2}}>
-                                                {item.title}
+                                            <div style={{fontWeight: '600', color: '#e5e7eb', fontSize: '0.9rem', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                                                {item.title.length > 35 ? item.title.substring(0, 35) + '...' : item.title}
                                             </div>
-                                            <div style={{fontSize: '0.85rem', color: '#9ca3af', marginBottom: 4}}>
+                                            <div style={{fontSize: '0.8rem', color: '#9ca3af', marginBottom: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'}}>
                                                 {item.desc}
                                             </div>
                                             <div style={{fontSize: '0.75rem', color: '#6b7280'}}>
@@ -1055,10 +1055,10 @@ const Dashboard: React.FC = () => {
                                     }}>
                                         <span style={{fontSize: '1.2rem', minWidth: '24px'}}>{item.icon}</span>
                                         <div style={{flex: 1, minWidth: 0}}>
-                                            <div style={{fontWeight: '600', color: '#e5e7eb', fontSize: '0.95rem', marginBottom: 2}}>
-                                                {item.title}
+                                            <div style={{fontWeight: '600', color: '#e5e7eb', fontSize: '0.9rem', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                                                {item.title.length > 35 ? item.title.substring(0, 35) + '...' : item.title}
                                             </div>
-                                            <div style={{fontSize: '0.85rem', color: '#9ca3af', marginBottom: 4}}>
+                                            <div style={{fontSize: '0.8rem', color: '#9ca3af', marginBottom: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'}}>
                                                 {item.desc}
                                             </div>
                                             <div style={{fontSize: '0.75rem', color: '#6b7280'}}>
