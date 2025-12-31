@@ -5,6 +5,7 @@ import { Blackjack } from '../components/Games/Blackjack';
 import { Slots } from '../components/Games/Slots';
 import { Roulette } from '../components/Games/Roulette';
 import { CasinoChallengesWidget } from '../components/Games/CasinoChallengesWidget';
+import { CasinoStatsWidget } from '../components/Games/CasinoStatsWidget';
 import { CasinoLeaderboard } from '../components/Games/CasinoLeaderboard';
 import { useLanguage } from '../context/LanguageContext';
 import {
@@ -445,6 +446,9 @@ export const MiniGames: React.FC = () => {
 
         {gameTab === 'casino' && (
           <>
+        {/* Your Stats */}
+        <CasinoStatsWidget />
+
         {/* Daily Challenges */}
         <CasinoChallengesWidget />
 
