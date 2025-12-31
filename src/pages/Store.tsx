@@ -4,6 +4,7 @@ import { getGems, setGems } from '../services/currency';
 import Button from '../components/UI/Button';
 import { useToast } from '../context/ToastContext';
 import LootCrate from '../components/UI/LootCrate';
+import DailySpinWheel from '../components/UI/DailySpinWheel';
 import PaymentModal from '../components/PaymentModal/PaymentModal';
 import CrateActionModal from '../components/CrateActionModal/CrateActionModal';
 import { buyPet, PET_SHOP, hasBoughtPetType, getAllPets } from '../services/pet';
@@ -386,6 +387,9 @@ const Store: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Daily Spin Wheel */}
+            <DailySpinWheel />
 
             {/* Gem Purchase Section */}
             <div style={{marginBottom:32}}>
