@@ -1,6 +1,5 @@
-import { db } from './firebase';
+import { db, auth } from './firebase';
 import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
-import { getCurrentUserId } from './auth';
 
 export interface GameHistory {
   id: string;
@@ -115,7 +114,7 @@ export const recordGameCompletion = async (
   }
 
   const xpEarned = calculateXP(gameType, difficulty, score);
-  const userId = getCurrentUserId();
+  const userId = auth.currentUser?.uid;
 
   try {
     // Record in Firebase

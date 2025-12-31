@@ -20,9 +20,10 @@ const Character: React.FC = () => {
   const [currentPetId, setCurrentPetId] = useState(getCurrentPetId());
   const [pets, setPets] = useState(getAllPets());
   const [inventory, setInventory] = useState(getInventory());
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'pets' | 'inventory'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'pets' | 'inventory' | 'insights'>('overview');
   const [streak, setStreak] = useState({ current: 0, longest: 0 });
   const [medals, setMedals] = useState<any[]>([]);
+  const [quests, setQuests] = useState<any[]>([]);
   const [selectedTitle, setSelectedTitle] = useState<any>(null);
   const [crateModalOpen, setCrateModalOpen] = useState(false);
   const [selectedCrate, setSelectedCrate] = useState<any>(null);
@@ -46,6 +47,12 @@ const Character: React.FC = () => {
     // Load medals and title
     setMedals(getMedals());
     setSelectedTitle(getSelectedTitle());
+
+    // Load quests
+    const questsStr = localStorage.getItem('adhd_quests_progress');
+    if (questsStr) {
+      setQuests(JSON.parse(questsStr));
+    }
 
     // Set up event listeners
     const handleXpUpdate = () => {
@@ -214,7 +221,7 @@ const Character: React.FC = () => {
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 24, paddingBottom: 16, justifyContent: 'center' }}>
-          {(['overview', 'pets', 'inventory'] as const).map(tab => (
+          {(['overview', 'pets', 'inventory', 'insights'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setSelectedTab(tab)}
@@ -253,6 +260,7 @@ const Character: React.FC = () => {
               {tab === 'overview' && '📊 Overview'}
               {tab === 'pets' && '🐾 Pets'}
               {tab === 'inventory' && `🎒 Inventory (${totalCrates})`}
+              {tab === 'insights' && '📈 In-Depth Insights'}
             </button>
           ))}
         </div>
@@ -653,6 +661,204 @@ const Character: React.FC = () => {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Expanded Insights Details */}
+        {selectedTab === 'insights' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            {/* Level & Progress */}
+            <div className="panel" style={{ padding: 24 }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>🎯 Level Progress</h3>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.9rem' }}>
+                  <span>Level {level}</span>
+                  <span className="subtle">{xpInLevel.toLocaleString()} / {xpNeeded.toLocaleString()} XP</span>
+                </div>
+                <div style={{ height: 12, background: 'rgba(255,255,255,0.1)', borderRadius: 6, overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      height: '100%',
+                      width: `${progressPercent}%`,
+                      background: 'linear-gradient(90deg, var(--accent), var(--accent-2))',
+                      transition: 'width 0.3s ease',
+                    }}
+                  />
+                </div>
+              </div>
+              <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
+                {xpToNextLevel.toLocaleString()} XP until next level
+              </div>
+            </div>
+
+            {/* Inventory Summary */}
+            <div className="panel" style={{ padding: 24 }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>🎁 Inventory Summary</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: 'var(--accent)' }}>{totalCrates}</div>
+                  <div className="subtle" style={{ fontSize: '0.85rem' }}>Total Crates</div>
+                </div>
+                {Object.entries(cratesByTier).map(([tier, crates]: any) => (
+                  <div key={tier} style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '1rem', fontWeight: 'bold', textTransform: 'capitalize', color: tier === 'gold' ? '#f59e0b' : tier === 'platinum' ? '#a78bfa' : 'var(--text)' }}>
+                      {crates.reduce((sum: number, c: any) => sum + c.quantity, 0)}
+                    </div>
+                    <div className="subtle" style={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>{tier}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Pet Companion Stats */}
+            {currentPet && (
+              <div className="panel" style={{ padding: 24 }}>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>🐾 Companion Status</h3>
+                <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>{getPetEmoji(currentPet.stage, currentPet.color, currentPet.emoji)}</div>
+                  <div style={{ fontWeight: 'bold', marginBottom: 4 }}>{currentPet.name}</div>
+                  <div className="subtle" style={{ fontSize: '0.9rem' }}>Level {Math.floor((currentPet.xp || 0) / 100) || 1}</div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: '0.9rem' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span>Hunger</span>
+                      <span style={{ fontWeight: 'bold' }}>{currentPet.hunger || 0}%</span>
+                    </div>
+                    <div style={{ height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${currentPet.hunger || 0}%`, background: '#f59e0b' }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span>Happiness</span>
+                      <span style={{ fontWeight: 'bold' }}>{currentPet.happiness || 0}%</span>
+                    </div>
+                    <div style={{ height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${currentPet.happiness || 0}%`, background: '#ec4899' }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span>Health</span>
+                      <span style={{ fontWeight: 'bold' }}>{currentPet.health || 0}%</span>
+                    </div>
+                    <div style={{ height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${currentPet.health || 0}%`, background: '#22c55e' }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Overall Summary */}
+            <div className="panel" style={{ padding: 24 }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>📊 Overall Summary</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: '0.9rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+                  <span>Days Active (Streak)</span>
+                  <span style={{ fontWeight: 'bold', color: '#ec4899' }}>{streak.current} days</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+                  <span>Best Streak</span>
+                  <span style={{ fontWeight: 'bold', color: '#f59e0b' }}>{streak.longest} days</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+                  <span>Avg Tasks/Day</span>
+                  <span style={{ fontWeight: 'bold', color: 'var(--accent)' }}>{(profile.tasksCompleted / Math.max(streak.longest, 1)).toFixed(1)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Total Achievements</span>
+                  <span style={{ fontWeight: 'bold', color: '#06b6d4' }}>{medals.filter(m => m.earned).length} / {medals.length}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quests Summary */}
+            <div className="panel" style={{ padding: 24, marginTop: 16 }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>🏆 Quest Progress</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#ec4899' }}>
+                    {quests.filter((q: any) => q.completed).length}/{quests.length}
+                  </div>
+                  <div className="subtle" style={{ fontSize: '0.9rem' }}>Quests Completed</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#ec4899', marginTop: 8 }}>
+                    {quests.length > 0 ? `${Math.round((quests.filter((q: any) => q.completed).length / quests.length) * 100)}%` : '0%'}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--accent)' }}>
+                    {quests.length}
+                  </div>
+                  <div className="subtle" style={{ fontSize: '0.9rem' }}>Total Available</div>
+                  <div className="subtle" style={{ fontSize: '0.85rem', marginTop: 8 }}>Keep working towards them!</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Personal Observations Section */}
+          <div className="panel" style={{ padding: 24, marginTop: 16 }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>💡 Personal Observations</h3>
+            <div style={{ display: 'grid', gap: 16 }}>
+              <div style={{ paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: 8 }}>📈 Progress Trend</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
+                  {profile?.tasksCompleted > 20 
+                    ? '🔥 You\'re on a roll! Your consistency is impressive.' 
+                    : profile?.tasksCompleted > 10 
+                    ? '💪 Great effort! You\'re building momentum.' 
+                    : '🌱 Every journey starts with a single step. Keep going!'}
+                </div>
+              </div>
+
+              <div style={{ paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: 8 }}>🔥 Streak Status</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
+                  {streak?.current > 7
+                    ? `Amazing! You've maintained a ${streak.current}-day streak. Don't break it! 🎯`
+                    : streak?.current > 0
+                    ? `You're on a ${streak.current}-day streak. Keep the momentum going!`
+                    : 'Start a new streak today and build consistency!'}
+                </div>
+              </div>
+
+              <div style={{ paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: 8 }}>🏆 Quest Progress</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
+                  {quests.filter((q: any) => q.completed).length === quests.length && quests.length > 0
+                    ? `Incredible! You've completed all available quests. You're a quest master! 🎉`
+                    : quests.filter((q: any) => q.completed).length > 0
+                    ? `You've completed ${quests.filter((q: any) => q.completed).length} quest${quests.filter((q: any) => q.completed).length > 1 ? 's' : ''}. Great work! Keep completing more.`
+                    : 'Start completing quests to earn rewards and achievements!'}
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: 8 }}>🎖️ Achievement Status</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
+                  {medals.filter(m => m.earned).length === medals.length && medals.length > 0
+                    ? `🌟 Perfect! You've unlocked all available medals. You are unstoppable!`
+                    : medals.filter(m => m.earned).length > 0
+                    ? `You've earned ${medals.filter(m => m.earned).length} medal${medals.filter(m => m.earned).length > 1 ? 's' : ''}. ${medals.length - medals.filter(m => m.earned).length} more to unlock!`
+                    : 'Earn medals by completing tasks, quests, and achieving milestones.'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tips & Encouragement Section */}
+          <div className="panel" style={{ padding: 24, marginTop: 16, background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>💭 Tips for Success</h3>
+            <ul style={{ margin: 0, paddingLeft: 20, lineHeight: '1.8', fontSize: '0.95rem' }}>
+              <li>✨ Focus on consistency over perfection - every small task counts!</li>
+              <li>🎯 Use streaks as motivation - they compound over time</li>
+              <li>🏆 Complete quests regularly for extra rewards and badges</li>
+              <li>🎖️ Work towards unlocking all medals for ultimate achievement</li>
+              <li>💎 Collect gems and XP to unlock exclusive features in the store</li>
+              <li>🔥 If you break a streak, don't give up - start a new one immediately</li>
+            </ul>
+          </div>
           </div>
         )}
       </div>

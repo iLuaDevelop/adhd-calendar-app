@@ -139,6 +139,24 @@ const Dashboard: React.FC = () => {
         const today = getTodayDate();
         return data[today] || 0;
     };
+
+    const getRemainingGames = () => {
+        const DAILY_GAME_CAP = 5;
+        const STORAGE_KEY = 'adhd_game_state';
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) return DAILY_GAME_CAP;
+        
+        const state = JSON.parse(stored);
+        const lastDate = localStorage.getItem('adhd_game_state_date');
+        const today = new Date().toDateString();
+        
+        // Reset if new day
+        if (lastDate !== today) {
+            return DAILY_GAME_CAP;
+        }
+        
+        return Math.max(0, DAILY_GAME_CAP - (state.gamesPlayedToday || 0));
+    };
     
     const incrementDailyCreation = () => {
         const stored = localStorage.getItem(DAILY_CREATIONS_KEY);
@@ -800,6 +818,25 @@ const Dashboard: React.FC = () => {
                 <h1>{t('dashboard.title')}</h1>
                 <div className="subtle">{t('dashboard.planYourDay')}</div>
             </div>
+
+            {/* Quick Game Break Card */}
+            {getRemainingGames() > 0 && (
+                <div className="panel" style={{
+                    padding: 24,
+                    marginBottom: 24,
+                    background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)',
+                    border: '2px solid rgba(147, 51, 234, 0.3)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}>
+                    <div>
+                        <h3 style={{margin: '0 0 8px 0', fontSize: '1.1rem'}}>🎮 Quick Game Break</h3>
+                        <p className="subtle" style={{margin: 0}}>Earn quick XP! {getRemainingGames()} game{getRemainingGames() !== 1 ? 's' : ''} left today</p>
+                    </div>
+                    <Button onClick={() => history.push('/games')} style={{minWidth: 120}}>Play →</Button>
+                </div>
+            )}
 
             {/* Recommended Tasks Section */}
             <div className="app-grid">

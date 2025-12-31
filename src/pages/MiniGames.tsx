@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PatternMemory } from '../components/Games/PatternMemory';
 import { ReactionTest } from '../components/Games/ReactionTest';
+import { Blackjack } from '../components/Games/Blackjack';
 import { useLanguage } from '../context/LanguageContext';
 import {
   canPlayGame,
@@ -9,11 +10,10 @@ import {
   GameHistory,
   getGameHistory,
 } from '../services/games';
-import { addXP, getCurrentUserData } from '../services/xp';
-import { awardPetXP } from '../services/pet';
-import { getCurrentUserId } from '../services/auth';
+import { grantXp } from '../services/xp';
+import { auth } from '../services/firebase';
 
-type GameType = 'pattern-memory' | 'reaction-test' | null;
+type GameType = 'pattern-memory' | 'reaction-test' | 'blackjack' | null;
 
 export const MiniGames: React.FC = () => {
   const { t } = useLanguage();
@@ -26,8 +26,9 @@ export const MiniGames: React.FC = () => {
   const [lastXP, setLastXP] = useState(0);
   const [history, setHistory] = useState<GameHistory[]>([]);
   const [cooldownTimer, setCooldownTimer] = useState<number | null>(null);
+  const [gameTab, setGameTab] = useState<'brain' | 'casino'>('brain');
 
-  const userId = getCurrentUserId();
+  const userId = auth.currentUser?.uid;
 
   // Load game state
   useEffect(() => {
@@ -83,14 +84,7 @@ export const MiniGames: React.FC = () => {
       setLastXP(result.xpEarned);
 
       // Award XP to player
-      const userData = await getCurrentUserData();
-      if (userData) {
-        await addXP(result.xpEarned, 'mini-game');
-      }
-
-      // Award pet XP (10-20% of game XP)
-      const petXP = Math.ceil(result.xpEarned * 0.15);
-      await awardPetXP(petXP);
+      grantXp(result.xpEarned);
 
       setShowResult(true);
       setActiveGame(null);
@@ -141,7 +135,19 @@ export const MiniGames: React.FC = () => {
     );
   }
 
-  // Result screen
+  if (activeGame === 'blackjack') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 p-8">
+        <Blackjack
+          onCancel={() => setActiveGame(null)}
+          onGameEnd={(gemsWon, gemsLost) => {
+            setActiveGame(null);
+            setGameTab('casino');
+          }}
+        />
+      </div>
+    );
+  }  // Result screen
   if (showResult) {
     return (
       <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', textAlign: 'center' }}>
@@ -208,15 +214,51 @@ export const MiniGames: React.FC = () => {
   // Main games menu
   return (
     <div className="container">
-      <div style={{ textAlign: 'center', maxWidth: '1000px', margin: '0 auto' }}>
+      <div style={{ textAlign: 'center', maxWidth: '1000px', margin: '-15px auto 0', paddingBottom: 40, position: 'relative', zIndex: 10, width: '100%', boxSizing: 'border-box' }}>
+        {/* Game Tabs */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 32, justifyContent: 'center', position: 'relative', zIndex: 100, pointerEvents: 'auto', paddingTop: 50 }}>
+          {(['brain', 'casino'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setGameTab(tab)}
+              style={{
+                padding: '10px 20px',
+                background: gameTab === tab 
+                  ? 'var(--accent)' 
+                  : 'rgba(124, 92, 255, 0.08)',
+                color: gameTab === tab ? '#fff' : 'var(--text)',
+                border: gameTab === tab 
+                  ? '1px solid var(--accent)' 
+                  : '1px solid rgba(124, 92, 255, 0.25)',
+                borderRadius: 20,
+                cursor: 'pointer',
+                fontWeight: gameTab === tab ? '600' : '500',
+                fontSize: '0.95rem',
+                transition: 'all 0.25s ease',
+                boxShadow: gameTab === tab 
+                  ? '0 0 12px rgba(124, 92, 255, 0.3)' 
+                  : 'none',
+                pointerEvents: 'auto',
+              }}
+            >
+              {tab === 'brain' && '🧠 Brain Games'}
+              {tab === 'casino' && '♠️ Casino'}
+            </button>
+          ))}
+        </div>
+
         {/* Header */}
         <div style={{ marginBottom: 32 }}>
-          <h1 style={{ margin: '0 0 12px 0', fontSize: '2.5rem', fontWeight: 'bold' }}>🎮 Brain Games</h1>
+          <h1 style={{ margin: '0 0 12px 0', fontSize: '2.5rem', fontWeight: 'bold' }}>
+            {gameTab === 'brain' ? '🎮 Brain Games' : '♠️ Casino'}
+          </h1>
           <p className="subtle" style={{ fontSize: '1.1rem', marginBottom: 24 }}>
-            Quick mind-sharpening games to earn XP fast!
+            {gameTab === 'brain' ? 'Quick mind-sharpening games to earn XP fast!' : 'Test your luck with card games using gems!'}
           </p>
         </div>
 
+        {gameTab === 'brain' && (
+          <>
         {/* Status Section */}
         <div className="panel" style={{ padding: 24, marginBottom: 24, textAlign: 'center' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 16 }}>
@@ -366,6 +408,62 @@ export const MiniGames: React.FC = () => {
           <p style={{ margin: '0 0 8px 0' }}>Daily limit: <strong>{5 - remainingGames}/5</strong> games • Cooldown: <strong>2 min</strong> between</p>
           <p style={{ margin: 0 }}>Earn XP + pet XP on top of your tasks! 🚀</p>
         </div>
+          </>
+        )}
+
+        {gameTab === 'casino' && (
+          <>
+        {/* Casino Games Section */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20, marginBottom: 32 }}>
+          {/* Blackjack Card */}
+          <div className="panel" style={{
+            padding: 24,
+            background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(74, 222, 128, 0.05) 100%)',
+            border: '2px solid rgba(34, 197, 94, 0.3)',
+            borderRadius: 12,
+            textAlign: 'left'
+          }}>
+            <h2 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', color: '#22c55e' }}>♠️ Blackjack</h2>
+            <p className="subtle" style={{ fontSize: '0.95rem', marginBottom: 16, minHeight: 48 }}>
+              Classic card game - Get closer to 21 than the dealer without going over. Test your luck and strategy!
+            </p>
+            <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: '0.9rem' }}>
+              <div style={{ marginBottom: 8 }}>💎 <strong>Bet gems</strong> (5-500)</div>
+              <div style={{ marginBottom: 8 }}>📊 <strong>Win: +bet • Lose: -bet</strong></div>
+              <div>🎰 <strong>48% win rate</strong></div>
+            </div>
+            <button
+              onClick={() => setActiveGame('blackjack')}
+              className="btn primary"
+              style={{ width: '100%' }}
+            >
+              Play →
+            </button>
+          </div>
+        </div>
+
+        {/* Casino Info */}
+        <div className="panel" style={{ padding: 24, marginBottom: 24, background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+          <h3 style={{ margin: '0 0 12px 0' }}>💡 Casino Tips</h3>
+          <ul style={{ margin: 0, paddingLeft: 20, fontSize: '0.9rem', color: 'var(--muted)', lineHeight: 1.8 }}>
+            <li>Gamble responsibly - set a daily budget and stick to it</li>
+            <li>No real money involved - all wins/losses are virtual gems</li>
+            <li>House edge ensures long-term losses, but big wins are possible!</li>
+            <li>Come back daily for fresh gems to gamble with</li>
+          </ul>
+        </div>
+
+        {/* Daily Cap Info */}
+        <div className="subtle" style={{
+          textAlign: 'center',
+          fontSize: '0.9rem',
+          lineHeight: 1.6,
+          marginBottom: 24
+        }}>
+          <p style={{ margin: 0 }}>🎲 No daily limits on casino games - play as much as you want!</p>
+        </div>
+          </>
+        )}
       </div>
     </div>
   );
