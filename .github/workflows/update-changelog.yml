@@ -34,19 +34,21 @@ jobs:
           TITLE=""
           DESC=""
           
-          # Extract emoji (everything before first space)
-          EMOJI=$(echo "$COMMIT_MSG" | awk -F' ' '{print $1}')
+          # Extract everything after first space (skips emoji)
+          AFTER_EMOJI="${COMMIT_MSG#* }"
           
-          # Get rest of message after emoji
-          REST=$(echo "$COMMIT_MSG" | sed "s/^$EMOJI[[:space:]]*//")
+          # Extract emoji by removing everything from first space onward
+          EMOJI="${COMMIT_MSG%% *}"
           
-          # Check if pipe exists
-          if [[ "$REST" == *"|"* ]]; then
-            # Split on pipe
-            TITLE=$(echo "$REST" | awk -F'|' '{print $1}' | xargs)
-            DESC=$(echo "$REST" | awk -F'|' '{print $2}' | xargs)
+          # Check if pipe exists and split
+          if [[ "$AFTER_EMOJI" == *"|"* ]]; then
+            # Split on pipe using parameter expansion
+            BEFORE_PIPE="${AFTER_EMOJI%%|*}"
+            AFTER_PIPE="${AFTER_EMOJI#*|}"
+            TITLE=$(echo "$BEFORE_PIPE" | xargs)
+            DESC=$(echo "$AFTER_PIPE" | xargs)
           else
-            TITLE="$REST"
+            TITLE="$AFTER_EMOJI"
             DESC=""
           fi
           
