@@ -997,7 +997,7 @@ const Dashboard: React.FC = () => {
                         <h4 style={{margin: '0 0 12px 0', fontSize: '0.9rem', fontWeight: '600', color: '#a1a1a1'}}>
                             📝 Latest Commits
                         </h4>
-                        <div style={{display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '400px', overflowY: 'auto'}}>
+                        <div style={{display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '400px', overflowY: 'auto', paddingRight: 8, scrollBehavior: 'smooth'}}>
                             {commits.length > 0 ? (
                                 commits.map((item) => (
                                     <div key={item.id} style={{
