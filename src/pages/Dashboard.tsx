@@ -20,6 +20,7 @@ import { enableCriticalTestMode, disableCriticalTestMode, isCriticalTestModeEnab
 import { signUpWithEmail, signInWithEmail, signOutUser, onAuthChange, getCurrentUserProfile, signInAsGuest } from '../services/auth';
 import { auth, db } from '../services/firebase';
 import { loadGameProgress } from '../services/gameProgress';
+import { subscribeToUpdates, formatUpdateTime, Update } from '../services/updates';
 
 const PURCHASES_KEY = 'adhd_purchases';
 const DAILY_CREATIONS_KEY = 'adhd_daily_creations';
@@ -110,6 +111,7 @@ const Dashboard: React.FC = () => {
     const [criticalTestMode, setCriticalTestMode] = useState(isCriticalTestModeEnabled());
     const [crateTestMode, setCrateTestMode] = useState(isCrateTestModeEnabled());
     const [criticalChances, setCriticalChances] = useState(getCriticalChances());
+    const [updates, setUpdates] = useState<Update[]>([]);
 
     const taskLimit = purchases.has(4) ? 6 : 3;
     const displayedTasks = tasks.slice(0, taskLimit);
@@ -128,6 +130,14 @@ const Dashboard: React.FC = () => {
                 setShowProfileFalse();
                 setIsInitialLoginModal(false);
             }
+        });
+        return () => unsubscribe();
+    }, []);
+
+    // Subscribe to real-time updates
+    useEffect(() => {
+        const unsubscribe = subscribeToUpdates((updates) => {
+            setUpdates(updates);
         });
         return () => unsubscribe();
     }, []);
@@ -820,7 +830,7 @@ const Dashboard: React.FC = () => {
                 <div className="subtle">{t('dashboard.planYourDay')}</div>
             </div>
 
-            {/* Quick Game Break Card */}
+            {/* Quick Game Break Card - Full Width */}
             {getRemainingGames() > 0 && (
                 <div className="panel" style={{
                     padding: 24,
@@ -839,27 +849,27 @@ const Dashboard: React.FC = () => {
                 </div>
             )}
 
-            {/* Recommended Tasks Section */}
+            {/* 3-Column Layout */}
             <div className="app-grid">
-                <aside className="panel">
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12, gap: 24, flexWrap: 'nowrap'}}>
-                        <div style={{display:'flex',alignItems:'center',gap:8, whiteSpace: 'nowrap', minWidth: 0}}>
+                {/* Column 1: Tasks */}
+                <aside className="panel" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12, gap: 12, flexWrap: 'wrap'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:8}}>
                             <h3 style={{margin:0}}>{t('dashboard.yourTasks')}</h3>
                             <span className="subtle" style={{fontSize:'0.875rem'}}>{getDailyCreationCount()}/{purchases.has(4) ? 6 : 3}</span>
                         </div>
-                        <div style={{display:'flex', gap:8}}>
-                            <Button onClick={() => setShowTemplates(true)} title="Quick add from templates">{t('dashboard.quickAdd')}</Button>
-                            <Button onClick={() => setAdding((s) => !s)} disabled={getDailyCreationCount() >= (purchases.has(4) ? 6 : 3) && !adding}>{adding ? t('dashboard.close') : `+ ${t('dashboard.add')}`}</Button>
-                        </div>
+                    </div>
+                    
+                    <div style={{display:'flex', gap:8, marginBottom: 12, flexWrap: 'wrap'}}>
+                        <Button onClick={() => setShowTemplates(true)} title="Quick add from templates">{t('dashboard.quickAdd')}</Button>
+                        <Button onClick={() => setAdding((s) => !s)} disabled={getDailyCreationCount() >= (purchases.has(4) ? 6 : 3) && !adding}>{adding ? t('dashboard.close') : `+ ${t('dashboard.add')}`}</Button>
                     </div>
 
                     {adding && <QuickAdd onAdd={handleAdd} />}
 
-                    <div className="tasks-list" style={{maxHeight: '400px', overflowY: 'auto'}}>
+                    <div className="tasks-list" style={{flex: 1, overflowY: 'auto', minHeight: '300px'}}>
                         {tasks.length === 0 && <div className="subtle">{t('dashboard.noTasks')}</div>}
                         {displayedTasks.map((task:any) => {
-                            // Anti-spam: Check if task is at least 5 minutes old before granting XP
-                            // Existing tasks without createdAt are allowed to grant XP immediately
                             const taskAge = task.createdAt ? Date.now() - task.createdAt : Infinity;
                             const canGrantXp = taskAge >= 5 * 60 * 1000;
                             const timeUntilXp = task.createdAt ? Math.max(0, 5 * 60 * 1000 - taskAge) : 0;
@@ -891,25 +901,26 @@ const Dashboard: React.FC = () => {
                     </div>
                 </aside>
 
-                <main className="panel">
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
-                        <div>
-                            <h3 style={{margin:0}}>{t('dashboard.upcomingEvents')}</h3>
-                            <div className="subtle">{new Date().toLocaleDateString()}</div>
-                        </div>
-                        <div style={{display:'flex',gap:8}}>
-                            <Button variant={view === 'day' ? undefined : 'ghost'} onClick={() => setView('day')}>{t('calendar.day')}</Button>
-                            <Button variant={view === 'week' ? undefined : 'ghost'} onClick={() => setView('week')}>{t('calendar.week')}</Button>
-                            <Button variant={view === 'month' ? undefined : 'ghost'} onClick={() => setView('month')}>{t('calendar.month')}</Button>
-                        </div>
+                {/* Column 2: Calendar */}
+                <main className="panel" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{marginBottom:12}}>
+                        <h3 style={{margin:'0 0 4px 0'}}>{t('dashboard.upcomingEvents')}</h3>
+                        <div className="subtle">{new Date().toLocaleDateString()}</div>
+                    </div>
+                    <div style={{display:'flex',gap:8, marginBottom: 12}}>
+                        <Button variant={view === 'day' ? undefined : 'ghost'} onClick={() => setView('day')}>{t('calendar.day')}</Button>
+                        <Button variant={view === 'week' ? undefined : 'ghost'} onClick={() => setView('week')}>{t('calendar.week')}</Button>
+                        <Button variant={view === 'month' ? undefined : 'ghost'} onClick={() => setView('month')}>{t('calendar.month')}</Button>
                     </div>
 
-                    <Calendar view={view} />
+                    <div style={{flex: 1, overflowY: 'auto'}}>
+                        <Calendar view={view} />
+                    </div>
                 </main>
 
-                {/* Pet Widget - Compact Quick View */}
+                {/* Column 3: Pet Companion */}
                 {pet && (
-                    <aside className="panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 16 }}>
+                    <aside className="panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 16, justifyContent: 'flex-start' }}>
                         <PetQuickView 
                             pet={pet} 
                             allPets={ownedPets}
@@ -926,6 +937,50 @@ const Dashboard: React.FC = () => {
                         />
                     </aside>
                 )}
+            </div>
+
+            {/* What's New Section */}
+            <div className="panel" style={{
+                marginTop: 24,
+                padding: 20,
+                background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(147, 51, 234, 0.05) 100%)',
+                border: '1px solid rgba(147, 51, 234, 0.2)',
+                borderRadius: 8
+            }}>
+                <h3 style={{margin: '0 0 16px 0', fontSize: '1rem', fontWeight: '600', color: '#d1d5db'}}>
+                    ✨ What's New
+                </h3>
+                <div style={{display: 'flex', flexDirection: 'column', gap: 12}}>
+                    {updates.length > 0 ? (
+                        updates.map((item) => (
+                            <div key={item.id} style={{
+                                display: 'flex',
+                                gap: 12,
+                                padding: 10,
+                                background: 'rgba(31, 41, 55, 0.3)',
+                                borderRadius: 6,
+                                borderLeft: '3px solid rgba(168, 85, 247, 0.4)'
+                            }}>
+                                <span style={{fontSize: '1.2rem', minWidth: '24px'}}>{item.icon}</span>
+                                <div style={{flex: 1, minWidth: 0}}>
+                                    <div style={{fontWeight: '600', color: '#e5e7eb', fontSize: '0.95rem', marginBottom: 2}}>
+                                        {item.title}
+                                    </div>
+                                    <div style={{fontSize: '0.85rem', color: '#9ca3af', marginBottom: 4}}>
+                                        {item.desc}
+                                    </div>
+                                    <div style={{fontSize: '0.75rem', color: '#6b7280'}}>
+                                        {formatUpdateTime(item.timestamp)}
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div style={{fontSize: '0.85rem', color: '#6b7280', textAlign: 'center', padding: '20px 0'}}>
+                            No updates yet...
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Quick Add Templates Popup */}

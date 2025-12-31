@@ -323,10 +323,12 @@ const Character: React.FC = () => {
                 
                 {/* Quick Pet Preview */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                  {/* Pet Emoji */}
+                  {/* Pet Emoji with Badges */}
                   <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <div style={{ fontSize: '5rem' }}>{currentPet.emoji}</div>
-                    <div style={{ position: 'absolute', bottom: 0, right: 0, fontSize: '1.8rem' }}>
+                    <div style={{ fontSize: '5rem' }}>{getPetEmoji(currentPet.stage, currentPet.color, currentPet.emoji)}</div>
+                    
+                    {/* Mood Indicator - Top Right */}
+                    <div style={{ position: 'absolute', top: 0, right: 0, fontSize: '1.8rem' }}>
                       {currentPet.mood === 'happy' && '😊'}
                       {currentPet.mood === 'excited' && '🤩'}
                       {currentPet.mood === 'playful' && '🎮'}
@@ -335,12 +337,51 @@ const Character: React.FC = () => {
                       {currentPet.mood === 'sleepy' && '😴'}
                       {!currentPet.mood && '😐'}
                     </div>
+
+                    {/* Level Circle - Bottom Left, right on edge */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        background: '#2563eb',
+                        borderRadius: '50%',
+                        width: 40,
+                        height: 40,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 17,
+                        fontWeight: 'bold',
+                        color: '#fff',
+                        border: '2px solid #60a5fa',
+                      }}
+                    >
+                      {currentPet.level}
+                    </div>
+
+                    {/* Stage Badge - Bottom Right, moved out */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: -5,
+                        right: -5,
+                        background: '#7c3aed',
+                        borderRadius: 6,
+                        padding: '4px 12px',
+                        fontSize: 10,
+                        fontWeight: 'bold',
+                        color: '#fff',
+                        border: '2px solid #a78bfa',
+                      }}
+                    >
+                      {currentPet.stage.toUpperCase()}
+                    </div>
                   </div>
 
                   {/* Pet Name & Level */}
                   <div style={{ textAlign: 'center' }}>
                     <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', fontWeight: 'bold', color: '#fff' }}>{currentPet.name}</h4>
-                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#9ca3af' }}>Level {currentPet.level} • {currentPet.stage}</p>
                   </div>
 
                   {/* Quick Stats - Just 3 key ones */}

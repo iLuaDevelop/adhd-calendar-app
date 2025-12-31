@@ -57,19 +57,70 @@ const PetQuickView: React.FC<PetQuickViewProps> = ({
         <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '600' }}>Your Companion</h3>
       </div>
 
-      {/* Pet Emoji */}
-      <div style={{ fontSize: '5rem', lineHeight: 1, marginBottom: 8 }}>
-        {getPetEmoji(pet.stage, pet.color, pet.emoji)}
+      {/* Pet Emoji with Badges */}
+      <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 8 }}>
+        <div style={{ fontSize: '5rem', lineHeight: 1 }}>
+          {getPetEmoji(pet.stage, pet.color, pet.emoji)}
+        </div>
+
+        {/* Mood Indicator - Top Right */}
+        <div style={{ position: 'absolute', top: 0, right: 0, fontSize: '1.5rem' }}>
+          {pet.mood === 'happy' && '😊'}
+          {pet.mood === 'excited' && '🤩'}
+          {pet.mood === 'playful' && '🎮'}
+          {pet.mood === 'content' && '😌'}
+          {pet.mood === 'sad' && '😢'}
+          {pet.mood === 'sleepy' && '😴'}
+          {!pet.mood && '😐'}
+        </div>
+
+        {/* Level Circle - Bottom Left, right on edge */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            background: '#2563eb',
+            borderRadius: '50%',
+            width: 28,
+            height: 28,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 13,
+            fontWeight: 'bold',
+            color: '#fff',
+            border: '2px solid #60a5fa',
+          }}
+        >
+          {pet.level}
+        </div>
+
+        {/* Stage Badge - Bottom Right, moved out */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: -4,
+            right: -4,
+            background: '#7c3aed',
+            borderRadius: 6,
+            padding: '3px 8px',
+            fontSize: 9,
+            fontWeight: 'bold',
+            color: '#fff',
+            border: '2px solid #a78bfa',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {pet.stage.toUpperCase()}
+        </div>
       </div>
 
-      {/* Pet Name and Level */}
+      {/* Pet Name */}
       <div style={{ textAlign: 'center', marginBottom: 16 }}>
         <h2 style={{ margin: '0 0 4px 0', fontSize: '1.25rem', fontWeight: '600', color: '#ffffff' }}>
           {pet.name}
         </h2>
-        <p style={{ margin: 0, fontSize: '0.875rem', color: '#9ca3af' }}>
-          Level {pet.level} • {pet.stage.charAt(0).toUpperCase() + pet.stage.slice(1)}
-        </p>
       </div>
 
       {/* Stats Grid - 3 columns */}

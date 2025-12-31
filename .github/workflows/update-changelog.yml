@@ -1,0 +1,95 @@
+name: Auto-Update Changelog
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Parse Commit and Post to Firebase
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+        run: |
+          # Get the latest commit message and author
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          COMMIT_HASH=$(git log -1 --pretty=%h)
+          
+          # Parse emoji and title from commit message
+          # Format: "emoji: title - description"
+          # Example: "🐾 feat: Pet display improvements - Added level badges to compact views"
+          
+          if [[ $COMMIT_MSG =~ ^([^:]+):[[:space:]]*([^-]+)-[[:space:]]*(.+)$ ]]; then
+            EMOJI="${BASH_REMATCH[1]}"
+            TITLE=$(echo "${BASH_REMATCH[2]}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            DESC=$(echo "${BASH_REMATCH[3]}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          else
+            # Fallback if message doesn't match pattern
+            EMOJI="📝"
+            TITLE=$(echo "$COMMIT_MSG" | head -1)
+            DESC=$(echo "$COMMIT_MSG" | tail -n +2 | head -1)
+          fi
+          
+          # Skip if commit message starts with "chore:" or "docs:"
+          if [[ $TITLE == chore* ]] || [[ $TITLE == docs* ]]; then
+            echo "Skipping chore/docs commit"
+            exit 0
+          fi
+          
+          # Install Node and Firebase tools
+          npm install -g firebase-tools
+          
+          # Create Firebase credentials file
+          echo '{
+            "type": "service_account",
+            "project_id": "'$FIREBASE_PROJECT_ID'",
+            "private_key": "'$(echo "$FIREBASE_PRIVATE_KEY" | sed 's/\\n/\\n/g')'",
+            "client_email": "'$FIREBASE_CLIENT_EMAIL'"
+          }' > /tmp/firebase-key.json
+          
+          # Create Node script to add update
+          cat > /tmp/add-update.js << 'EOF'
+          const admin = require('firebase-admin');
+          const serviceAccount = require('/tmp/firebase-key.json');
+          
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+          });
+          
+          const db = admin.firestore();
+          const emoji = process.argv[2];
+          const title = process.argv[3];
+          const desc = process.argv[4];
+          const hash = process.argv[5];
+          
+          db.collection('updates').add({
+            icon: emoji,
+            title: title,
+            desc: desc,
+            active: true,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            commitHash: hash
+          }).then(() => {
+            console.log('Update added to Firebase!');
+            process.exit(0);
+          }).catch(err => {
+            console.error('Error:', err);
+            process.exit(1);
+          });
+          EOF
+          
+          # Install Firebase Admin SDK
+          npm install -g firebase-admin
+          
+          # Add update to Firebase
+          node /tmp/add-update.js "$EMOJI" "$TITLE" "$DESC" "$COMMIT_HASH"

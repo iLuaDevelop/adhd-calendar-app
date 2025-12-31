@@ -32,6 +32,15 @@ export const Blackjack: React.FC<BlackjackProps> = ({ onCancel, onGameEnd }) => 
   const suits: CardSuit[] = ['♠', '♥', '♦', '♣'];
   const ranks: CardRank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
+  // Auto-stand when player hits to 21 during gameplay (not initial deal)
+  useEffect(() => {
+    if (gameState === 'playing' && playerTotal === 21 && playerHand.length > 2) {
+      setTimeout(() => {
+        dealerPlay();
+      }, 500);
+    }
+  }, [playerTotal, gameState, playerHand.length]);
+
   const drawCard = (): Card => {
     const suit = suits[Math.floor(Math.random() * suits.length)];
     const rank = ranks[Math.floor(Math.random() * ranks.length)];
@@ -156,7 +165,11 @@ export const Blackjack: React.FC<BlackjackProps> = ({ onCancel, onGameEnd }) => 
     }
 
     setResult(resultType);
-    setGameState('result');
+    
+    // Delay showing the result screen so player can see the final totals
+    setTimeout(() => {
+      setGameState('result');
+    }, 1800);
   };
 
   const renderCard = (card: Card, hidden = false) => {
@@ -305,58 +318,70 @@ export const Blackjack: React.FC<BlackjackProps> = ({ onCancel, onGameEnd }) => 
   if (gameState === 'playing') {
     return (
       <div style={{
-        background: 'linear-gradient(180deg, rgba(0, 100, 0, 0.2) 0%, rgba(0, 50, 0, 0.15) 100%)',
-        padding: 40,
+        background: 'linear-gradient(180deg, rgba(34, 197, 94, 0.08) 0%, rgba(16, 185, 129, 0.04) 100%)',
+        padding: '50px 40px',
         borderRadius: 20,
-        border: '1px solid rgba(100, 200, 100, 0.2)',
-        maxWidth: '700px',
+        border: '2px solid rgba(34, 197, 94, 0.3)',
+        maxWidth: '650px',
         margin: '0 auto',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
       }}>
-        <h2 style={{ textAlign: 'center', marginBottom: 8 }}>♠️ Blackjack ♠️</h2>
-        <div style={{ textAlign: 'center', color: 'var(--muted)', marginBottom: 24 }}>Bet: {bet} 💎</div>
+        <h2 style={{ textAlign: 'center', marginBottom: 4, fontSize: '2rem' }}>♠️ Blackjack ♠️</h2>
+        <div style={{ textAlign: 'center', color: 'var(--muted)', marginBottom: 32, fontSize: '1.1rem', fontWeight: '500' }}>Bet: {bet} 💎</div>
 
         {/* Dealer's hand */}
-        <div style={{ marginBottom: 40 }}>
-          <h3 style={{ marginBottom: 12, marginTop: 0 }}>Dealer</h3>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
+        <div style={{ marginBottom: 50, width: '100%' }}>
+          <h3 style={{ marginBottom: 16, marginTop: 0, fontSize: '1.2rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Dealer</h3>
+          <div style={{ display: 'flex', gap: 16, marginBottom: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
             {dealerHand.map((card, idx) => (
-              <div key={idx}>
+              <div key={idx} style={{ transform: 'scale(1.1)' }}>
                 {renderCard(card, !dealerRevealed && idx === 1)}
               </div>
             ))}
           </div>
-          <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
-            Total: {dealerRevealed ? dealerTotal : (dealerHand.length > 0 ? `${getCardValue(dealerHand[0])}+?` : '0')}
+          <div style={{ fontSize: '1rem', color: 'var(--accent)', fontWeight: 'bold', textAlign: 'center' }}>
+            Total: <span style={{ fontSize: '1.2rem' }}>{dealerRevealed ? dealerTotal : (dealerHand.length > 0 ? `${getCardValue(dealerHand[0])}+?` : '0')}</span>
           </div>
         </div>
 
+        {/* Divider */}
+        <div style={{ width: '100%', height: '1px', background: 'rgba(255, 255, 255, 0.1)', marginBottom: 50 }}></div>
+
         {/* Player's hand */}
-        <div style={{ marginBottom: 32 }}>
-          <h3 style={{ marginBottom: 12, marginTop: 0 }}>You</h3>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
+        <div style={{ marginBottom: 40, width: '100%' }}>
+          <h3 style={{ marginBottom: 16, marginTop: 0, fontSize: '1.2rem', color: 'var(--text-secondary)', textAlign: 'center' }}>You</h3>
+          <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
             {playerHand.map((card, idx) => (
-              <div key={idx}>{renderCard(card)}</div>
+              <div key={idx} style={{ transform: 'scale(1.1)' }}>{renderCard(card)}</div>
             ))}
           </div>
           <div style={{
-            fontSize: '1.2rem',
+            fontSize: '1.3rem',
             fontWeight: 'bold',
-            color: playerTotal > 21 ? '#e74c3c' : 'var(--accent)',
+            color: playerTotal > 21 ? '#ef4444' : '#22c55e',
+            textAlign: 'center',
+            padding: '12px',
+            background: playerTotal > 21 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+            borderRadius: 8,
+            border: playerTotal > 21 ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(34, 197, 94, 0.2)',
           }}>
             Total: {playerTotal}
-            {playerTotal > 21 && ' - BUST!'}
-            {playerTotal === 21 && playerHand.length === 2 && ' - BLACKJACK!'}
+            {playerTotal > 21 && ' - BUST! 💥'}
+            {playerTotal === 21 && playerHand.length === 2 && ' - BLACKJACK! 🎉'}
+            {result === 'win' && ' - WIN! 🎊'}
           </div>
         </div>
 
         {/* Action buttons */}
         {playerTotal <= 21 && (
-          <div style={{ display: 'flex', gap: 12 }}>
-            <Button variant="primary" onClick={hit} style={{ flex: 1 }}>
-              Hit 🎴
+          <div style={{ display: 'flex', gap: 20, width: '100%', justifyContent: 'center', marginTop: 16 }}>
+            <Button variant="primary" onClick={hit} style={{ padding: '16px 40px', fontSize: '1.2rem', fontWeight: '700' }}>
+              Hit
             </Button>
-            <Button variant="secondary" onClick={stand} style={{ flex: 1 }}>
-              Stand ✋
+            <Button variant="secondary" onClick={stand} style={{ padding: '16px 40px', fontSize: '1.2rem', fontWeight: '700' }}>
+              Stand
             </Button>
           </div>
         )}
@@ -367,61 +392,71 @@ export const Blackjack: React.FC<BlackjackProps> = ({ onCancel, onGameEnd }) => 
   // Result screen
   return (
     <div style={{
-      padding: 40,
+      padding: '50px 40px',
       borderRadius: 20,
       maxWidth: '500px',
       margin: '0 auto',
       textAlign: 'center',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
       background: result === 'win'
-        ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(74, 222, 128, 0.05) 100%)'
+        ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(74, 222, 128, 0.08) 100%)'
         : result === 'push'
-        ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%)'
-        : 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(248, 113, 113, 0.05) 100%)',
-      border: `1px solid ${
+        ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(96, 165, 250, 0.08) 100%)'
+        : 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(248, 113, 113, 0.08) 100%)',
+      border: `2px solid ${
         result === 'win'
-          ? 'rgba(34, 197, 94, 0.3)'
+          ? 'rgba(34, 197, 94, 0.4)'
           : result === 'push'
-          ? 'rgba(59, 130, 246, 0.3)'
-          : 'rgba(239, 68, 68, 0.3)'
+          ? 'rgba(59, 130, 246, 0.4)'
+          : 'rgba(239, 68, 68, 0.4)'
       }`,
     }}>
-      <div style={{ fontSize: '3rem', marginBottom: 16 }}>
+      <div style={{ fontSize: '4rem', marginBottom: 16 }}>
         {result === 'win' ? '🎉' : result === 'push' ? '🤝' : '😢'}
       </div>
 
-      <h2 style={{ marginBottom: 8, fontSize: '2rem' }}>
+      <h2 style={{ marginBottom: 16, fontSize: '2.2rem', fontWeight: 'bold' }}>
         {result === 'win' ? 'You Won!' : result === 'push' ? "It's a Tie!" : 'You Lost!'}
       </h2>
 
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: '0.9rem', color: 'var(--muted)', marginBottom: 4 }}>Gems Change</div>
+      <div style={{ marginBottom: 32, width: '100%' }}>
+        <div style={{ fontSize: '0.95rem', color: 'var(--muted)', marginBottom: 8 }}>Gems Change</div>
         <div style={{
-          fontSize: '2rem',
+          fontSize: '2.5rem',
           fontWeight: 'bold',
           color: result === 'win' ? '#22c55e' : result === 'push' ? '#06b6d4' : '#ef4444',
+          padding: '16px',
+          background: result === 'win' ? 'rgba(34, 197, 94, 0.1)' : result === 'push' ? 'rgba(6, 182, 212, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+          borderRadius: 12,
+          border: result === 'win' ? '1px solid rgba(34, 197, 94, 0.3)' : result === 'push' ? '1px solid rgba(6, 182, 212, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
         }}>
-          {result === 'win' ? '+' : ''}{result === 'lose' ? '-' : ''}{result === 'push' ? '±' : ''}{Math.abs(bet)}
+          {result === 'win' ? '+' : ''}{result === 'lose' ? '-' : ''}{result === 'push' ? '±' : ''}{Math.abs(bet)} 💎
         </div>
       </div>
 
       <div style={{
         background: 'rgba(0, 0, 0, 0.2)',
-        padding: 12,
-        borderRadius: 8,
-        marginBottom: 20,
-        fontSize: '0.85rem',
+        padding: '14px 16px',
+        borderRadius: 10,
+        marginBottom: 28,
+        fontSize: '0.9rem',
+        width: '100%',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
       }}>
-        <div>Player: {playerTotal} | Dealer: {dealerTotal}</div>
+        <div style={{ marginBottom: 4 }}>Player: <span style={{ fontWeight: 'bold', color: 'var(--accent)' }}>{playerTotal}</span></div>
+        <div>Dealer: <span style={{ fontWeight: 'bold', color: 'var(--accent)' }}>{dealerTotal}</span></div>
       </div>
 
-      <div style={{ display: 'flex', gap: 12 }}>
+      <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: '400px', justifyContent: 'center' }}>
         <Button
           variant="ghost"
           onClick={() => {
             setGameState('betting');
             setBet(10);
           }}
-          style={{ flex: 1 }}
+          style={{ flex: 1, padding: '14px 24px', fontSize: '1rem', fontWeight: '600' }}
         >
           Play Again
         </Button>
@@ -433,7 +468,7 @@ export const Blackjack: React.FC<BlackjackProps> = ({ onCancel, onGameEnd }) => 
           recordCasinoGameResult(gemsWon, gemsLost, 'blackjack');
           
           onGameEnd(gemsWon, gemsLost);
-        }} style={{ flex: 1 }}>
+        }} style={{ flex: 1, padding: '14px 24px', fontSize: '1rem', fontWeight: '600' }}>
           Back
         </Button>
       </div>
