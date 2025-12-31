@@ -102,6 +102,8 @@ export const CasinoLeaderboard: React.FC<CasinoLeaderboardProps> = ({ entries })
         display: 'flex',
         gap: 8,
         alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
       }}>
         🏅 Casino Leaderboards
       </h3>
@@ -111,27 +113,44 @@ export const CasinoLeaderboard: React.FC<CasinoLeaderboardProps> = ({ entries })
         display: 'flex',
         gap: 8,
         marginBottom: 20,
+        justifyContent: 'center',
         borderBottom: '1px solid rgba(255,255,255,0.1)',
         paddingBottom: 12,
+        flexWrap: 'wrap',
       }}>
         {(['wins', 'streak', 'profit'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             style={{
-              padding: '8px 16px',
+              padding: '10px 20px',
               background: activeTab === tab
-                ? 'rgba(59, 130, 246, 0.3)'
-                : 'transparent',
-              color: activeTab === tab ? 'var(--accent)' : 'var(--text-secondary)',
+                ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.5) 0%, rgba(99, 102, 241, 0.4) 100%)'
+                : 'rgba(59, 130, 246, 0.1)',
+              color: activeTab === tab ? '#fff' : 'var(--text-secondary)',
               border: activeTab === tab
-                ? '1px solid rgba(59, 130, 246, 0.5)'
-                : '1px solid transparent',
-              borderRadius: 6,
+                ? '2px solid rgba(99, 102, 241, 0.8)'
+                : '2px solid rgba(59, 130, 246, 0.3)',
+              borderRadius: 8,
               cursor: 'pointer',
-              fontSize: '0.9rem',
-              fontWeight: activeTab === tab ? 'bold' : '500',
+              fontSize: '0.95rem',
+              fontWeight: activeTab === tab ? '600' : '500',
               transition: 'all 0.2s ease',
+              boxShadow: activeTab === tab
+                ? '0 0 15px rgba(59, 130, 246, 0.3)'
+                : 'none',
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== tab) {
+                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.5)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== tab) {
+                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+                e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+              }
             }}
           >
             {tab === 'wins' && '💰 Biggest Wins'}
