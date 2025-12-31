@@ -4,6 +4,8 @@ import { ReactionTest } from '../components/Games/ReactionTest';
 import { Blackjack } from '../components/Games/Blackjack';
 import { Slots } from '../components/Games/Slots';
 import { Roulette } from '../components/Games/Roulette';
+import { CasinoChallengesWidget } from '../components/Games/CasinoChallengesWidget';
+import { CasinoLeaderboard } from '../components/Games/CasinoLeaderboard';
 import { useLanguage } from '../context/LanguageContext';
 import {
   canPlayGame,
@@ -443,6 +445,9 @@ export const MiniGames: React.FC = () => {
 
         {gameTab === 'casino' && (
           <>
+        {/* Daily Challenges */}
+        <CasinoChallengesWidget />
+
         {/* Casino Games Section */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20, marginBottom: 32 }}>
           {/* Blackjack Card */}
@@ -532,8 +537,12 @@ export const MiniGames: React.FC = () => {
             <li>No real money involved - all wins/losses are virtual gems</li>
             <li>House edge ensures long-term losses, but big wins are possible!</li>
             <li>Come back daily for fresh gems to gamble with</li>
+            <li>Win streaks give multiplier bonuses - the more you win, the bigger the payout!</li>
           </ul>
         </div>
+
+        {/* Leaderboard */}
+        <CasinoLeaderboard />
 
         {/* Daily Cap Info */}
         <div className="subtle" style={{
