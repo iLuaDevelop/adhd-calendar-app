@@ -39,13 +39,14 @@ export const CasinoStatsWidget: React.FC = () => {
         onClick={() => setExpanded(!expanded)}
         style={{
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'center',
           alignItems: 'center',
           cursor: 'pointer',
-          marginBottom: expanded ? 20 : 0,
+          marginBottom: expanded ? 20 : 16,
+          position: 'relative',
         }}
       >
-        <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--accent)' }}>
+        <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--accent)', textAlign: 'center' }}>
           📊 Your Casino Stats
         </h3>
         <div style={{
@@ -53,6 +54,8 @@ export const CasinoStatsWidget: React.FC = () => {
           color: 'var(--text-secondary)',
           transition: 'transform 0.2s',
           transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+          position: 'absolute',
+          right: 0,
         }}>
           ▼
         </div>

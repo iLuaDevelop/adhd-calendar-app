@@ -39,32 +39,34 @@ export const CasinoChallengesWidget: React.FC = () => {
         onClick={() => setExpanded(!expanded)}
         style={{
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'center',
           alignItems: 'center',
           cursor: 'pointer',
-          marginBottom: expanded ? 16 : 0,
+          marginBottom: expanded ? 16 : 12,
+          position: 'relative',
+          gap: 12,
         }}
       >
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fbbf24' }}>
-            🎯 Daily Challenges
-          </h3>
-          <div style={{
-            background: 'rgba(251, 191, 36, 0.2)',
-            color: '#fbbf24',
-            padding: '4px 12px',
-            borderRadius: 12,
-            fontSize: '0.85rem',
-            fontWeight: 'bold',
-          }}>
-            {completedCount}/{totalCount}
-          </div>
+        <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fbbf24', textAlign: 'center' }}>
+          🎯 Daily Challenges
+        </h3>
+        <div style={{
+          background: 'rgba(251, 191, 36, 0.2)',
+          color: '#fbbf24',
+          padding: '4px 12px',
+          borderRadius: 12,
+          fontSize: '0.85rem',
+          fontWeight: 'bold',
+        }}>
+          {completedCount}/{totalCount}
         </div>
         <div style={{
           fontSize: '0.9rem',
           color: 'var(--text-secondary)',
           transition: 'transform 0.2s',
           transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+          position: 'absolute',
+          right: 0,
         }}>
           ▼
         </div>
@@ -73,23 +75,28 @@ export const CasinoChallengesWidget: React.FC = () => {
       {/* Compact View */}
       {!expanded && (
         <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: 'grid',
+          gap: 12,
         }}>
           <div>
             <div style={{
-              fontSize: '0.9rem',
+              fontSize: '0.85rem',
               color: 'var(--text-secondary)',
-              marginBottom: 8,
+              marginBottom: 6,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}>
-              Progress
+              <span>Progress</span>
+              <span style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--accent)' }}>
+                {progress}%
+              </span>
             </div>
             <div style={{
-              width: 200,
-              height: 8,
-              background: 'rgba(0,0,0,0.2)',
-              borderRadius: 4,
+              width: '100%',
+              height: 10,
+              background: 'rgba(0,0,0,0.3)',
+              borderRadius: 5,
               overflow: 'hidden',
             }}>
               <div
@@ -104,12 +111,15 @@ export const CasinoChallengesWidget: React.FC = () => {
           </div>
           {bonus > 0 && (
             <div style={{
-              textAlign: 'right',
+              textAlign: 'center',
               fontSize: '1.1rem',
               fontWeight: 'bold',
               color: '#10b981',
+              background: 'rgba(16, 185, 129, 0.15)',
+              padding: '8px',
+              borderRadius: 6,
             }}>
-              +{bonus} 💎
+              +{bonus} 💎 Bonus Available
             </div>
           )}
         </div>
