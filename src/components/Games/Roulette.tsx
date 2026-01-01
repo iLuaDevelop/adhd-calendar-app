@@ -139,7 +139,7 @@ export const Roulette: React.FC<RouletteProps> = ({ onCancel, onGameEnd }) => {
               background: 'conic-gradient(from 0deg, red 0deg 9.73deg, black 9.73deg 19.46deg, red 19.46deg 29.19deg, black 29.19deg 38.92deg, red 38.92deg 48.65deg, black 48.65deg 58.38deg, red 58.38deg 68.11deg, black 68.11deg 77.84deg, red 77.84deg 87.57deg, black 87.57deg 97.3deg, red 97.3deg 107.03deg, black 107.03deg 116.76deg, red 116.76deg 126.49deg, black 126.49deg 136.22deg, red 136.22deg 145.95deg, black 145.95deg 155.68deg, red 155.68deg 165.41deg, black 165.41deg 175.14deg, green 175.14deg 180deg, black 180deg 189.73deg, red 189.73deg 199.46deg, black 199.46deg 209.19deg, red 209.19deg 218.92deg, black 218.92deg 228.65deg, red 228.65deg 238.38deg, black 238.38deg 248.11deg, red 248.11deg 257.84deg, black 257.84deg 267.57deg, red 267.57deg 277.3deg, black 277.3deg 287.03deg, red 287.03deg 296.76deg, black 296.76deg 306.49deg, red 306.49deg 316.22deg, black 316.22deg 325.95deg, red 325.95deg 335.68deg, black 335.68deg 345.41deg, red 345.41deg 355.14deg, black 355.14deg 365deg)',
               border: '8px solid gold',
               boxShadow: '0 0 30px rgba(251, 191, 36, 0.6)',
-              transition: spinning ? `transform 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)` : 'none',
+              transition: `transform 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
               transform: `rotate(${rotation}deg)`,
             }}
           />

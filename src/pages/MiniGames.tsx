@@ -540,7 +540,7 @@ export const MiniGames: React.FC = () => {
         </div>
 
         {/* Casino Info */}
-        <div className="panel" style={{ padding: 24, marginBottom: 24, background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+        <div className="panel" style={{ padding: 24, marginBottom: 24, background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', textAlign: 'left' }}>
           <h3 style={{ margin: '0 0 12px 0' }}>💡 Casino Tips</h3>
           <ul style={{ margin: 0, paddingLeft: 20, fontSize: '0.9rem', color: 'var(--muted)', lineHeight: 1.8 }}>
             <li>Gamble responsibly - set a daily budget and stick to it</li>
