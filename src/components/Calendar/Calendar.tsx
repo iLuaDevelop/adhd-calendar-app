@@ -163,7 +163,7 @@ const Calendar: React.FC<{ view?: 'day' | 'week' | 'month' }> = ({ view = 'month
             )}
 
             {view === 'week' && (
-                <div style={{display:'flex',flexDirection:'column',gap:8,padding:12}}>
+                <div style={{display:'flex',flexDirection:'column',gap:8,padding:12,maxHeight:'60vh',overflowY:'auto'}}>
                     {weekDays.map((day) => {
                         const canCompleteEvent = day <= new Date();
                         return (
