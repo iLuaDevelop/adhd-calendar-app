@@ -99,15 +99,14 @@ const Calendar: React.FC<{ view?: 'day' | 'week' | 'month' }> = ({ view = 'month
     const dayName = view === 'day' ? displayDate.toDateString() : (view === 'week' ? weekLabel : monthName);
 
     return (
-        <div className="calendar" style={{ position: 'relative' }}>
+        <div className="calendar" style={{ position: 'relative', display: 'flex', flexDirection: 'column', maxHeight: '65vh' }}>
             <header className="calendar-header" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:16,paddingBottom:12}}>
                 <button className="btn ghost" onClick={view === 'day' ? prevDay : view === 'week' ? prevWeek : prevMonth} aria-label="Previous" style={{color:'var(--text)'}}>◀</button>
                 <h1 style={{flex:1,textAlign:'center',margin:0}}>{dayName}</h1>
                 <button className="btn ghost" onClick={view === 'day' ? nextDay : view === 'week' ? nextWeek : nextMonth} aria-label="Next" style={{color:'var(--text)'}}>▶</button>
             </header>
-
             {view === 'day' && (
-                <div style={{display:'flex',flexDirection:'column',gap:12}}>
+                <div style={{display:'flex',flexDirection:'column',gap:12,flex:1,overflowY:'auto'}}>
                     <div style={{padding:12}}>
                         <h3 style={{margin:'0 0 8px 0'}}>Events</h3>
                         {displayDate > new Date() && (
