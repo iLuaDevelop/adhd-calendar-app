@@ -850,7 +850,7 @@ const Dashboard: React.FC = () => {
             {/* 3-Column Layout */}
             <div className="app-grid">
                 {/* Column 1: Tasks */}
-                <aside className="panel" style={{ display: 'flex', flexDirection: 'column' }}>
+                <aside className="panel" style={{ display: 'flex', flexDirection: 'column', height: 450 }}>
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12, gap: 12, flexWrap: 'wrap'}}>
                         <div style={{display:'flex',alignItems:'center',gap:8}}>
                             <h3 style={{margin:0}}>{t('dashboard.yourTasks')}</h3>
@@ -900,7 +900,7 @@ const Dashboard: React.FC = () => {
                 </aside>
 
                 {/* Column 2: Calendar */}
-                <main className="panel" style={{ display: 'flex', flexDirection: 'column' }}>
+                <main className="panel" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', height: 450 }}>
                     <div style={{marginBottom:12}}>
                         <h3 style={{margin:'0 0 4px 0'}}>{t('dashboard.upcomingEvents')}</h3>
                         <div className="subtle">{new Date().toLocaleDateString()}</div>
@@ -911,14 +911,14 @@ const Dashboard: React.FC = () => {
                         <Button variant={view === 'month' ? undefined : 'ghost'} onClick={() => setView('month')}>{t('calendar.month')}</Button>
                     </div>
 
-                    <div style={{flex: 1, overflowY: 'auto'}}>
+                    <div style={{flex: 1, overflowY: 'auto', minHeight: 0}}>
                         <Calendar view={view} />
                     </div>
                 </main>
 
                 {/* Column 3: Pet Companion */}
                 {pet && (
-                    <aside className="panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 16, justifyContent: 'flex-start' }}>
+                    <aside className="panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 16, justifyContent: 'flex-start', height: 450 }}>
                         <PetQuickView 
                             pet={pet} 
                             allPets={ownedPets}

@@ -98,15 +98,26 @@ const Calendar: React.FC<{ view?: 'day' | 'week' | 'month' }> = ({ view = 'month
     const weekLabel = view === 'week' ? `${weekDays[0]?.toLocaleDateString()} - ${weekDays[6]?.toLocaleDateString()}` : '';
     const dayName = view === 'day' ? displayDate.toDateString() : (view === 'week' ? weekLabel : monthName);
 
+    React.useEffect(() => {
+        const calendarEl = document.querySelector('.calendar') as HTMLElement;
+        if (calendarEl) {
+            const computed = window.getComputedStyle(calendarEl);
+            const viewEl = calendarEl.querySelector('[data-view]') as HTMLElement;
+            const viewHeight = viewEl?.offsetHeight || 0;
+            const viewScroll = viewEl?.scrollHeight || 0;
+            console.log(`[Calendar Component] View: ${view}, Calendar height: ${calendarEl.offsetHeight}, Computed flex: ${computed.flex}, minHeight: ${computed.minHeight}, ViewEl height: ${viewHeight}, ViewEl scrollHeight: ${viewScroll}`);
+        }
+    }, [view, cells.length, weekDays.length]);
+
     return (
-        <div className="calendar" style={{ position: 'relative', display: 'flex', flexDirection: 'column', maxHeight: '65vh' }}>
+        <div className="calendar" style={{ position: 'relative', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
             <header className="calendar-header" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:16,paddingBottom:12}}>
                 <button className="btn ghost" onClick={view === 'day' ? prevDay : view === 'week' ? prevWeek : prevMonth} aria-label="Previous" style={{color:'var(--text)'}}>◀</button>
                 <h1 style={{flex:1,textAlign:'center',margin:0}}>{dayName}</h1>
                 <button className="btn ghost" onClick={view === 'day' ? nextDay : view === 'week' ? nextWeek : nextMonth} aria-label="Next" style={{color:'var(--text)'}}>▶</button>
             </header>
             {view === 'day' && (
-                <div style={{display:'flex',flexDirection:'column',gap:12,flex:1,overflowY:'auto'}}>
+                <div data-view="day" style={{display:'flex',flexDirection:'column',gap:12,overflowY:'auto'}} onMouseEnter={(e) => console.log(`[Day View] Height: ${(e.currentTarget as HTMLElement).offsetHeight}, ScrollHeight: ${(e.currentTarget as HTMLElement).scrollHeight}`)}>
                     <div style={{padding:12}}>
                         <h3 style={{margin:'0 0 8px 0'}}>Events</h3>
                         {displayDate > new Date() && (
@@ -162,7 +173,7 @@ const Calendar: React.FC<{ view?: 'day' | 'week' | 'month' }> = ({ view = 'month
             )}
 
             {view === 'week' && (
-                <div style={{display:'flex',flexDirection:'column',gap:8,padding:12,maxHeight:'60vh',overflowY:'auto'}}>
+                <div data-view="week" style={{display:'flex',flexDirection:'column',gap:8,padding:12,overflowY:'auto'}} onMouseEnter={(e) => console.log(`[Week View] Height: ${(e.currentTarget as HTMLElement).offsetHeight}, ScrollHeight: ${(e.currentTarget as HTMLElement).scrollHeight}`)}>
                     {weekDays.map((day) => {
                         const canCompleteEvent = day <= new Date();
                         return (
@@ -223,7 +234,7 @@ const Calendar: React.FC<{ view?: 'day' | 'week' | 'month' }> = ({ view = 'month
 
             {view !== 'day' && view !== 'week' && (
                 <>
-                    <div className="calendar-body">
+                    <div data-view="month" className="calendar-body" style={{overflowY: 'auto'}} onMouseEnter={(e) => console.log(`[Month View] Height: ${(e.currentTarget as HTMLElement).offsetHeight}, ScrollHeight: ${(e.currentTarget as HTMLElement).scrollHeight}, Cells: ${cells.length}`)}>
                         {cells.map((d, idx) => (
                             d ? (
                                 <DayCell key={idx} date={d} events={eventsMap[d.toDateString()] || []} onClick={handleDayClick} />
