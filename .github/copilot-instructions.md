@@ -100,27 +100,44 @@ npm run dist                    # Alternative: build + sign + create installer
 ### ⚠️ GIT COMMITS: MANDATORY AFTER EVERY BUILD
 **ALWAYS commit your code after running `npm run build-electron`** to prevent losing work. Git commits save your entire source code (all `.tsx`, `.ts`, `.css` files), allowing you to restore any previous version.
 
+### Commit Message Format - IMPORTANT:
+**ONLY use this format - NO EXCEPTIONS:**
+```
+Title | Description
+```
+
+Examples:
+- ✅ `Social menu YOU card displays profile | Updated getUserProfile to query playerProfiles collection`
+- ✅ `Database backup system added | Client-side backup via DevMenu and Node admin script`
+- ❌ `fix: Social menu profile loading` (NO prefixes)
+- ❌ `improve: better auth` (NO special characters)
+
+This format is parsed by GitHub Actions workflow to post commits to What's New feed.
+
 ```bash
 # After making changes and testing
 npm run build-electron
 
-# Then immediately commit
+# Then immediately commit with proper format
 git add -A
-git commit -m "feature: description of what was changed"
+git commit -m "Feature title | Feature description"
 git log --oneline -5  # Verify commit was created
 ```
 
-**Why this matters:**
-- Commits = permanent snapshots of source code (NOT just `.exe` files)
-- You can restore entire codebase: `git checkout [commit-id]`
-- Prevents accidental loss of features/fixes (happened with v1.0.3)
-- Takes 30 seconds, saves hours of re-implementing
+---
 
-**Good commit messages:**
-- `restore: bring back v1.0.3 features - custom toast system, fix profile card`
-- `fix: QuickAdd input cutoff by moving form outside scrollable container`
-- `feature: add custom toast notifications to replace native alerts`
-- `chore: replace all 42 alert() calls with showToast()`
+## Firebase Collections - Important Locations
+
+**User profile data lives in `playerProfiles` collection** (NOT `users`):
+- If you see components querying `users` collection, they need to be updated to `playerProfiles`
+- Example fix: [Social menu profile loading](src/components/UI/SocialMenu.tsx#L156)
+- Pattern also fixed in: [Character.tsx](src/pages/Character.tsx#L68), [ProfileHeaderCard](src/components/UI/ProfileHeaderCard.tsx)
+
+**Other key collections:**
+- `gameProgress` - User game state and stats
+- `updates` - What's New feed (commits, releases)
+- `leaderboard` - User rankings
+- `tasks`, `events`, `quests`, `achievements` - Game content
 
 ## Architecture Patterns
 
@@ -351,6 +368,37 @@ All external integrations abstracted in `src/services/`:
 - **State**: Add `console.log()` in useEffect hooks to trace state changes
 - **Build**: Check `dist/` folder to verify bundled output
 - **Electron**: Check main process logs in console for IPC/window errors
+
+## ⚠️ DESTRUCTIVE COMMAND SAFETY PROTOCOL
+
+**CRITICAL**: Never execute destructive commands without explicit user confirmation. A previous Claude session accidentally deleted the entire Firestore database with `firebase firestore:delete updates --all-collections --force`.
+
+### Rules for Destructive Operations:
+1. **NEVER use `--force` or `--all-collections` flags** - These caused total data loss
+2. **Always show the exact command first** - Before executing anything destructive
+3. **Wait for explicit user confirmation** - User must type "yes" or similar
+4. **Suggest backup first** - Always offer to create a backup before deletion
+5. **Use `--dry-run` when available** - Test destructive operations safely first
+6. **Explain what will be deleted** - Be specific about scope and impact
+
+### Destructive Command Examples (DO NOT RUN):
+```bash
+# ❌ NEVER - Deletes entire database
+firebase firestore:delete [collection] --all-collections --force
+
+# ❌ NEVER - Deletes without confirmation
+firebase firestore:delete [collection] --force
+
+# ✅ SAFE - Ask first, show command, get confirmation
+# Then: "Are you absolutely sure? Type YES to proceed"
+firebase firestore:delete [collection] --interactive
+```
+
+### Backup Before Any Destructive Operation:
+1. Run `npm run backup-db` (client-side in app DevMenu)
+2. Verify backup file created in Downloads
+3. **Then** proceed with any deletion/modification
+4. **Test on backup first** if possible
 
 ---
 
