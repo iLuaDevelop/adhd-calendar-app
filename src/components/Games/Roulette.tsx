@@ -52,7 +52,11 @@ export const Roulette: React.FC<RouletteProps> = ({ onCancel, onGameEnd }) => {
 
     // Spin animation (3+ full rotations)
     const rotations = 360 * 3 + Math.floor(Math.random() * 360);
-    setRotation(rotations);
+    
+    // Use requestAnimationFrame to ensure transition is applied before rotation changes
+    requestAnimationFrame(() => {
+      setRotation(rotations);
+    });
 
     setTimeout(() => {
       setWinningNumber(randomNum);
